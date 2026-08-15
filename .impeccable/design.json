@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-15T02:40:06Z",
+  "title": "Design System: Hublet",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Organizer Ink",
+        "canonical": "#152431",
+        "tonalRamp": ["oklch(15% 0.025 245)", "oklch(25% 0.025 245)", "oklch(35% 0.025 245)", "oklch(45% 0.025 245)", "oklch(58% 0.025 245)", "oklch(70% 0.02 245)", "oklch(83% 0.014 245)", "oklch(95% 0.006 245)"]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#526474",
+        "tonalRamp": ["oklch(15% 0.022 245)", "oklch(25% 0.022 245)", "oklch(35% 0.022 245)", "oklch(45% 0.022 245)", "oklch(58% 0.02 245)", "oklch(70% 0.017 245)", "oklch(83% 0.012 245)", "oklch(95% 0.005 245)"]
+      },
+      "utility-ground": {
+        "role": "neutral",
+        "displayName": "Utility Ground",
+        "canonical": "#e9eef2",
+        "tonalRamp": ["oklch(15% 0.012 240)", "oklch(25% 0.012 240)", "oklch(35% 0.012 240)", "oklch(45% 0.012 240)", "oklch(58% 0.011 240)", "oklch(70% 0.009 240)", "oklch(83% 0.007 240)", "oklch(95% 0.004 240)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Work Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(25% 0 0)", "oklch(35% 0 0)", "oklch(45% 0 0)", "oklch(58% 0 0)", "oklch(70% 0 0)", "oklch(83% 0 0)", "oklch(95% 0 0)"]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider Gray",
+        "canonical": "#cbd5dc",
+        "tonalRamp": ["oklch(15% 0.012 240)", "oklch(25% 0.012 240)", "oklch(35% 0.012 240)", "oklch(45% 0.012 240)", "oklch(58% 0.011 240)", "oklch(70% 0.009 240)", "oklch(83% 0.007 240)", "oklch(95% 0.004 240)"]
+      },
+      "coffee": {
+        "role": "secondary",
+        "displayName": "Coffee Blue",
+        "canonical": "#236bc5",
+        "tonalRamp": ["oklch(15% 0.14 255)", "oklch(25% 0.14 255)", "oklch(35% 0.14 255)", "oklch(45% 0.14 255)", "oklch(58% 0.13 255)", "oklch(70% 0.1 255)", "oklch(83% 0.065 255)", "oklch(95% 0.025 255)"]
+      },
+      "coffee-bay": {
+        "role": "tertiary",
+        "displayName": "Coffee Bay Blue",
+        "canonical": "#9bc5ff",
+        "tonalRamp": ["oklch(15% 0.09 255)", "oklch(25% 0.09 255)", "oklch(35% 0.09 255)", "oklch(45% 0.09 255)", "oklch(58% 0.085 255)", "oklch(70% 0.072 255)", "oklch(83% 0.05 255)", "oklch(95% 0.018 255)"]
+      },
+      "goals": {
+        "role": "secondary",
+        "displayName": "Goal Green",
+        "canonical": "#4d6f00",
+        "tonalRamp": ["oklch(15% 0.105 125)", "oklch(25% 0.105 125)", "oklch(35% 0.105 125)", "oklch(45% 0.105 125)", "oklch(58% 0.095 125)", "oklch(70% 0.075 125)", "oklch(83% 0.05 125)", "oklch(95% 0.018 125)"]
+      },
+      "goals-bay": {
+        "role": "tertiary",
+        "displayName": "Goal Bay Lime",
+        "canonical": "#c9e96b",
+        "tonalRamp": ["oklch(15% 0.11 120)", "oklch(25% 0.11 120)", "oklch(35% 0.11 120)", "oklch(45% 0.11 120)", "oklch(58% 0.1 120)", "oklch(70% 0.08 120)", "oklch(83% 0.055 120)", "oklch(95% 0.02 120)"]
+      },
+      "recipes": {
+        "role": "secondary",
+        "displayName": "Recipe Terracotta",
+        "canonical": "#a33c27",
+        "tonalRamp": ["oklch(15% 0.12 35)", "oklch(25% 0.12 35)", "oklch(35% 0.12 35)", "oklch(45% 0.12 35)", "oklch(58% 0.11 35)", "oklch(70% 0.085 35)", "oklch(83% 0.055 35)", "oklch(95% 0.02 35)"]
+      },
+      "recipes-bay": {
+        "role": "tertiary",
+        "displayName": "Recipe Bay Coral",
+        "canonical": "#ff9f87",
+        "tonalRamp": ["oklch(15% 0.115 35)", "oklch(25% 0.115 35)", "oklch(35% 0.115 35)", "oklch(45% 0.115 35)", "oklch(58% 0.105 35)", "oklch(70% 0.085 35)", "oklch(83% 0.055 35)", "oklch(95% 0.02 35)"]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus Blue",
+        "canonical": "#0a72dc",
+        "tonalRamp": ["oklch(15% 0.16 250)", "oklch(25% 0.16 250)", "oklch(35% 0.16 250)", "oklch(45% 0.16 250)", "oklch(58% 0.145 250)", "oklch(70% 0.11 250)", "oklch(83% 0.07 250)", "oklch(95% 0.025 250)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Rounded Display", "purpose": "Identity, page headings, launcher destinations, and error headings only." },
+      "title": { "displayName": "Operational Title", "purpose": "Panel summaries, counts, navigation landmarks, and strong actions." },
+      "body": { "displayName": "System Body", "purpose": "Records, instructions, fields, and supporting content." },
+      "label": { "displayName": "Precise Label", "purpose": "Visible field labels and compact metadata." }
+    },
+    "shadows": [
+      { "name": "panel-depth", "value": "0 10px 24px rgb(21 36 49 / 12%)", "purpose": "Lift primary working panels and launcher destinations from the utility ground." },
+      { "name": "bay-hover", "value": "0 14px 30px rgb(21 36 49 / 18%)", "purpose": "Deepen launcher destination depth on hover without moving the bay." },
+      { "name": "mark-depth", "value": "0 7px 16px rgb(21 36 49 / 16%)", "purpose": "Separate the layered Hublet mark from the header surface." }
+    ],
+    "motion": [
+      { "name": "settle", "value": "360ms cubic-bezier(.22, 1, .36, 1)", "purpose": "One page-entry fade and 6px upward settle; disabled for reduced motion." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "760px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The shared ink action; plugin pages replace ink with their assigned accent.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Save changes</button>",
+      "css": ".ds-btn-primary { min-height: 44px; padding: .7rem .8rem; color: var(--surface, #fff); background: var(--ink, #152431); border: 1px solid var(--ink, #152431); border-radius: 10px; font: 750 1rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-btn-primary:hover { filter: brightness(.94); } .ds-btn-primary:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-btn-primary:active { filter: brightness(.88); }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "A compact bordered action for sign-out, archive, and other secondary operations.",
+      "html": "<button class=\"ds-btn-quiet\" type=\"button\">Archive</button>",
+      "css": ".ds-btn-quiet { min-height: 40px; padding: .45rem .7rem; color: var(--muted-ink, #526474); background: transparent; border: 1px solid var(--divider, #cbd5dc); border-radius: 10px; font: 750 .9rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-btn-quiet:hover { color: var(--ink, #152431); background: #f4f7f9; border-color: #9cabb5; } .ds-btn-quiet:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-btn-quiet:active { background: #e9eef2; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A native-feeling labeled field for direct server-rendered forms.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-field\">Name<input class=\"ds-field\" id=\"ds-field\" value=\"Morning blend\"></label>",
+      "css": ".ds-field-label { display: grid; gap: .35rem; color: var(--muted-ink, #526474); font: 700 .86rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-field { padding: .7rem .8rem; color: var(--ink, #152431); background: #fbfcfd; border: 1px solid #b9c6cf; border-radius: 10px; font: 400 1rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-field:hover { border-color: #9cabb5; } .ds-field:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; }"
+    },
+    {
+      "name": "Coffee Launcher Bay",
+      "kind": "card",
+      "refersTo": "launcher-coffee",
+      "description": "A tactile plugin destination using the Coffee light color family.",
+      "html": "<a class=\"ds-launcher-coffee\" href=\"#\"><svg class=\"ds-launcher-icon\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path d=\"M10 17h25v12a10 10 0 0 1-10 10h-5a10 10 0 0 1-10-10V17Z\"/><path d=\"M35 21h3a6 6 0 0 1 0 12h-5M17 11c0-3 3-3 3-6M27 11c0-3 3-3 3-6\"/></svg><span><strong>Coffee</strong><small>Beans, shots and settings</small></span><span class=\"ds-launcher-action\">Open <span aria-hidden=\"true\">→</span></span></a>",
+      "css": ".ds-launcher-coffee { min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(1.25rem, 3vw, 2rem); color: var(--ink, #152431); background: var(--coffee-bay, #9bc5ff); border-radius: 14px; box-shadow: 0 10px 24px rgb(21 36 49 / 12%); text-decoration: none; } .ds-launcher-coffee:hover { box-shadow: 0 14px 30px rgb(21 36 49 / 18%); } .ds-launcher-coffee:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-launcher-coffee:active { filter: brightness(.97); } .ds-launcher-icon { width: 64px; height: 64px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; } .ds-launcher-coffee strong { display: block; font: 800 2rem/1 ui-rounded, \"SF Pro Rounded\", -apple-system, sans-serif; letter-spacing: -.035em; } .ds-launcher-coffee small { color: rgb(21 36 49 / 76%); font-weight: 650; } .ds-launcher-action { display: flex; justify-content: space-between; font-weight: 800; }"
+    },
+    {
+      "name": "Goals Launcher Bay",
+      "kind": "card",
+      "refersTo": "launcher-goals",
+      "description": "A tactile plugin destination using the Goals light color family.",
+      "html": "<a class=\"ds-launcher-goals\" href=\"#\"><svg class=\"ds-launcher-icon\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><circle cx=\"24\" cy=\"24\" r=\"17\"/><circle cx=\"24\" cy=\"24\" r=\"9\"/><path d=\"m24 24 13-13M31 11h6v6\"/></svg><span><strong>Goals</strong><small>Measurements and progress</small></span><span>Open →</span></a>",
+      "css": ".ds-launcher-goals { min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(1.25rem, 3vw, 2rem); color: var(--ink, #152431); background: var(--goals-bay, #c9e96b); border-radius: 14px; box-shadow: 0 10px 24px rgb(21 36 49 / 12%); text-decoration: none; font: 650 1rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-launcher-goals:hover { box-shadow: 0 14px 30px rgb(21 36 49 / 18%); } .ds-launcher-goals:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-launcher-goals:active { filter: brightness(.97); } .ds-launcher-icon { width: 64px; height: 64px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; } .ds-launcher-goals strong { display: block; font: 800 2rem/1 ui-rounded, \"SF Pro Rounded\", -apple-system, sans-serif; letter-spacing: -.035em; } .ds-launcher-goals small { color: rgb(21 36 49 / 76%); font-weight: 650; } .ds-launcher-goals > span:last-child { font-weight: 800; }"
+    },
+    {
+      "name": "Recipes Launcher Bay",
+      "kind": "card",
+      "refersTo": "launcher-recipes",
+      "description": "A tactile plugin destination using the Recipes light color family.",
+      "html": "<a class=\"ds-launcher-recipes\" href=\"#\"><svg class=\"ds-launcher-icon\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path d=\"M12 8h21a4 4 0 0 1 4 4v28H16a4 4 0 0 1-4-4V8Z\"/><path d=\"M16 8v32M22 17h9M22 24h9M22 31h6\"/></svg><span><strong>Recipes</strong><small>References and cook notes</small></span><span>Open →</span></a>",
+      "css": ".ds-launcher-recipes { min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(1.25rem, 3vw, 2rem); color: var(--ink, #152431); background: var(--recipes-bay, #ff9f87); border-radius: 14px; box-shadow: 0 10px 24px rgb(21 36 49 / 12%); text-decoration: none; font: 650 1rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-launcher-recipes:hover { box-shadow: 0 14px 30px rgb(21 36 49 / 18%); } .ds-launcher-recipes:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-launcher-recipes:active { filter: brightness(.97); } .ds-launcher-icon { width: 64px; height: 64px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; } .ds-launcher-recipes strong { display: block; font: 800 2rem/1 ui-rounded, \"SF Pro Rounded\", -apple-system, sans-serif; letter-spacing: -.035em; } .ds-launcher-recipes small { color: rgb(21 36 49 / 76%); font-weight: 650; } .ds-launcher-recipes > span:last-child { font-weight: 800; }"
+    },
+    {
+      "name": "Records Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The primary white working surface, using internal dividers instead of nested cards.",
+      "html": "<section class=\"ds-records\"><header><h2>Open beans</h2><b>2</b></header><details><summary><span><strong>House blend</strong><small>Local roaster</small></span><span>Edit</span></summary><p>Record details open in place.</p></details></section>",
+      "css": ".ds-records { padding: clamp(1.1rem, 3vw, 2rem); color: var(--ink, #152431); background: var(--surface, #fff); border-radius: 14px; box-shadow: 0 10px 24px rgb(21 36 49 / 12%); font: 400 1rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-records header, .ds-records summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; } .ds-records h2 { margin: 0 0 1rem; } .ds-records details { border-top: 1px solid var(--divider, #cbd5dc); border-bottom: 1px solid var(--divider, #cbd5dc); } .ds-records summary { min-height: 76px; padding: 1rem .25rem; cursor: pointer; } .ds-records summary > span:first-child { display: grid; gap: .15rem; } .ds-records small { color: var(--muted-ink, #526474); } .ds-records details:focus-within { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; }"
+    },
+    {
+      "name": "Primary Navigation",
+      "kind": "nav",
+      "refersTo": "navigation-primary",
+      "description": "A compact white rail that keeps identity and direct plugin access visible on wider screens.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary\"><a class=\"ds-brand\" href=\"#\"><span aria-hidden=\"true\"></span>Hublet</a><div><a href=\"#\">Coffee</a><a href=\"#\">Goals</a><a href=\"#\">Recipes</a></div></nav>",
+      "css": ".ds-nav { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 1rem; color: var(--ink, #152431); background: var(--surface, #fff); border-bottom: 1px solid var(--divider, #cbd5dc); font: 650 .9rem/1.5 -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; } .ds-nav a { color: inherit; text-decoration: none; } .ds-nav a:hover { text-decoration: underline; text-underline-offset: .2em; } .ds-nav a:focus-visible { outline: 3px solid var(--focus, #0a72dc); outline-offset: 3px; } .ds-nav > div { display: flex; gap: 1.15rem; } .ds-brand { display: inline-flex; align-items: center; gap: .65rem; font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; } .ds-brand > span { width: 28px; aspect-ratio: 1; background: var(--ink, #152431); border-radius: 8px 8px 8px 2px; box-shadow: 0 7px 16px rgb(21 36 49 / 16%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Modular Home Wall Organizer",
+    "overview": "Hublet feels like a compact household fixture: three purpose-built bays mounted on cool utility gray, with ink-blue structure, precise labels, and soft molded depth. It is friendly and tactile without becoming decorative, gamified, or dashboard-like.\n\nThe interface is an operating surface for short, trusted-device sessions. Records stay visually primary, forms remain native and direct, and each plugin owns one saturated color family so the user always knows which bay they are working in.",
+    "keyCharacteristics": [
+      "Cool utility-gray ground with white working surfaces.",
+      "Ink structure and a distinct saturated family for each plugin.",
+      "Rounded display voice paired with restrained system UI text.",
+      "Molded panels, fine dividers, and soft offset depth.",
+      "Mobile-first task order with one reduced-motion-safe settle."
+    ],
+    "rules": [
+      { "name": "The One Bay, One Family Rule", "body": "A plugin uses only its assigned dark accent for actions and its matching light bay on the launcher.", "section": "colors" },
+      { "name": "The Cool Infrastructure Rule", "body": "Shared chrome stays ink, white, or utility gray; plugin color communicates place, not decoration.", "section": "colors" },
+      { "name": "The Rounded Voice Rule", "body": "Rounded type speaks only for identity and major destinations; operational copy always returns to the system sans.", "section": "typography" },
+      { "name": "The Task-First Mobile Rule", "body": "Responsive reordering follows what the owner came to do, not desktop source order.", "section": "layout" },
+      { "name": "The Attached Rail Rule", "body": "Secondary action and helper panels use borders, not shadows; depth is reserved for primary surfaces and destinations.", "section": "elevation" },
+      { "name": "The Panel, Not Card Stack Rule", "body": "Use one molded container with internal dividers for a record collection; do not wrap every row in its own floating card.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep records and the current plugin's primary action in the first useful viewport.",
+      "Do use semantic server-rendered controls, native disclosures, and visible labels.",
+      "Do use internal dividers to organize dense history inside one molded working panel.",
+      "Do preserve the single settle motion and its reduced-motion override."
+    ],
+    "donts": [
+      "Don't turn Hublet into an analytics dashboard, plugin marketplace, or generic productivity shell.",
+      "Don't mix plugin color families or spread saturated color into shared navigation and infrastructure.",
+      "Don't create a floating card for every row or add ornamental depth to secondary rails.",
+      "Don't replace the system UI body voice with a decorative typeface."
+    ]
+  }
+}

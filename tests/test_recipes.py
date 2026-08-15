@@ -189,7 +189,8 @@ def test_recipe_html_forms_link_edit_and_log(settings_env: dict[str, str]) -> No
     assert {linked.status_code, edited.status_code, cooked.status_code} == {303}
     assert "Best pasta" in page.text
     assert "Keep it" in page.text
-    assert "ingredients" not in page.text.casefold()
+    assert 'name="ingredients"' not in page.text
+    assert 'name="steps"' not in page.text
     assert recipes.get_recipe(settings, recipe["id"])["cook_logs"][0]["rating"] == 5
 
 
@@ -219,4 +220,5 @@ def test_recipe_invalid_html_returns_422(settings_env: dict[str, str]) -> None:
         )
 
     assert response.status_code == 422
-    assert response.text == "note_reference is required"
+    assert "note_reference is required" in response.text
+    assert 'role="alert"' in response.text

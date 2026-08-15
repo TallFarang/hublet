@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from html import escape
 from typing import Annotated, Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.db import connect
 from app.runtime import Plugin
+from app.web import render
 
 DB_FILENAME = "goals.db"
 MIGRATIONS = (
@@ -229,20 +229,10 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
     server.add_tool(status_tool, name="goals.status")
 
 
-@router.get("", response_class=HTMLResponse)
-def goals_page(request: Request) -> str:
+@router.get("")
+def goals_page(request: Request) -> Response:
     records = list_goals(request.app.state.settings)
-    rows = "".join(_goal_html(goal) for goal in records)
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-    <title>Goals · Hublet</title></head><body><main><a href="/">Hublet</a><h1>Goals</h1>
-    <ul>{rows or '<li>No active goals.</li>'}</ul>
-    <form method="post" action="/goals"><h2>Add a goal</h2>
-    <label>Title <input name="title" required></label>
-    <label>Description <textarea name="description"></textarea></label>
-    <label>Target <input name="target_value" type="number" step="any"></label>
-    <label>Unit <input name="unit"></label>
-    <label>Target date <input name="target_date" type="date"></label>
-    <button>Add</button></form></main></body></html>"""
+    return render(request, "goals.html", title="Goals", goals=records)
 
 
 @router.post("")
@@ -312,35 +302,11 @@ def launcher_summary(settings: Settings) -> str:
     return f"{count} active {'goal' if count == 1 else 'goals'}"
 
 
-def _goal_html(goal: dict[str, Any]) -> str:
-    current = "Not measured" if goal["current_value"] is None else f"{goal['current_value']:g}"
-    return f"""<li><details><summary><strong>{escape(goal['title'])}</strong> —
-    {escape(current)} {escape(goal['unit'] or '')}</summary>
-    <form method="post" action="/goals/{goal['id']}/edit">
-    <label>Title <input name="title" value="{_value(goal, 'title')}" required></label>
-    <label>Description <textarea name="description">{escape(goal['description'] or '')}</textarea></label>
-    <label>Target <input name="target_value" type="number" step="any"
-    value="{_value(goal, 'target_value')}"></label>
-    <label>Unit <input name="unit" value="{_value(goal, 'unit')}"></label>
-    <label>Target date <input name="target_date" type="date"
-    value="{_value(goal, 'target_date')}"></label><button>Save</button></form>
-    <form method="post" action="/goals/{goal['id']}/progress">
-    <label>Current measurement <input name="value" type="number" step="any" required></label>
-    <label>Note <input name="note"></label><button>Log progress</button></form>
-    <form method="post" action="/goals/{goal['id']}/status">
-    <button name="status" value="completed">Complete</button>
-    <button name="status" value="archived">Archive</button></form></details></li>"""
-
-
 def _validate_status(status: str | None, allow_none: bool = True) -> None:
     if status is None and allow_none:
         return
     if status not in {"active", "completed", "archived"}:
         raise ValueError("status must be active, completed or archived")
-
-
-def _value(record: dict[str, Any], key: str) -> str:
-    return escape(str(record[key]) if record[key] is not None else "", quote=True)
 
 
 def _now() -> str:
@@ -349,7 +315,7 @@ def _now() -> str:
 
 PLUGIN = Plugin(
     name="goals",
-    icon="◎",
+    icon="goals",
     db_filename=DB_FILENAME,
     migrations=MIGRATIONS,
     register_mcp=register_mcp,

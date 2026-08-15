@@ -9,23 +9,21 @@ from typing import Annotated
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import PlainTextResponse, Response
+from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
 
 from app.auth import BearerAuthMiddleware, DashboardAuthMiddleware, SameOriginMiddleware
 from app.config import Settings
 from app.plugins import PLUGINS
 from app.runtime import Plugin, migrate_plugins, plugin_health
+from app.web import STATIC_DIR, render
+from app.web import router as web_router
 
 SESSION_MAX_AGE = 90 * 24 * 60 * 60
-LOGIN_PAGE = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Sign in · Hublet</title></head>
-<body><main><h1>Hublet</h1><form method="post"><label>Token
-<input name="token" type="password" required autofocus></label><button>Sign in</button>
-</form></main></body></html>"""
 
 
 def create_app(
@@ -55,12 +53,26 @@ def create_app(
             yield
 
     application = FastAPI(title="Hublet", lifespan=lifespan)
+    application.include_router(web_router)
     for plugin in selected_plugins:
         application.include_router(plugin.router)
+    application.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @application.exception_handler(ValueError)
-    def invalid_input(_request: Request, error: ValueError) -> PlainTextResponse:
-        return PlainTextResponse(str(error), status_code=422)
+    def invalid_input(request: Request, error: ValueError) -> Response:
+        section = request.url.path.strip("/").partition("/")[0]
+        destination = section.capitalize() if section in {"coffee", "goals", "recipes"} else "Hublet"
+        back = f"/{section}" if section in {"coffee", "goals", "recipes"} else "/"
+        response = render(
+            request,
+            "error.html",
+            title="Check that entry",
+            message=str(error),
+            destination=destination,
+            back=back,
+        )
+        response.status_code = 422
+        return response
 
     @application.get("/health")
     def health() -> dict[str, object]:
@@ -69,14 +81,16 @@ def create_app(
             "plugins": plugin_health(application.state.settings, application.state.plugins),
         }
 
-    @application.get("/login", response_class=HTMLResponse)
-    def login_page() -> str:
-        return LOGIN_PAGE
+    @application.get("/login")
+    def login_page(request: Request) -> Response:
+        return render(request, "login.html", error=None)
 
     @application.post("/login")
     def login(request: Request, token: Annotated[str, Form()]) -> Response:
         if not hmac.compare_digest(token, resolved_settings.dashboard_token):
-            return HTMLResponse(LOGIN_PAGE, status_code=401)
+            response = render(request, "login.html", error="That token did not match.")
+            response.status_code = 401
+            return response
         request.session.clear()
         request.session["authenticated"] = True
         return RedirectResponse("/", status_code=303)

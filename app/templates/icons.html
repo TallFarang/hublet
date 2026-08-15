@@ -1,0 +1,18 @@
+{% macro plugin_icon(name) -%}
+  {% if name == "coffee" %}
+  <svg viewBox="0 0 48 48" role="img" aria-label="Coffee">
+    <path d="M10 17h25v12a10 10 0 0 1-10 10h-5a10 10 0 0 1-10-10V17Z"/>
+    <path d="M35 21h3a6 6 0 0 1 0 12h-5M17 11c0-3 3-3 3-6M27 11c0-3 3-3 3-6"/>
+  </svg>
+  {% elif name == "goals" %}
+  <svg viewBox="0 0 48 48" role="img" aria-label="Goals">
+    <circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="9"/>
+    <path d="m24 24 13-13M31 11h6v6"/>
+  </svg>
+  {% else %}
+  <svg viewBox="0 0 48 48" role="img" aria-label="Recipes">
+    <path d="M12 8h21a4 4 0 0 1 4 4v28H16a4 4 0 0 1-4-4V8Z"/>
+    <path d="M16 8v32M22 17h9M22 24h9M22 31h6"/>
+  </svg>
+  {% endif %}
+{%- endmacro %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block body_class %}plugin-page coffee-page{% endblock %}
+{% block content %}
+  <header class="page-heading plugin-heading">
+    <a class="back-link" href="/">← Personal</a>
+    <h1>Coffee</h1>
+    <p>Keep the shot, the taste and the setting together.</p>
+  </header>
+  <div class="workspace-grid">
+    <section class="records-panel" aria-labelledby="beans-heading">
+      <div class="section-heading">
+        <h2 id="beans-heading">Open beans</h2><span>{{ beans|length }}</span>
+      </div>
+      {% if beans %}
+      <div class="record-list">
+        {% for bean in beans %}
+        <details class="record">
+          <summary><span><strong>{{ bean.name }}</strong><small>{{ bean.roaster or "Roaster not set" }}</small></span><span>Edit</span></summary>
+          <form method="post" action="/coffee/beans/{{ bean.id }}" class="form-grid">
+            <label>Name <input name="name" value="{{ bean.name }}" required></label>
+            <label>Roaster <input name="roaster" value="{{ bean.roaster or '' }}"></label>
+            <label>Roast date <input name="roast_date" type="date" value="{{ bean.roast_date or '' }}"></label>
+            <label>Origin <input name="origin" value="{{ bean.origin or '' }}"></label>
+            <label>Process <input name="process" value="{{ bean.process or '' }}"></label>
+            <label class="full-field">Notes <textarea name="notes">{{ bean.notes or '' }}</textarea></label>
+            <div class="form-actions full-field"><button type="submit">Save bean</button></div>
+          </form>
+          <form method="post" action="/coffee/beans/{{ bean.id }}/archive" class="subtle-action">
+            <button type="submit" class="quiet-button">Archive bean</button>
+          </form>
+        </details>
+        {% endfor %}
+      </div>
+      {% else %}<p class="empty-state">No open beans yet. Add the bag beside you.</p>{% endif %}
+      <h2>Recent shots</h2>
+      {% if shots %}
+      <ol class="history-list">
+        {% for shot in shots %}
+        <li><span><strong>{{ shot.bean_name }}</strong><small>{{ shot.created_at[:10] }}</small></span><span class="measurement">{{ shot.dose_g|int if shot.dose_g % 1 == 0 else shot.dose_g }}g → {{ shot.yield_g|int if shot.yield_g % 1 == 0 else shot.yield_g }}g · {{ shot.time_s|int if shot.time_s % 1 == 0 else shot.time_s }}s</span></li>
+        {% endfor %}
+      </ol>
+      {% else %}<p class="empty-state">Your next shot will start the history.</p>{% endif %}
+    </section>
+    <aside class="action-rail">
+      <details class="action-panel add-beans" {% if not beans %}open{% endif %}>
+        <summary>Add beans</summary>
+        <form method="post" action="/coffee/beans" class="form-grid">
+          <label>Name <input name="name" required></label>
+          <label>Roaster <input name="roaster"></label>
+          <label>Roast date <input name="roast_date" type="date"></label>
+          <label>Origin <input name="origin"></label>
+          <label>Process <input name="process"></label>
+          <label class="full-field">Notes <textarea name="notes"></textarea></label>
+          <button class="full-field" type="submit">Add beans</button>
+        </form>
+      </details>
+      <details class="action-panel log-shot" {% if beans %}open{% endif %}>
+        <summary>Log a shot</summary>
+        {% if beans %}
+        <form method="post" action="/coffee/shots">
+          <label>Bean <select name="bean_id" required>{% for bean in beans %}<option value="{{ bean.id }}">{{ bean.name }}</option>{% endfor %}</select></label>
+          <div class="form-grid compact-grid">
+            <label>Dose (g) <input name="dose_g" type="number" step="0.1" inputmode="decimal" required></label>
+            <label>Yield (g) <input name="yield_g" type="number" step="0.1" inputmode="decimal" required></label>
+            <label>Time (s) <input name="time_s" type="number" step="0.1" inputmode="decimal" required></label>
+            <label>Grind <input name="grind_setting" required></label>
+            <label>Rating <input name="rating" type="number" min="1" max="5" inputmode="numeric"></label>
+            <label>Taste tags <input name="taste_tags" placeholder="sweet, bright"></label>
+          </div>
+          <button type="submit">Log shot</button>
+        </form>
+        {% else %}<p class="empty-state">Add beans first, then log the shot.</p>{% endif %}
+      </details>
+    </aside>
+  </div>
+{% endblock %}

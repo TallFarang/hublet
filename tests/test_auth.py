@@ -106,7 +106,8 @@ def test_login_sets_minimal_long_lived_session(settings_env: dict[str, str]) -> 
     assert "samesite=lax" in cookie_options
     assert "path=/" in cookie_options
     assert "secure" not in cookie_options
-    assert authenticated.status_code == 404
+    assert authenticated.status_code == 200
+    assert "Personal" in authenticated.text
 
 
 def test_https_origin_sets_secure_cookie(settings_env: dict[str, str]) -> None:
@@ -157,7 +158,7 @@ def test_dashboard_token_rotation_does_not_revoke_session(
         client.cookies.set("hublet_session", cookie)
         response = client.get("/", follow_redirects=False)
 
-    assert response.status_code == 404
+    assert response.status_code == 200
 
 
 def test_mcp_token_cannot_log_in_to_dashboard(settings_env: dict[str, str]) -> None:

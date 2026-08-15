@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body_class %}error-page{% endblock %}
+{% block content %}
+  <section class="error-panel" role="alert">
+    <h1>That entry needs a quick fix.</h1>
+    <p>{{ message }}</p>
+    <p>Return to the form, correct the field, and try again. Your browser will keep what you entered.</p>
+    <button type="button" onclick="history.back()">Back to your entry</button>
+    <noscript><a href="{{ back }}">Return to {{ destination }}</a></noscript>
+  </section>
+{% endblock %}

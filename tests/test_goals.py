@@ -186,7 +186,8 @@ def test_goal_invalid_html_returns_422(settings_env: dict[str, str]) -> None:
         )
 
     assert response.status_code == 422
-    assert response.text == "title is required"
+    assert "title is required" in response.text
+    assert 'role="alert"' in response.text
 
 
 def test_goal_launcher_summary_counts_active(goal_settings: Settings) -> None:

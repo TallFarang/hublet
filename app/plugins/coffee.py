@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from html import escape
 from typing import Annotated, Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.db import connect
 from app.runtime import Plugin
+from app.web import render
 
 DB_FILENAME = "coffee.db"
 MIGRATIONS = (
@@ -318,55 +318,16 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
     server.add_tool(recommend_next_tool, name="coffee.recommend_next")
 
 
-@router.get("", response_class=HTMLResponse)
-def coffee_page(request: Request) -> str:
+@router.get("")
+def coffee_page(request: Request) -> Response:
     settings = request.app.state.settings
-    beans = list_beans(settings)
-    shots = history(settings, limit=10)
-    bean_rows = "".join(
-        f"""<li><details><summary><strong>{escape(bean['name'])}</strong>
-        {escape(bean['roaster'] or '')}</summary>
-        <form method="post" action="/coffee/beans/{bean['id']}">
-        <label>Name <input name="name" value="{_value(bean, 'name')}" required></label>
-        <label>Roaster <input name="roaster" value="{_value(bean, 'roaster')}"></label>
-        <label>Roast date <input name="roast_date" type="date"
-        value="{_value(bean, 'roast_date')}"></label>
-        <label>Origin <input name="origin" value="{_value(bean, 'origin')}"></label>
-        <label>Process <input name="process" value="{_value(bean, 'process')}"></label>
-        <label>Notes <textarea name="notes">{escape(bean['notes'] or '')}</textarea></label>
-        <button>Save</button></form>
-        <form method="post" action="/coffee/beans/{bean['id']}/archive">
-        <button>Archive</button></form></details></li>"""
-        for bean in beans
+    return render(
+        request,
+        "coffee.html",
+        title="Coffee",
+        beans=list_beans(settings),
+        shots=history(settings, limit=10),
     )
-    options = "".join(
-        f'<option value="{bean["id"]}">{escape(bean["name"])}</option>' for bean in beans
-    )
-    shot_rows = "".join(
-        f"<li>{escape(shot['bean_name'])}: {shot['dose_g']:g}g → {shot['yield_g']:g}g "
-        f"in {shot['time_s']:g}s</li>"
-        for shot in shots
-    )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-    <title>Coffee · Hublet</title></head><body><main><a href="/">Hublet</a><h1>Coffee</h1>
-    <h2>Open beans</h2><ul>{bean_rows or '<li>None yet.</li>'}</ul>
-    <form method="post" action="/coffee/beans"><h2>Add beans</h2>
-    <label>Name <input name="name" required></label>
-    <label>Roaster <input name="roaster"></label>
-    <label>Roast date <input name="roast_date" type="date"></label>
-    <label>Origin <input name="origin"></label>
-    <label>Process <input name="process"></label>
-    <label>Notes <textarea name="notes"></textarea></label><button>Add</button></form>
-    <form method="post" action="/coffee/shots"><h2>Log a shot</h2>
-    <label>Bean <select name="bean_id" required>{options}</select></label>
-    <label>Dose <input name="dose_g" type="number" step="0.1" required></label>
-    <label>Yield <input name="yield_g" type="number" step="0.1" required></label>
-    <label>Time <input name="time_s" type="number" step="0.1" required></label>
-    <label>Grind <input name="grind_setting" required></label>
-    <label>Rating <input name="rating" type="number" min="1" max="5"></label>
-    <label>Taste tags <input name="taste_tags"></label><button>Log shot</button></form>
-    <h2>Recent shots</h2><ul>{shot_rows or '<li>None yet.</li>'}</ul>
-    </main></body></html>"""
 
 
 @router.post("/beans")
@@ -457,10 +418,6 @@ def _validate_bean(name: str, status: str) -> None:
         raise ValueError("status must be open or archived")
 
 
-def _value(record: dict[str, Any], key: str) -> str:
-    return escape(record[key] or "", quote=True)
-
-
 def _shot(row: Any) -> dict[str, Any]:
     result = dict(row)
     result["taste_tags"] = json.loads(result.pop("taste_tags_json"))
@@ -473,7 +430,7 @@ def _now() -> str:
 
 PLUGIN = Plugin(
     name="coffee",
-    icon="☕",
+    icon="coffee",
     db_filename=DB_FILENAME,
     migrations=MIGRATIONS,
     register_mcp=register_mcp,

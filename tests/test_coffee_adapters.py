@@ -154,7 +154,9 @@ def test_html_domain_validation_returns_422(settings_env: dict[str, str]) -> Non
         )
 
     assert response.status_code == 422
-    assert response.text == "name is required"
+    assert "name is required" in response.text
+    assert 'role="alert"' in response.text
+    assert "history.back()" in response.text
 
 
 def test_launcher_summary_counts_open_beans(settings_env: dict[str, str]) -> None:

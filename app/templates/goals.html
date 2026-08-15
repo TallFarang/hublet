@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block body_class %}plugin-page goals-page{% endblock %}
+{% block content %}
+  <header class="page-heading plugin-heading">
+    <a class="back-link" href="/">← Personal</a>
+    <h1>Goals</h1>
+    <p>The latest measurement is the truth. Progress never gets accidentally added twice.</p>
+  </header>
+  <div class="workspace-grid">
+    <section class="records-panel" aria-labelledby="active-goals-heading">
+      <div class="section-heading"><h2 id="active-goals-heading">Active goals</h2><span>{{ goals|length }}</span></div>
+      {% if goals %}
+      <div class="record-list">
+        {% for goal in goals %}
+        <details class="record">
+          <summary>
+            <span><strong>{{ goal.title }}</strong><small>{{ goal.description or "No description" }}</small></span>
+            <span class="measurement">{% if goal.current_value is not none %}{{ goal.current_value }} {{ goal.unit or '' }}{% else %}Not measured{% endif %}</span>
+          </summary>
+          <div class="record-body">
+            <form method="post" action="/goals/{{ goal.id }}/progress" class="progress-form">
+              <label>Current measurement <input name="value" type="number" step="any" inputmode="decimal" required></label>
+              <label>Note <input name="note" placeholder="What changed?"></label>
+              <button type="submit">Log progress</button>
+            </form>
+            <form method="post" action="/goals/{{ goal.id }}/edit" class="form-grid edit-form">
+              <label>Title <input name="title" value="{{ goal.title }}" required></label>
+              <label>Target <input name="target_value" type="number" step="any" value="{{ goal.target_value if goal.target_value is not none else '' }}"></label>
+              <label>Unit <input name="unit" value="{{ goal.unit or '' }}"></label>
+              <label>Target date <input name="target_date" type="date" value="{{ goal.target_date or '' }}"></label>
+              <label class="full-field">Description <textarea name="description">{{ goal.description or '' }}</textarea></label>
+              <button class="full-field" type="submit">Save goal</button>
+            </form>
+            <form method="post" action="/goals/{{ goal.id }}/status" class="status-actions">
+              <button name="status" value="completed" type="submit">Complete</button>
+              <button name="status" value="archived" type="submit" class="quiet-button">Archive</button>
+            </form>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+      {% else %}<p class="empty-state">No active goals. Add one small enough to move.</p>{% endif %}
+    </section>
+    <aside class="action-rail">
+      <details class="action-panel" open>
+        <summary>Add a goal</summary>
+        <form method="post" action="/goals">
+          <label>Title <input name="title" required></label>
+          <label>Description <textarea name="description"></textarea></label>
+          <div class="form-grid compact-grid">
+            <label>Target <input name="target_value" type="number" step="any" inputmode="decimal"></label>
+            <label>Unit <input name="unit"></label>
+          </div>
+          <label>Target date <input name="target_date" type="date"></label>
+          <button type="submit">Add goal</button>
+        </form>
+      </details>
+      <p class="helper-note"><strong>Absolute, not added.</strong> If progress was 5 and is now 7, enter 7.</p>
+    </aside>
+  </div>
+{% endblock %}

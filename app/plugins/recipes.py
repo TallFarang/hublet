@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from html import escape
 from typing import Annotated, Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.db import connect
 from app.runtime import Plugin
+from app.web import render
 
 DB_FILENAME = "recipes.db"
 MIGRATIONS = (
@@ -198,20 +198,11 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
     server.add_tool(history_tool, name="recipes.history")
 
 
-@router.get("", response_class=HTMLResponse)
-def recipes_page(request: Request) -> str:
+@router.get("")
+def recipes_page(request: Request) -> Response:
     settings = request.app.state.settings
     records = [get_recipe(settings, recipe["id"]) for recipe in search(settings)]
-    rows = "".join(_recipe_html(recipe) for recipe in records)
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-    <title>Recipes · Hublet</title></head><body><main><a href="/">Hublet</a><h1>Recipes</h1>
-    <p>Recipe content stays in Apple Notes. Hublet remembers experiments.</p>
-    <ul>{rows or '<li>No linked recipes.</li>'}</ul>
-    <form method="post" action="/recipes"><h2>Link a recipe</h2>
-    <label>Name <input name="name" required></label>
-    <label>Note reference <input name="note_reference" required></label>
-    <label>Tags <input name="tags"></label><button>Link</button></form>
-    </main></body></html>"""
+    return render(request, "recipes.html", title="Recipes", recipes=records)
 
 
 @router.post("")
@@ -269,33 +260,6 @@ def launcher_summary(settings: Settings) -> str:
     return f"{count} {'cook' if count == 1 else 'cooks'}"
 
 
-def _recipe_html(recipe: dict[str, Any]) -> str:
-    cook_rows = "".join(
-        f"""<li><strong>{log['rating']}/5</strong>
-        <div>Changes: {escape(log['changes'] or '—')}</div>
-        <div>Notes: {escape(log['notes'] or '—')}</div>
-        <div>Conclusion: {escape(log['conclusion'] or '—')}</div></li>"""
-        for log in recipe["cook_logs"]
-    )
-    return f"""<li><details><summary><strong>{escape(recipe['name'])}</strong> —
-    {escape(', '.join(recipe['tags']))}</summary>
-    <p><code>{escape(recipe['note_reference'])}</code></p>
-    <form method="post" action="/recipes/{recipe['id']}/edit">
-    <label>Name <input name="name" value="{_value(recipe, 'name')}" required></label>
-    <label>Note reference <input name="note_reference"
-    value="{_value(recipe, 'note_reference')}" required></label>
-    <label>Tags <input name="tags" value="{escape(', '.join(recipe['tags']), quote=True)}">
-    </label><button>Save</button></form>
-    <form method="post" action="/recipes/{recipe['id']}/cooks">
-    <label>Rating <input name="rating" type="number" min="1" max="5" required></label>
-    <label>Changes <textarea name="changes"></textarea></label>
-    <label>Notes <textarea name="notes"></textarea></label>
-    <label>Conclusion <textarea name="conclusion"></textarea></label>
-    <button>Log cook</button></form>
-    <h3>Cook history</h3><ul>{cook_rows or '<li>Nothing cooked yet.</li>'}</ul>
-    </details></li>"""
-
-
 def _validate_recipe(name: str, note_reference: str) -> None:
     if not name:
         raise ValueError("name is required")
@@ -314,17 +278,13 @@ def _recipe(row: Any) -> dict[str, Any]:
     return result
 
 
-def _value(record: dict[str, Any], key: str) -> str:
-    return escape(record[key] or "", quote=True)
-
-
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
 PLUGIN = Plugin(
     name="recipes",
-    icon="◇",
+    icon="recipes",
     db_filename=DB_FILENAME,
     migrations=MIGRATIONS,
     register_mcp=register_mcp,
