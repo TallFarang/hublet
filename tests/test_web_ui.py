@@ -24,7 +24,7 @@ def test_launcher_renders_three_useful_local_cards(settings_env: dict[str, str])
     with TestClient(app, base_url=settings.public_origin) as client:
         sign_in(client, settings)
         coffee.add_bean(settings, "Daybreak")
-        goals.create_goal(settings, "Read")
+        goals.create_goal(settings, "read", "health", "Read")
         recipe = recipes.link_recipe(settings, "Stew", "notes://example/stew")
         recipes.log_cook(settings, recipe["id"], rating=4)
         response = client.get("/")
@@ -32,7 +32,7 @@ def test_launcher_renders_three_useful_local_cards(settings_env: dict[str, str])
     assert response.status_code == 200
     assert "Personal" in response.text
     assert "1 open bean" in response.text
-    assert "1 active goal" in response.text
+    assert "1 goal" in response.text
     assert "1 cook" in response.text
     assert response.text.count('class="launcher-card') == 3
     assert response.text.count("<svg") >= 3
@@ -65,7 +65,7 @@ def test_plugin_pages_keep_manual_actions_findable(settings_env: dict[str, str])
 
     with TestClient(app, base_url=settings.public_origin) as client:
         sign_in(client, settings)
-        goals.create_goal(settings, "Make progress")
+        goals.create_goal(settings, "make_progress", "health", "Make progress")
         pages = {
             "coffee": client.get("/coffee").text,
             "goals": client.get("/goals").text,
@@ -74,7 +74,9 @@ def test_plugin_pages_keep_manual_actions_findable(settings_env: dict[str, str])
 
     assert all("<main" in page and "<form" in page for page in pages.values())
     assert "Add beans" in pages["coffee"] and "Log a shot" in pages["coffee"]
-    assert "Add a goal" in pages["goals"] and "Current measurement" in pages["goals"]
+    assert "Add a simple goal" in pages["goals"]
+    assert "Evidence stays automatic" in pages["goals"]
+    assert "Current measurement" not in pages["goals"]
     assert "Link a recipe" in pages["recipes"] and "Recipe content stays in Apple Notes" in pages[
         "recipes"
     ]
