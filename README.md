@@ -69,5 +69,36 @@ Pull requests and pushes run Ruff and pytest on GitHub-hosted runners. A green p
 After the first publish, change the package visibility to **Public** once in its GitHub
 Package settings; [GHCR packages start private by default](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
+## Mac deployment
+
+Keep the checkout, live data, backups, logs, and environment files in owner-chosen local
+paths. Nothing in the repository fixes a Mac username, LAN address, or private directory.
+The Compose service publishes port 8787 on the host; set `HUBLET_PUBLIC_ORIGIN` in the
+external secrets file to the real hostname or LAN address trusted devices use.
+
+Create the local directories, copy `.env.example` to an external `secrets.env`, replace its
+placeholders with three independently generated random values, and keep it mode 600. Create
+an external `deploy.env` containing the host-side paths:
+
+```sh
+HUBLET_HOST_DATA_DIR=$HOME/.hublet/data
+HUBLET_HOST_BACKUP_DIR=$HOME/.hublet/backups
+HUBLET_ENV_FILE=$HOME/.hublet/secrets.env
+```
+
+To pin or roll back the image, add `HUBLET_IMAGE=ghcr.io/tallfarang/hublet:<commit-sha>` to
+that file. Run either operation manually with:
+
+```sh
+HUBLET_DEPLOY_ENV=$HOME/.hublet/deploy.env sh ops/hublet-ops.sh deploy
+HUBLET_DEPLOY_ENV=$HOME/.hublet/deploy.env sh ops/hublet-ops.sh backup
+```
+
+For automatic operation, copy the two templates in `ops/` to `~/Library/LaunchAgents/`,
+replace their three `__HUBLET_*__` placeholders with absolute local paths, and validate them
+with `plutil -lint`. Bootstrap them with `launchctl bootstrap gui/$(id -u) <plist>`. The
+deploy job checks every five minutes but restarts the service only when the pulled image
+changes; the backup job runs daily at 03:15. Their local log paths are set in the templates.
+
 Never expose Hublet through router port forwarding. It is designed for one trusted user on
 a home LAN.

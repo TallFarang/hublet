@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.hublet.backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>__HUBLET_REPOSITORY_DIR__/ops/hublet-ops.sh</string>
+    <string>backup</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HUBLET_DEPLOY_ENV</key>
+    <string>__HUBLET_DEPLOY_ENV__</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>15</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__HUBLET_LOG_DIR__/backup.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HUBLET_LOG_DIR__/backup.log</string>
+</dict>
+</plist>

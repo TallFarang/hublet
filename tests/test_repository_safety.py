@@ -21,8 +21,10 @@ REQUIRED_GITIGNORE_ENTRIES = {
     "backups/",
     "coverage.xml",
     "data/",
+    "deploy.env",
     "htmlcov/",
     "secrets/",
+    "secrets.env",
 }
 DATABASE_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
 SQLITE_HEADER = b"SQLite " + b"format 3\0"

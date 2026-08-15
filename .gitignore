@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+deploy.env
+secrets.env
 
 *.db
 *.sqlite

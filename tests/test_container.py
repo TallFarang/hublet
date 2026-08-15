@@ -23,7 +23,7 @@ def test_dockerfile_runs_one_unprivileged_process_from_runtime_lock() -> None:
 def test_compose_uses_generic_host_paths_and_restart_policy() -> None:
     compose = (REPOSITORY_ROOT / "compose.yml").read_text()
 
-    assert "image: ghcr.io/tallfarang/hublet:latest" in compose
+    assert "ghcr.io/tallfarang/hublet:latest" in compose
     assert "build: ." in compose
     assert "restart: unless-stopped" in compose
     assert '- "8787:8000"' in compose

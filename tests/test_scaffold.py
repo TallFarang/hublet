@@ -88,8 +88,10 @@ REQUIRED_DOCKERIGNORE_ENTRIES = {
     "backups",
     "coverage.xml",
     "data",
+    "deploy.env",
     "htmlcov/",
     "secrets",
+    "secrets.env",
 }
 PINNED_REQUIREMENT = re.compile(r"^[A-Za-z0-9_.-]+==[^=\s]+$")
 

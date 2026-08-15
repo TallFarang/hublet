@@ -1,6 +1,6 @@
 services:
   runtime:
-    image: ghcr.io/tallfarang/hublet:latest
+    image: ${HUBLET_IMAGE:-ghcr.io/tallfarang/hublet:latest}
     build: .
     restart: unless-stopped
     ports:
