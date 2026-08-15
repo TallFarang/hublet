@@ -13,11 +13,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import Response
+from starlette.responses import PlainTextResponse, Response
 
 from app.auth import BearerAuthMiddleware, DashboardAuthMiddleware, SameOriginMiddleware
 from app.config import Settings
-from app.runtime import PLUGINS, Plugin, migrate_plugins, plugin_health
+from app.plugins import PLUGINS
+from app.runtime import Plugin, migrate_plugins, plugin_health
 
 SESSION_MAX_AGE = 90 * 24 * 60 * 60
 LOGIN_PAGE = """<!doctype html>
@@ -35,7 +36,7 @@ def create_app(
     selected_plugins = tuple(PLUGINS if plugins is None else plugins)
     mcp = MCPServer("Hublet")
     for plugin in selected_plugins:
-        plugin.register_mcp(mcp)
+        plugin.register_mcp(mcp, resolved_settings)
     mcp_application = mcp.streamable_http_app(
         streamable_http_path="/",
         json_response=True,
@@ -54,6 +55,12 @@ def create_app(
             yield
 
     application = FastAPI(title="Hublet", lifespan=lifespan)
+    for plugin in selected_plugins:
+        application.include_router(plugin.router)
+
+    @application.exception_handler(ValueError)
+    def invalid_input(_request: Request, error: ValueError) -> PlainTextResponse:
+        return PlainTextResponse(str(error), status_code=422)
 
     @application.get("/health")
     def health() -> dict[str, object]:

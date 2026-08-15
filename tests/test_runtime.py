@@ -13,7 +13,7 @@ def make_plugin() -> Plugin:
         icon="circle",
         db_filename="example.db",
         migrations=("CREATE TABLE example (value TEXT NOT NULL);",),
-        register_mcp=lambda server: None,
+        register_mcp=lambda server, settings: None,
         router=APIRouter(),
         launcher_summary=lambda settings: "0 examples",
     )
@@ -29,8 +29,8 @@ def test_plugin_runtime_migrates_and_checks_health(settings_env: dict[str, str])
     assert plugin_health(settings, (plugin,)) == {"example": "ok"}
 
 
-def test_plugin_descriptor_accepts_mcp_registration() -> None:
-    registered: list[MCPServer] = []
+def test_plugin_descriptor_accepts_mcp_registration(settings_env: dict[str, str]) -> None:
+    registered: list[tuple[MCPServer, Settings]] = []
     plugin = make_plugin()
     server = MCPServer("test")
     plugin = Plugin(
@@ -38,11 +38,12 @@ def test_plugin_descriptor_accepts_mcp_registration() -> None:
         icon=plugin.icon,
         db_filename=plugin.db_filename,
         migrations=plugin.migrations,
-        register_mcp=registered.append,
+        register_mcp=lambda server, settings: registered.append((server, settings)),
         router=plugin.router,
         launcher_summary=plugin.launcher_summary,
     )
 
-    plugin.register_mcp(server)
+    settings = Settings.from_env(settings_env)
+    plugin.register_mcp(server, settings)
 
-    assert registered == [server]
+    assert registered == [(server, settings)]

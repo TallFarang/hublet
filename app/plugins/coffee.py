@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from html import escape
+from typing import Annotated, Any
 from uuid import uuid4
+
+from fastapi import APIRouter, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from mcp.server import MCPServer
 
 from app.config import Settings
 from app.db import connect
+from app.runtime import Plugin
 
 DB_FILENAME = "coffee.db"
 MIGRATIONS = (
@@ -40,6 +46,7 @@ MIGRATIONS = (
     );
     """,
 )
+router = APIRouter(prefix="/coffee")
 
 
 def add_bean(
@@ -253,11 +260,205 @@ def recommend_next(settings: Settings, bean_id: str) -> dict[str, Any]:
     }
 
 
+def register_mcp(server: MCPServer, settings: Settings) -> None:
+    def add_bean_tool(
+        name: str,
+        roaster: str | None = None,
+        roast_date: str | None = None,
+        origin: str | None = None,
+        process: str | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Remember a bag of coffee beans."""
+        return add_bean(settings, name, roaster, roast_date, origin, process, notes=notes)
+
+    def list_beans_tool(status: str | None = "open") -> list[dict[str, Any]]:
+        """List coffee beans, normally only open bags."""
+        return list_beans(settings, status)
+
+    def log_shot_tool(
+        bean_id: str,
+        dose_g: float,
+        yield_g: float,
+        time_s: float,
+        grind_setting: str,
+        grinder: str | None = None,
+        temperature_c: float | None = None,
+        rating: int | None = None,
+        taste_tags: list[str] | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Log an espresso shot and its outcome."""
+        return log_shot(
+            settings,
+            bean_id,
+            dose_g=dose_g,
+            yield_g=yield_g,
+            time_s=time_s,
+            grind_setting=grind_setting,
+            grinder=grinder,
+            temperature_c=temperature_c,
+            rating=rating,
+            taste_tags=taste_tags,
+            notes=notes,
+        )
+
+    def history_tool(bean_id: str | None = None, limit: int = 20) -> list[dict[str, Any]]:
+        """Return recent espresso shots."""
+        return history(settings, bean_id, limit)
+
+    def recommend_next_tool(bean_id: str) -> dict[str, Any]:
+        """Recommend one conservative next adjustment from personal history."""
+        return recommend_next(settings, bean_id)
+
+    server.add_tool(add_bean_tool, name="coffee.add_bean")
+    server.add_tool(list_beans_tool, name="coffee.list_beans")
+    server.add_tool(log_shot_tool, name="coffee.log_shot")
+    server.add_tool(history_tool, name="coffee.history")
+    server.add_tool(recommend_next_tool, name="coffee.recommend_next")
+
+
+@router.get("", response_class=HTMLResponse)
+def coffee_page(request: Request) -> str:
+    settings = request.app.state.settings
+    beans = list_beans(settings)
+    shots = history(settings, limit=10)
+    bean_rows = "".join(
+        f"""<li><details><summary><strong>{escape(bean['name'])}</strong>
+        {escape(bean['roaster'] or '')}</summary>
+        <form method="post" action="/coffee/beans/{bean['id']}">
+        <label>Name <input name="name" value="{_value(bean, 'name')}" required></label>
+        <label>Roaster <input name="roaster" value="{_value(bean, 'roaster')}"></label>
+        <label>Roast date <input name="roast_date" type="date"
+        value="{_value(bean, 'roast_date')}"></label>
+        <label>Origin <input name="origin" value="{_value(bean, 'origin')}"></label>
+        <label>Process <input name="process" value="{_value(bean, 'process')}"></label>
+        <label>Notes <textarea name="notes">{escape(bean['notes'] or '')}</textarea></label>
+        <button>Save</button></form>
+        <form method="post" action="/coffee/beans/{bean['id']}/archive">
+        <button>Archive</button></form></details></li>"""
+        for bean in beans
+    )
+    options = "".join(
+        f'<option value="{bean["id"]}">{escape(bean["name"])}</option>' for bean in beans
+    )
+    shot_rows = "".join(
+        f"<li>{escape(shot['bean_name'])}: {shot['dose_g']:g}g → {shot['yield_g']:g}g "
+        f"in {shot['time_s']:g}s</li>"
+        for shot in shots
+    )
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <title>Coffee · Hublet</title></head><body><main><a href="/">Hublet</a><h1>Coffee</h1>
+    <h2>Open beans</h2><ul>{bean_rows or '<li>None yet.</li>'}</ul>
+    <form method="post" action="/coffee/beans"><h2>Add beans</h2>
+    <label>Name <input name="name" required></label>
+    <label>Roaster <input name="roaster"></label>
+    <label>Roast date <input name="roast_date" type="date"></label>
+    <label>Origin <input name="origin"></label>
+    <label>Process <input name="process"></label>
+    <label>Notes <textarea name="notes"></textarea></label><button>Add</button></form>
+    <form method="post" action="/coffee/shots"><h2>Log a shot</h2>
+    <label>Bean <select name="bean_id" required>{options}</select></label>
+    <label>Dose <input name="dose_g" type="number" step="0.1" required></label>
+    <label>Yield <input name="yield_g" type="number" step="0.1" required></label>
+    <label>Time <input name="time_s" type="number" step="0.1" required></label>
+    <label>Grind <input name="grind_setting" required></label>
+    <label>Rating <input name="rating" type="number" min="1" max="5"></label>
+    <label>Taste tags <input name="taste_tags"></label><button>Log shot</button></form>
+    <h2>Recent shots</h2><ul>{shot_rows or '<li>None yet.</li>'}</ul>
+    </main></body></html>"""
+
+
+@router.post("/beans")
+def create_bean(
+    request: Request,
+    name: Annotated[str, Form()],
+    roaster: Annotated[str | None, Form()] = None,
+    roast_date: Annotated[str | None, Form()] = None,
+    origin: Annotated[str | None, Form()] = None,
+    process: Annotated[str | None, Form()] = None,
+    notes: Annotated[str | None, Form()] = None,
+) -> RedirectResponse:
+    add_bean(
+        request.app.state.settings,
+        name,
+        roaster=roaster or None,
+        roast_date=roast_date or None,
+        origin=origin or None,
+        process=process or None,
+        notes=notes or None,
+    )
+    return RedirectResponse("/coffee", status_code=303)
+
+
+@router.post("/beans/{bean_id}")
+def edit_bean(
+    request: Request,
+    bean_id: str,
+    name: Annotated[str, Form()],
+    roaster: Annotated[str, Form()] = "",
+    roast_date: Annotated[str, Form()] = "",
+    origin: Annotated[str, Form()] = "",
+    process: Annotated[str, Form()] = "",
+    notes: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    update_bean(
+        request.app.state.settings,
+        bean_id,
+        name=name,
+        roaster=roaster,
+        roast_date=roast_date,
+        origin=origin,
+        process=process,
+        notes=notes,
+    )
+    return RedirectResponse("/coffee", status_code=303)
+
+
+@router.post("/beans/{bean_id}/archive")
+def archive_bean(request: Request, bean_id: str) -> RedirectResponse:
+    update_bean(request.app.state.settings, bean_id, status="archived")
+    return RedirectResponse("/coffee", status_code=303)
+
+
+@router.post("/shots")
+def create_shot(
+    request: Request,
+    bean_id: Annotated[str, Form()],
+    dose_g: Annotated[float, Form()],
+    yield_g: Annotated[float, Form()],
+    time_s: Annotated[float, Form()],
+    grind_setting: Annotated[str, Form()],
+    rating: Annotated[int | None, Form()] = None,
+    taste_tags: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    log_shot(
+        request.app.state.settings,
+        bean_id,
+        dose_g=dose_g,
+        yield_g=yield_g,
+        time_s=time_s,
+        grind_setting=grind_setting,
+        rating=rating,
+        taste_tags=taste_tags.split(","),
+    )
+    return RedirectResponse("/coffee", status_code=303)
+
+
+def launcher_summary(settings: Settings) -> str:
+    count = len(list_beans(settings))
+    return f"{count} open {'bean' if count == 1 else 'beans'}"
+
+
 def _validate_bean(name: str, status: str) -> None:
     if not name:
         raise ValueError("name is required")
     if status not in {"open", "archived"}:
         raise ValueError("status must be open or archived")
+
+
+def _value(record: dict[str, Any], key: str) -> str:
+    return escape(record[key] or "", quote=True)
 
 
 def _shot(row: Any) -> dict[str, Any]:
@@ -268,3 +469,14 @@ def _shot(row: Any) -> dict[str, Any]:
 
 def _now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+PLUGIN = Plugin(
+    name="coffee",
+    icon="☕",
+    db_filename=DB_FILENAME,
+    migrations=MIGRATIONS,
+    register_mcp=register_mcp,
+    router=router,
+    launcher_summary=launcher_summary,
+)

@@ -20,24 +20,19 @@ class Plugin:
     icon: str
     db_filename: str
     migrations: tuple[str, ...]
-    register_mcp: Callable[[MCPServer], None]
+    register_mcp: Callable[[MCPServer, Settings], None]
     router: APIRouter
     launcher_summary: Callable[[Settings], str]
 
 
-PLUGINS: tuple[Plugin, ...] = ()
-
-
-def migrate_plugins(settings: Settings, plugins: Sequence[Plugin] | None = None) -> None:
-    for plugin in PLUGINS if plugins is None else plugins:
+def migrate_plugins(settings: Settings, plugins: Sequence[Plugin]) -> None:
+    for plugin in plugins:
         migrate(settings.data_dir / plugin.db_filename, plugin.migrations)
 
 
-def plugin_health(
-    settings: Settings, plugins: Sequence[Plugin] | None = None
-) -> dict[str, str]:
+def plugin_health(settings: Settings, plugins: Sequence[Plugin]) -> dict[str, str]:
     health = {}
-    for plugin in PLUGINS if plugins is None else plugins:
+    for plugin in plugins:
         with connect(settings.data_dir / plugin.db_filename) as connection:
             connection.execute("SELECT 1").fetchone()
         health[plugin.name] = "ok"
