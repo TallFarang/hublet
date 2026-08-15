@@ -60,5 +60,14 @@ date.
 To restore, stop Hublet, replace the affected live `.db` file with the chosen snapshot,
 start Hublet again, and verify `/health`.
 
+## CI and container images
+
+Pull requests and pushes run Ruff and pytest on GitHub-hosted runners. A green push to
+`main` also publishes `ghcr.io/tallfarang/hublet` for both amd64 and arm64, tagged as
+`latest` and with the immutable commit SHA.
+
+After the first publish, change the package visibility to **Public** once in its GitHub
+Package settings; [GHCR packages start private by default](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
 Never expose Hublet through router port forwarding. It is designed for one trusted user on
 a home LAN.
