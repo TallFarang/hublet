@@ -1,0 +1,16 @@
+services:
+  runtime:
+    image: ghcr.io/tallfarang/hublet:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8787:8000"
+    volumes:
+      - type: bind
+        source: "${HUBLET_HOST_DATA_DIR:?set HUBLET_HOST_DATA_DIR}"
+        target: /data
+      - type: bind
+        source: "${HUBLET_HOST_BACKUP_DIR:?set HUBLET_HOST_BACKUP_DIR}"
+        target: /backups
+    env_file:
+      - "${HUBLET_ENV_FILE:?set HUBLET_ENV_FILE}"
