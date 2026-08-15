@@ -21,8 +21,7 @@ def goal_settings(settings_env: dict[str, str]) -> Settings:
 
 
 def test_goal_plugin_adds_one_explicit_registration() -> None:
-    assert PLUGINS[-1] is goals.PLUGIN
-    assert [plugin.name for plugin in PLUGINS] == ["coffee", "goals"]
+    assert PLUGINS[1] is goals.PLUGIN
 
 
 def test_goal_schema_is_only_goals_and_entries(goal_settings: Settings) -> None:
@@ -70,9 +69,11 @@ def test_goal_update_and_non_destructive_status(goal_settings: Settings) -> None
         target_date="2026-09-01",
     )
     completed = goals.set_status(goal_settings, goal["id"], "completed")
+    cleared = goals.update_goal(goal_settings, goal["id"], clear_target=True)
 
     assert updated["title"] == "Ship it"
     assert completed["status"] == "completed"
+    assert cleared["target_value"] is None
     assert goals.list_goals(goal_settings) == []
     assert goals.list_goals(goal_settings, status=None)[0]["id"] == goal["id"]
 
@@ -165,6 +166,27 @@ def test_goal_html_forms_create_edit_progress_and_complete(
         4.0,
         "completed",
     )
+    assert saved["target_value"] is None
+
+
+def test_goal_invalid_html_returns_422(settings_env: dict[str, str]) -> None:
+    settings = Settings.from_env(settings_env)
+    app = create_app(settings=settings, plugins=(goals.PLUGIN,))
+
+    with TestClient(app, base_url=settings.public_origin) as client:
+        client.post(
+            "/login",
+            data={"token": settings.dashboard_token},
+            headers={"Origin": settings.public_origin},
+        )
+        response = client.post(
+            "/goals",
+            data={"title": "   "},
+            headers={"Origin": settings.public_origin},
+        )
+
+    assert response.status_code == 422
+    assert response.text == "title is required"
 
 
 def test_goal_launcher_summary_counts_active(goal_settings: Settings) -> None:

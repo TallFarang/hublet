@@ -132,6 +132,7 @@ def update_goal(
     target_value: float | None = None,
     unit: str | None = None,
     target_date: str | None = None,
+    clear_target: bool = False,
 ) -> dict[str, Any]:
     changes = {
         key: value
@@ -144,6 +145,8 @@ def update_goal(
         }.items()
         if value is not None
     }
+    if clear_target:
+        changes["target_value"] = None
     if "title" in changes and not changes["title"]:
         raise ValueError("title is required")
     get_goal(settings, goal_id)
@@ -176,6 +179,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         target_value: float | None = None,
         unit: str | None = None,
         target_date: str | None = None,
+        clear_target: bool = False,
     ) -> dict[str, Any]:
         """Create a durable goal."""
         return create_goal(settings, title, description, target_value, unit, target_date)
@@ -199,6 +203,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         target_value: float | None = None,
         unit: str | None = None,
         target_date: str | None = None,
+        clear_target: bool = False,
     ) -> dict[str, Any]:
         """Edit a goal's target or description."""
         return update_goal(
@@ -209,6 +214,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
             target_value=target_value,
             unit=unit,
             target_date=target_date,
+            clear_target=clear_target,
         )
 
     def status_tool(goal_id: str, status: str) -> dict[str, Any]:
@@ -277,6 +283,7 @@ def edit_goal_form(
         target_value=target_value,
         unit=unit,
         target_date=target_date,
+        clear_target=target_value is None,
     )
     return RedirectResponse("/goals", status_code=303)
 
