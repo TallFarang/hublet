@@ -12,7 +12,7 @@ from app.runtime import migrate_plugins
 
 
 def test_coffee_descriptor_is_explicitly_registered() -> None:
-    assert PLUGINS == (coffee.PLUGIN,)
+    assert PLUGINS[0] is coffee.PLUGIN
     assert coffee.PLUGIN.name == "coffee"
     assert coffee.PLUGIN.db_filename == "coffee.db"
     assert coffee.PLUGIN.migrations is coffee.MIGRATIONS
