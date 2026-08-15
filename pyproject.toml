@@ -13,6 +13,9 @@ dependencies = [
     "uvicorn==0.52.3",
 ]
 
+[project.scripts]
+hublet-backup = "app.backup:main"
+
 [project.optional-dependencies]
 dev = [
     "httpx==0.28.1",

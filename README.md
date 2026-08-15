@@ -49,5 +49,16 @@ python3 -m venv .venv
 contains that runtime closure plus the three approved development dependencies and their
 transitive requirements.
 
+## Backups
+
+Run `hublet-backup` from the installed environment. It uses SQLite's online backup API to
+write all three databases to `HUBLET_BACKUP_DIR/YYYY-MM-DD`, prints that path, and keeps the
+newest 30 daily snapshots. Missing live databases or an incomplete copy fail without
+publishing a final-dated snapshot. A successful snapshot is never overwritten on the same
+date.
+
+To restore, stop Hublet, replace the affected live `.db` file with the chosen snapshot,
+start Hublet again, and verify `/health`.
+
 Never expose Hublet through router port forwarding. It is designed for one trusted user on
 a home LAN.
