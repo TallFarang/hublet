@@ -30,7 +30,8 @@ def test_public_routes_do_not_require_dashboard_session(settings_env: dict[str, 
     settings = Settings.from_env(settings_env)
 
     with make_client(settings) as client:
-        assert client.get("/health").status_code == 200
+        assert client.get("/healthz").status_code == 200
+        assert client.get("/health", follow_redirects=False).status_code == 303
         assert client.get("/login").status_code == 200
 
 

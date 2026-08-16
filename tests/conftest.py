@@ -9,6 +9,7 @@ import pytest
 def settings_env(tmp_path: Path) -> dict[str, str]:
     secret = "x" * 40
     return {
+        "HUBLET_AGENTBRIDGE_DIR": str(tmp_path / "agentbridge"),
         "HUBLET_BACKUP_DIR": str(tmp_path / "backups"),
         "HUBLET_DASHBOARD_TOKEN": secret,
         "HUBLET_DATA_DIR": str(tmp_path / "data"),

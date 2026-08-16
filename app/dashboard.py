@@ -118,6 +118,37 @@ def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> di
     }
 
 
+def health_dashboard(report: dict[str, Any]) -> dict[str, Any]:
+    labels = {
+        "vo2_max": "VO₂ max",
+        "body_weight_kg": "Body weight",
+        "resting_heart_rate": "Resting heart rate",
+        "workouts_completed": "Workouts · 30d",
+    }
+    metrics = []
+    for name, metric in report["metrics"].items():
+        values = [float(point["value"]) for point in metric["series"]]
+        latest = sum(values) if name == "workouts_completed" else (values[-1] if values else None)
+        metrics.append(
+            {
+                **plot(values),
+                "name": name,
+                "label": labels[name],
+                "value": round(latest, 1) if latest is not None else None,
+                "unit": metric["unit"],
+                "latest_date": metric["latest"]["date"] if metric["latest"] else None,
+                "has_series": bool(values),
+            }
+        )
+    return {
+        "metrics": metrics,
+        "freshness": report["source"]["freshness"],
+        "latest_export_date": report["source"]["latest_export_date"],
+        "exported_days": len(report["coverage"]["exported_dates"]),
+        "missing_days": len(report["source"]["missing_dates"]),
+    }
+
+
 def _goal_state(values: list[float], target: float | None, direction: str | None) -> str:
     if not values:
         return "No numeric data"

@@ -12,6 +12,7 @@
   --food: #efb56a;
   --recipes: #ec8d82;
   --coffee: #79bce8;
+  --health: #b6a2f2;
   --danger: #ff9b8f;
   --pico-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --pico-font-size: 100%;
@@ -67,6 +68,7 @@ code { color: var(--muted); background: #0f1216; }
 .food-page { --accent: var(--food); }
 .recipes-page { --accent: var(--recipes); }
 .coffee-page { --accent: var(--coffee); }
+.health-page { --accent: var(--health); }
 .plugin-page button:not(.quiet-button) {
   --pico-background-color: var(--accent);
   --pico-border-color: var(--accent);

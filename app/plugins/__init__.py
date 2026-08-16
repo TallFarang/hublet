@@ -3,6 +3,7 @@
 from app.plugins.coffee import PLUGIN as COFFEE
 from app.plugins.food import PLUGIN as FOOD
 from app.plugins.goals import PLUGIN as GOALS
+from app.plugins.health import PLUGIN as HEALTH
 from app.plugins.recipes import PLUGIN as RECIPES
 
-PLUGINS = (GOALS, FOOD, RECIPES, COFFEE)
+PLUGINS = (GOALS, FOOD, RECIPES, COFFEE, HEALTH)

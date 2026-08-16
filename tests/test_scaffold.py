@@ -67,6 +67,7 @@ EXPECTED_DEV_LOCK_PACKAGES = EXPECTED_RUNTIME_LOCK_PACKAGES | {
     "ruff",
 }
 REQUIRED_ENV_KEYS = {
+    "HUBLET_AGENTBRIDGE_DIR",
     "HUBLET_BACKUP_DIR",
     "HUBLET_DASHBOARD_TOKEN",
     "HUBLET_DATA_DIR",
@@ -114,6 +115,7 @@ def test_example_environment_has_required_generic_settings() -> None:
 
     assert set(environment) == REQUIRED_ENV_KEYS
     assert environment["HUBLET_BACKUP_DIR"] == "/backups"
+    assert environment["HUBLET_AGENTBRIDGE_DIR"] == "/agentbridge"
     assert environment["HUBLET_MCP_ALLOWED_HOSTS"] == (
         "hublet.example.test:*,localhost:*,127.0.0.1:*"
     )

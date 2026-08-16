@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 REQUIRED_SETTINGS = (
+    "HUBLET_AGENTBRIDGE_DIR",
     "HUBLET_BACKUP_DIR",
     "HUBLET_DASHBOARD_TOKEN",
     "HUBLET_DATA_DIR",
@@ -31,6 +32,7 @@ class Settings:
 
     data_dir: Path
     backup_dir: Path
+    agentbridge_dir: Path
     public_origin: str
     mcp_allowed_hosts: tuple[str, ...]
     dashboard_token: str
@@ -64,6 +66,7 @@ class Settings:
         return cls(
             data_dir=Path(values["HUBLET_DATA_DIR"]),
             backup_dir=Path(values["HUBLET_BACKUP_DIR"]),
+            agentbridge_dir=Path(values["HUBLET_AGENTBRIDGE_DIR"]),
             public_origin=public_origin,
             mcp_allowed_hosts=allowed_hosts,
             dashboard_token=values["HUBLET_DASHBOARD_TOKEN"],

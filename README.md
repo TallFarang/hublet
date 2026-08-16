@@ -1,7 +1,7 @@
 # Hublet
 
 Hublet is a brutally lightweight personal structured-memory daemon for OpenClaw. It will
-provide Coffee, Goals, Recipes, and Food through one MCP endpoint and a small server-rendered
+provide Coffee, Goals, Recipes, Food, and Health through one MCP endpoint and a small server-rendered
 dashboard.
 
 The v1 runtime is intentionally narrow: Python 3.13, FastAPI, the official MCP SDK,
@@ -25,6 +25,7 @@ The complete configuration contract is:
 
 - `HUBLET_DATA_DIR` selects the live SQLite data directory.
 - `HUBLET_BACKUP_DIR` selects the independent snapshot directory.
+- `HUBLET_AGENTBRIDGE_DIR` selects the only directory the Health importer may read.
 - `HUBLET_PUBLIC_ORIGIN` is the dashboard origin used for Origin/Referer validation.
 - `HUBLET_DASHBOARD_TOKEN` authenticates the dashboard login form.
 - `HUBLET_SESSION_SECRET` signs the dashboard session cookie.
@@ -53,13 +54,13 @@ transitive requirements.
 ## Backups
 
 Run `hublet-backup` from the installed environment. It uses SQLite's online backup API to
-write all four databases to `HUBLET_BACKUP_DIR/YYYY-MM-DD`, prints that path, and keeps the
+write all five databases to `HUBLET_BACKUP_DIR/YYYY-MM-DD`, prints that path, and keeps the
 newest 30 daily snapshots. Missing live databases or an incomplete copy fail without
 publishing a final-dated snapshot. A successful snapshot is never overwritten on the same
 date.
 
 To restore, stop Hublet, replace the affected live `.db` file with the chosen snapshot,
-start Hublet again, and verify `/health`.
+start Hublet again, and verify `/healthz`.
 
 ## Food recovery import
 
@@ -70,6 +71,18 @@ importer collapses append-only legacy correction chains onto their original stab
 deterministic nutrition IDs and only the needed legacy variants, verifies correction-aware
 totals, and confirms both source checksums remain unchanged.
 Keep the source CSVs outside the repository as read-only rollback archives.
+
+## Agentbridge Health sync
+
+Set `HUBLET_AGENTBRIDGE_DIR` to the directory containing Agentbridge daily JSON exports. The
+`health_sync_agentbridge` MCP tool scans that directory itself; callers cannot supply a path. Each
+successful sync atomically replaces Health's current snapshot, while invalid or disappearing
+exports leave the previous `health.db` intact. Unknown HealthKit types remain queryable as raw JSON.
+
+For a weekly Goals report, OpenClaw should call Health sync, request `health_summary`, record the
+returned mapped evidence through `goals_record_evidence`, and then request
+`goals_report_snapshot`. Hublet keeps no Health import history because the Agentbridge exports and
+daily SQLite snapshots already provide recovery.
 
 ## CI
 
@@ -115,12 +128,12 @@ them with `launchctl bootstrap gui/$(id -u) <plist>`.
 The runtime is kept alive by launchd, backups run daily at 03:15, and the deploy job checks
 public GitHub `main` every five minutes. It exits when nothing changed and refuses to update
 unless the checkout is clean and a successful daily snapshot is less than 26 hours old.
-For a changed commit it updates the shared environment, restarts Hublet, checks `/health`,
+For a changed commit it updates the shared environment, restarts Hublet, checks `/healthz`,
 then records the SHA in `RELEASE`. Shell and Git polling do not invoke an LLM.
 
 Automatic rollback is intentionally omitted. To undo a release, unload the deploy job, stop
 the runtime, check out the SHA in `<root>/PREVIOUS_RELEASE`, reinstall the locked runtime
-requirements and editable project, restart `io.hublet.runtime`, and verify `/health`. Restore
+requirements and editable project, restart `io.hublet.runtime`, and verify `/healthz`. Restore
 databases separately from the daily snapshots only when required.
 
 Never expose Hublet through router port forwarding. It is designed for one trusted user on

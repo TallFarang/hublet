@@ -37,11 +37,12 @@ def test_launcher_is_compact_factual_and_ordered(settings_env: dict[str, str]) -
     assert "0 food records" in response.text
     assert "Four useful places" not in response.text
     assert "Local by design" not in response.text
-    assert response.text.count('class="launcher-tile') == 4
-    assert response.text.count("<svg") >= 4
+    assert response.text.count('class="launcher-tile') == 5
+    assert response.text.count("<svg") >= 5
     assert response.text.index("Goals") < response.text.index("Food")
     assert response.text.index("Food") < response.text.index("Recipes")
     assert response.text.index("Recipes") < response.text.index("Coffee")
+    assert response.text.index("Coffee") < response.text.index("Health")
 
 
 def test_pages_share_local_css_and_no_javascript(settings_env: dict[str, str]) -> None:
@@ -50,7 +51,10 @@ def test_pages_share_local_css_and_no_javascript(settings_env: dict[str, str]) -
 
     with TestClient(app, base_url=settings.public_origin) as client:
         sign_in(client, settings)
-        pages = [client.get(path) for path in ("/", "/coffee", "/goals", "/recipes", "/food")]
+        pages = [
+            client.get(path)
+            for path in ("/", "/coffee", "/goals", "/recipes", "/food", "/health")
+        ]
         pico = client.get("/static/pico.min.css")
         styles = [client.get(f"/static/{name}.css") for name in ("tokens", "shell", "dashboard", "forms")]
 

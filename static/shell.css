@@ -73,6 +73,7 @@
 .launcher-tile--food { --tile-accent: var(--food); }
 .launcher-tile--recipes { --tile-accent: var(--recipes); }
 .launcher-tile--coffee { --tile-accent: var(--coffee); }
+.launcher-tile--health { --tile-accent: var(--health); }
 .launcher-icon { width: clamp(32px, 6vw, 68px); color: var(--tile-accent); }
 .launcher-icon svg { display: block; width: 100%; height: auto; }
 .launcher-copy { min-width: 0; display: grid; gap: 0.15rem; }

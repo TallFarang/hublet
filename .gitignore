@@ -10,6 +10,7 @@ secrets.env
 data/
 backups/
 secrets/
+example_json/
 
 *.pem
 *.key

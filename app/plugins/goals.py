@@ -412,11 +412,10 @@ def report_snapshot(settings: Settings, start_date: str, end_date: str) -> dict[
                 )
                 gap = None
                 if not observations:
-                    gap = (
-                        "no_observation_in_period"
-                        if source["tracking_status"] == "connected"
-                        else "source_unavailable"
-                    )
+                    gap = {
+                        "connected": "no_observation_in_period",
+                        "stale": "source_stale",
+                    }.get(source["tracking_status"], "source_unavailable")
                 evidence.append(
                     {
                         "source_definition": source,

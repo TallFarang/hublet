@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "charts.html" import line_chart %}
+{% block body_class %}plugin-page health-page{% endblock %}
+{% block content %}
+  <header class="plugin-title"><a href="/">Home</a><h1>Health</h1></header>
+  <section class="instrument-panel health-instruments" aria-labelledby="health-status">
+    <div class="instrument-heading">
+      <h2 id="health-status">HealthKit</h2>
+      <span class="signal signal--{{ dashboard.freshness }}">{{ dashboard.freshness|replace('_', ' ') }}</span>
+    </div>
+    <div class="health-readouts">
+      {% for metric in dashboard.metrics %}
+      <section class="health-readout">
+        <header><strong>{{ metric.label }}</strong><small>{{ metric.latest_date or 'No measurement' }}</small></header>
+        <div class="health-measurement">
+          <strong>{{ metric.value if metric.value is not none else '—' }}</strong>
+          <small>{{ metric.unit if metric.value is not none else '' }}</small>
+        </div>
+        {% if metric.has_series %}{{ line_chart(metric, metric.label ~ ' trend') }}
+        {% else %}<p class="chart-empty">No measurements</p>{% endif %}
+      </section>
+      {% endfor %}
+    </div>
+    <dl class="health-sync-strip">
+      <div><dt>Latest export</dt><dd>{{ dashboard.latest_export_date or 'Never' }}</dd></div>
+      <div><dt>Days loaded</dt><dd>{{ dashboard.exported_days }}</dd></div>
+      <div><dt>Missing</dt><dd>{{ dashboard.missing_days }}</dd></div>
+      <div><dt>Route</dt><dd>Agentbridge</dd></div>
+    </dl>
+  </section>
+{% endblock %}

@@ -16,7 +16,7 @@ def test_health_reports_registered_plugin(settings_env: dict[str, str]) -> None:
     app = create_app(settings=settings, plugins=(make_plugin(),))
 
     with TestClient(app, base_url=settings.public_origin) as client:
-        response = client.get("/health")
+        response = client.get("/healthz")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "plugins": {"example": "ok"}}

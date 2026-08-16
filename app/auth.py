@@ -75,7 +75,7 @@ class DashboardAuthMiddleware:
 
 
 def _is_public_path(path: str) -> bool:
-    return path in {"/health", "/login"} or path.startswith("/static/") or _is_mcp_path(path)
+    return path in {"/healthz", "/login"} or path.startswith("/static/") or _is_mcp_path(path)
 
 
 def _is_mcp_path(path: str) -> bool:

@@ -1,6 +1,6 @@
 ---
 name: Hublet
-description: A restrained dark quick-glance dashboard for four personal-memory plugins.
+description: A restrained dark quick-glance dashboard for five personal-memory plugins.
 colors:
   ground: "#0b0d10"
   surface: "#14181d"
@@ -14,6 +14,7 @@ colors:
   food: "#efb56a"
   recipes: "#ec8d82"
   coffee: "#79bce8"
+  health: "#b6a2f2"
   field: "#101318"
   inset: "#0f1216"
   error-ground: "#321713"
@@ -30,7 +31,7 @@ typography:
     fontSize: "clamp(1.05rem, 3.2vw, 2.15rem)"
     fontWeight: 700
     lineHeight: 1.05
-    letterSpacing: "-0.025em"
+    letterSpacing: "normal"
   body:
     fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
     fontSize: "1rem"
@@ -98,13 +99,13 @@ The system is native, factual, and dense enough for an iPhone. Status and charts
 
 - Matte dark ground with bordered charcoal instrument surfaces.
 - Modern system sans throughout, with tight headings and tabular readings.
-- Restrained Goals, Food, Recipes, and Coffee signal colors.
+- Restrained Goals, Food, Recipes, Coffee, and Health signal colors.
 - A compact two-column launcher built for up to eight plugins.
 - Inline charts and current status before forms, history, or definitions.
 
 ## Colors
 
-The palette is almost monochrome infrastructure with four semantic plugin signals. Accent color identifies a domain and highlights its live readings; it does not fill large surfaces.
+The palette is almost monochrome infrastructure with five semantic plugin signals. Accent color identifies a domain and highlights its live readings; it does not fill large surfaces.
 
 ### Primary
 
@@ -118,6 +119,7 @@ The palette is almost monochrome infrastructure with four semantic plugin signal
 - **Food Signal:** Nutrition readings, seven-day bars, and Food identity. Food remains read-only in the dashboard, so this color does not imply an editing action.
 - **Recipe Signal:** Recipe readings, rating traces, and Recipes actions.
 - **Coffee Signal:** Coffee readings, extraction traces, and Coffee actions.
+- **Health Signal:** HealthKit measurements, freshness, and Health identity.
 
 ### Tertiary
 
@@ -164,7 +166,7 @@ The palette is almost monochrome infrastructure with four semantic plugin signal
 
 The shared shell is centered at a maximum width of 1120px. It uses 1rem side gutters on wider screens and 0.5rem gutters at 760px and below. The header is a fixed-height 56px rail, while page content remains in normal document flow.
 
-The launcher fills the remaining small viewport height and always uses two equal columns. With one to eight plugins, rows flex to fit and overflow is suppressed; this keeps the approved Goals, Food, Recipes, Coffee order visible without scrolling on an iPhone 17 and preserves room for four more destinations. Beyond eight, rows receive a 112px minimum and the launcher may scroll.
+The launcher fills the remaining small viewport height and always uses two equal columns. With one to eight plugins, rows flex to fit and overflow is suppressed; this keeps the approved Goals, Food, Recipes, Coffee, Health order visible without scrolling on an iPhone 17 and preserves room for three more destinations. Beyond eight, rows receive a 112px minimum and the launcher may scroll.
 
 Plugin pages place a 64px title row above an instrument panel sized to fill the first useful viewport. Current readings, progress, and inline charts come first. A deliberate gap separates that quick-glance layer from management. Forms and dual management panels use two columns when space allows, then collapse to one column at 760px. Primary navigation links hide at that breakpoint, leaving Home through the Hublet brand and a 44px sign-out control.
 
@@ -202,7 +204,7 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 - **Structure:** A two-column internal grid pairs a responsive line icon with a clipped name-and-summary block.
 - **State:** Neutral Instrument Surface at rest; Raised Surface and a stronger border on hover. Tiles never lift, scale, or acquire shadows.
-- **Order:** Goals, Food, Recipes, Coffee is the shipped primary sequence. Future plugins append without disturbing that order unless product priority changes.
+- **Order:** Goals, Food, Recipes, Coffee, Health is the shipped primary sequence. Future plugins append without disturbing that order unless product priority changes.
 
 ### Instrument Panels and Charts
 
@@ -230,12 +232,16 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 - **Read-only:** Food shows four current readings, a seven-day calorie bar chart, tracking issues, stored counts, and an explicit note that changes happen through OpenClaw. Do not add dashboard forms without changing the product contract.
 
+### Health Status
+
+- **Read-only:** Health shows global freshness, four mapped measurements and compact inline trends. Raw records and synchronization stay in MCP rather than the dashboard.
+
 ## Do's and Don'ts
 
 ### Do:
 
 - **Do** keep the first useful viewport devoted to current status, progress, and charts.
-- **Do** preserve the compact two-column launcher and the Goals, Food, Recipes, Coffee order.
+- **Do** preserve the compact two-column launcher and the Goals, Food, Recipes, Coffee, Health order.
 - **Do** use semantic server-rendered HTML, native disclosures, visible labels, and accessible SVG titles.
 - **Do** keep all essential interaction targets at least 44px tall, except the intentionally compact 40px quiet button.
 - **Do** use internal rules to organize dense records and histories inside one outer panel.

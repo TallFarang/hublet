@@ -14,11 +14,12 @@ capture; the web interface handles quick browsing and manual corrections.
 ## Product Purpose
 
 Hublet keeps small pieces of structured personal memory—coffee experiments, goal progress and
-recipe cook notes—durable and easy to inspect without becoming a general productivity platform.
+recipe cook notes and HealthKit measurements—durable and easy to inspect without becoming a
+general productivity platform.
 
 ## Positioning
 
-One tiny local process gives an agent and a human the same domain functions over four independent
+One tiny local process gives an agent and a human the same domain functions over five independent
 SQLite files. It stores only useful structure and leaves canonical data, such as recipe content, in
 the app that already owns it.
 
@@ -34,6 +35,7 @@ instrument rather than a reporting suite.
 - Goals with timestamped absolute progress measurements.
 - Apple Notes recipe references with cooking experiments and conclusions.
 - Receipt-backed food consumption with current linked nutrition and explicit tracking gaps.
+- Read-only Agentbridge HealthKit snapshots with compact evidence for Goals.
 - Server-rendered HTML forms and inline data graphics, with no JavaScript, frontend framework,
   chart library, web font or external asset dependency.
 - One signed-cookie dashboard login and a separately protected MCP endpoint.

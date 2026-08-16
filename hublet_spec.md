@@ -9,7 +9,7 @@ Implementation-ready specification for a single-user system optimized for minima
 
 **Working project name: Hublet.**
 
-Build one small native Python service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes and Food plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
+Build one small native Python service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes, Food and Health plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
 
 ```text
 iPhone / Mac browser                 Discord
@@ -24,6 +24,7 @@ iPhone / Mac browser                 Discord
         +-- Food    -> food.db
         +-- Recipes -> recipes.db
         +-- Coffee  -> coffee.db
+        +-- Health  -> health.db
 ```
 
 ## 2. Key philosophy and decisions
@@ -92,7 +93,7 @@ Start with one file per plugin. Split files only when navigation becomes painful
 
 ## 5. Plugin runtime
 
-Each plugin is an ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the four descriptors in one tuple. Do not add discovery, lifecycle hooks, configuration schemas or a dynamic plugin framework.
+Each plugin is an ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the five descriptors in one tuple. Do not add discovery, lifecycle hooks, configuration schemas or a dynamic plugin framework.
 
 ```text
 Plugin(
@@ -111,7 +112,7 @@ MCP tools and HTML form handlers must call the same ordinary Python domain funct
 ## 6. Web interface
 
 The root page is a compact app launcher. Show plugins in the explicit order Goals, Food, Recipes,
-Coffee. Up to eight touch-friendly destinations must fit without scrolling in a 402-by-714 CSS
+Coffee, Health. Up to eight touch-friendly destinations must fit without scrolling in a 402-by-714 CSS
 pixel viewport; larger registries may overflow vertically. Each destination contains one Lucide
 icon, its name and one short factual summary.
 
@@ -122,7 +123,7 @@ icon, its name and one short factual summary.
  12 cooks      2 open
 ```
 
-Routes: /, /goals, /food, /recipes, /coffee. Each plugin starts with compact current readings and a
+Routes: /, /goals, /food, /recipes, /coffee, /health. Each plugin starts with compact current readings and a
 dependency-free inline chart; records and forms follow below on the same page. Food is read-only in
 the web UI and remains writable through OpenClaw MCP. Mutations use ordinary POSTed HTML forms
 followed by redirects; v1 exposes no JSON REST API. Use semantic HTML, locally vendored Pico CSS,
@@ -176,6 +177,14 @@ food_find_gaps
 food_summary
 ```
 
+```text
+health_sync_agentbridge
+health_query_records
+health_summary
+health_sync_status
+health_list_types
+```
+
 OpenClaw interprets conversational input, resolves the relevant record, invokes tools and explains results. The runtime returns structured facts and deterministic recommendations; OpenClaw supplies natural-language reasoning/presentation.
 
 ## 8. Coffee plugin
@@ -226,11 +235,21 @@ and conversational wording. Receipt items and corrections have explicit MCP obje
 Nutrition search returns stable offset pages of at most 200 entries. Summaries embed compact
 uncertain-record facts while the dedicated gap query retains full investigative detail.
 
+## 11a. Health plugin
+
+Health is a read-only projection of JSON files beneath `HUBLET_AGENTBRIDGE_DIR`. A sync chooses
+the highest daily revision, validates the complete set, deduplicates HealthKit UUIDs and replaces
+the current `health.db` snapshot in one transaction. It keeps current days, discovered types,
+canonical records with full raw JSON, and one sync-state row—no batch or revision history.
+Unknown types are stored without semantic interpretation. Health summaries map only VO2 max, body
+weight, resting heart rate and workout count into goal-ready `HealthKit` evidence. OpenClaw performs
+sync, summary, evidence recording and Goals snapshot in that order.
+
 ## 12. Database conventions
 
 | Rule | Decision |
 | --- | --- |
-| Isolation | coffee.db, goals.db, recipes.db and food.db. |
+| Isolation | coffee.db, goals.db, recipes.db, food.db and health.db. |
 | Persistence | Host mount under `$HOME/.hublet/data/`. Never store live data in Git or the image. |
 | IDs | UUID text. |
 | Dates | UTC ISO-8601 timestamps; ISO date for date-only fields. |
@@ -290,7 +309,7 @@ All dashboard writes use authenticated HTML forms. V1 has no REST API. Do not im
 
 Use one Python virtual environment and one Uvicorn worker. A `launchd` job runs Hublet from
 the Git checkout, keeps it alive after a process or Mac restart, and writes to an external log.
-The runtime sources its settings from external files before starting. Add `/health` and run
+The runtime sources its settings from external files before starting. Add `/healthz` and run
 migrations before accepting requests. Keep OpenClaw in its existing separate process.
 
 ## 15. GitHub push-to-deploy
@@ -311,7 +330,7 @@ Mac launchd job (e.g. every 5 minutes)
   update clean checkout and shared venv when changed
   launchctl kickstart io.hublet.runtime
      |
-GET /health
+GET /healthz
 ```
 
 Why this design:
@@ -327,7 +346,7 @@ The Mac should run a tiny `launchd` job every 5 minutes. The deploy script shoul
 1. fetch `origin/main` and exit if its commit matches the external `RELEASE` file
 2. refuse to deploy if the checkout is dirty or the newest daily snapshot is over 26 hours old
 3. check out the commit and install locked dependencies into the shared virtual environment
-4. restart the runtime and call `/health`
+4. restart the runtime and call `/healthz`
 5. record the new and previous commit SHAs only after health succeeds
 
 Automatic rollback, staged releases and model-driven monitoring are out of scope. Manual
@@ -351,9 +370,9 @@ Use the existing MacBook, home network, Python, SQLite, Bonjour/mDNS, GitHub pub
 
 ## 16. Backup and recovery
 
-Provide one command that snapshots all four databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
+Provide one command that snapshots all five databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
 
-Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot -> start the runtime -> verify `/health`.
+Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot -> start the runtime -> verify `/healthz`.
 
 ## 17. Explicit non-goals
 
@@ -375,11 +394,11 @@ Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot
 
 | Phase | Deliverable / acceptance criterion |
 | --- | --- |
-| 1. Foundation | Native process, /health, SQLite helper, migration helper, plugin registry. |
+| 1. Foundation | Native process, /healthz, SQLite helper, migration helper, plugin registry. |
 | 2. Coffee vertical slice | Discord -> OpenClaw -> MCP -> coffee.db -> response works for log_shot and history. |
 | 3. Goals | Add plugin without changing core architecture beyond registration. |
 | 4. Recipes | Link Notes recipes and store cook logs only; prove history/conclusion workflow. |
-| 5. Launcher | Pico CSS home page and four plugin pages, usable on iPhone over home Wi-Fi. |
+| 5. Launcher | Pico CSS home page and five plugin pages, usable on iPhone over home Wi-Fi. |
 | 6. Operations | Independent MCP bearer and signed-cookie dashboard auth, backup command, public GitHub CI and launchd auto-pull deployment. |
 | 7. Stop | Do not add more platform machinery until a real use case demands it. |
 
@@ -387,9 +406,9 @@ Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot
 
 - One public GitHub repository containing no personal data or secrets.
 - One native Python process supervised by launchd.
-- Four independent SQLite files persisted outside the checkout.
+- Five independent SQLite files persisted outside the checkout.
 - One MCP endpoint registered with OpenClaw.
-- Coffee, Goals, Recipes and Food usable naturally from Discord.
+- Coffee, Goals, Recipes, Food and Health usable naturally from Discord.
 - Home launcher reachable from iPhone on the LAN and styled with Pico CSS.
 - Apple Notes remains canonical for recipe content.
 - Push to main is tested by GitHub Actions and polled directly by the MacBook.

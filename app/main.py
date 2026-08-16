@@ -75,8 +75,8 @@ def create_app(
         response.status_code = 422
         return response
 
-    @application.get("/health")
-    def health() -> dict[str, object]:
+    @application.get("/healthz")
+    def system_health() -> dict[str, object]:
         return {
             "status": "ok",
             "plugins": plugin_health(application.state.settings, application.state.plugins),

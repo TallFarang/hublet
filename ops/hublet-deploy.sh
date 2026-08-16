@@ -35,5 +35,5 @@ git -C "$APP_DIR" checkout --quiet --detach "$wanted_release"
 "$VENV_PYTHON" -m pip install --quiet --no-deps -e "$APP_DIR"
 launchctl kickstart -k "gui/$(id -u)/io.hublet.runtime"
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
-  http://127.0.0.1:8787/health >/dev/null
+  http://127.0.0.1:8787/healthz >/dev/null
 printf '%s\n' "$wanted_release" >"$RELEASE_FILE"
