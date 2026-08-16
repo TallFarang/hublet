@@ -9,7 +9,7 @@ Implementation-ready specification for a single-user system optimized for minima
 
 **Working project name: Hublet.**
 
-Build one small Dockerized service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes and Food plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
+Build one small native Python service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes and Food plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
 
 ```text
 iPhone / Mac browser                 Discord
@@ -17,7 +17,7 @@ iPhone / Mac browser                 Discord
         | home LAN                      v
         v                           OpenClaw
        Hublet <------------------------|
-  one container          MCP Streamable HTTP
+ one Python process      MCP Streamable HTTP
         |
         +-- Home launcher
         +-- Goals   -> goals.db
@@ -31,16 +31,16 @@ iPhone / Mac browser                 Discord
 | Principle | Decision |
 | --- | --- |
 | Brutally lightweight | Prefer obvious code over abstractions. Remove features before adding infrastructure. |
-| One runtime | One public GitHub repo, one runtime container, one Python process, one MCP endpoint and one web server. |
-| Plugins are modules | No separate containers, dynamic marketplace, internal RPC, queue or event bus. |
+| One runtime | One public GitHub repo, one Python process, one MCP endpoint and one web server. |
+| Plugins are modules | No separate services, dynamic marketplace, internal RPC, queue or event bus. |
 | No duplicate master data | If another app is authoritative, store only additional structured memory. Apple Notes remains canonical for recipes. |
 | Agent-first | Discord/OpenClaw handles natural-language capture and reasoning. |
 | Simple web UI | Server-rendered pages for browse/edit. No SPA. |
 | Semantic tools | Expose coffee.log_shot rather than generic database.insert. |
 | No destructive tools | Archive/complete instead of agent-accessible delete in v1. |
 | Local by default | Dashboard only needs home-LAN access. No public hosting/TLS/reverse proxy in v1. |
-| Boring persistence | SQLite outside the container, tiny migrations and automatic snapshots. |
-| Public by design | Source code, schemas, Docker config and docs may be public. Personal data, tokens, machine-specific settings and live databases must never be committed. |
+| Boring persistence | SQLite outside the checkout, tiny migrations and automatic snapshots. |
+| Public by design | Source code, schemas, deployment templates and docs may be public. Personal data, tokens, machine-specific settings and live databases must never be committed. |
 | Completely free | Hublet must require no paid hosting, domain, database, API, CI/CD service or SaaS. Use only free/open-source components and GitHub features that are free for public repositories. |
 
 ## 3. Tech stack
@@ -52,8 +52,8 @@ iPhone / Mac browser                 Discord
 | Agent interface | Official MCP Python SDK v2; Streamable HTTP mounted in FastAPI |
 | Database | Built-in sqlite3; one SQLite file per plugin |
 | UI | Server-rendered HTML + a vendored local copy of Pico CSS; no CDN |
-| Container | Docker + Docker Compose |
-| CI/CD | GitHub Actions on GitHub-hosted runners -> public GHCR image -> Mac launchd auto-pull/deploy |
+| Runtime | Native Python virtual environment supervised by macOS launchd |
+| CI/CD | GitHub-hosted Actions for checks; Mac launchd polls public GitHub main |
 | Tests | pytest; high-value tests only |
 | Lint | Ruff |
 
@@ -82,11 +82,10 @@ hublet/
     dashboard.css
     forms.css
   tests/
-  compose.yml
-  Dockerfile
+  ops/
   pyproject.toml
   .env.example
-  .github/workflows/ci-deploy.yml
+  .github/workflows/ci.yml
 ```
 
 Start with one file per plugin. Split files only when navigation becomes painful. Avoid repository/service/model layers merely for architectural neatness.
@@ -287,43 +286,30 @@ All dashboard writes use authenticated HTML forms. V1 has no REST API. Do not im
 
 **Do not attach a self-hosted GitHub Actions runner to this public repository.** Public repositories can receive pull requests from forks, and GitHub warns that self-hosted runners can therefore expose the host machine to dangerous code. All repository CI must run on GitHub-hosted runners.
 
-## 14. Docker
+## 14. Native Mac runtime
 
-```text
-services:
-  runtime:
-    build: .
-    restart: unless-stopped
-    ports:
-      - "8787:8000"
-    volumes:
-      - ${HOME}/.hublet/data:/data
-    env_file:
-      - ${HOME}/.hublet/secrets.env
-```
-
-Use one Uvicorn worker. Add /health. Run migrations before accepting requests. The container must recover after Docker/Mac restart. Keep OpenClaw outside Docker.
+Use one Python virtual environment and one Uvicorn worker. A `launchd` job runs Hublet from
+the Git checkout, keeps it alive after a process or Mac restart, and writes to an external log.
+The runtime sources its settings from external files before starting. Add `/health` and run
+migrations before accepting requests. Keep OpenClaw in its existing separate process.
 
 ## 15. GitHub push-to-deploy
 
 Goal: pushing trusted code to `main` should automatically update Hublet on the MacBook with no paid service and no inbound connection to the home network.
 
-Use this flow:
+Use this deliberately small flow:
 
 ```text
 git push main
      |
 GitHub-hosted Actions
-  ruff -> pytest -> docker build
-     |
-     v only if green
-push public image to GHCR
-  ghcr.io/example/hublet:latest
+  editable install -> ruff -> pytest
      |
      v
 Mac launchd job (e.g. every 5 minutes)
-  docker compose pull
-  docker compose up -d --remove-orphans
+  git fetch public main
+  update clean checkout and shared venv when changed
+  launchctl kickstart io.hublet.runtime
      |
 GET /health
 ```
@@ -331,7 +317,6 @@ GET /health
 Why this design:
 
 - Standard GitHub-hosted Actions are free for public repositories.
-- Public GitHub Packages / GHCR images are free to publish and pull under GitHub's current public-package policy.
 - No self-hosted GitHub runner is exposed to public-repository workflows.
 - No webhook endpoint, reverse proxy, tunnel or cloud server is required.
 - The Mac initiates outbound pulls only.
@@ -339,20 +324,22 @@ Why this design:
 
 The Mac should run a tiny `launchd` job every 5 minutes. The deploy script should:
 
-1. `docker compose pull`
-2. detect whether the image changed; if not, exit
-3. `docker compose up -d --remove-orphans`
-4. call `/health`
-5. if health fails, leave a local log entry; automatic rollback is out of scope for v1
+1. fetch `origin/main` and exit if its commit matches the external `RELEASE` file
+2. refuse to deploy if the checkout is dirty or the newest daily snapshot is over 26 hours old
+3. check out the commit and install locked dependencies into the shared virtual environment
+4. restart the runtime and call `/health`
+5. record the new and previous commit SHAs only after health succeeds
 
-Use immutable commit-SHA image tags as well as `latest` so a manual rollback is possible. Do not add Watchtower unless the simple `launchd` script proves unreliable; one shell script is less infrastructure.
+Automatic rollback, staged releases and model-driven monitoring are out of scope. Manual
+rollback uses the recorded previous SHA. The polling job is ordinary shell and Git work and
+does not consume LLM tokens.
 
 ### Zero-cost requirement
 
 Hublet must have **$0 recurring software/service cost**. The implementation must not require:
 
 - paid GitHub runners
-- paid container registry/storage
+- paid package or artifact storage
 - Vercel, Render, Railway, Fly.io or other hosted deployment
 - a purchased domain
 - hosted database
@@ -360,13 +347,13 @@ Hublet must have **$0 recurring software/service cost**. The implementation must
 - paid auth provider
 - paid APIs for core functionality
 
-Use the existing MacBook, home network, Docker, SQLite, Bonjour/mDNS, GitHub public-repository Actions, public GHCR and local `launchd`. Hardware, electricity, internet access and any existing OpenClaw/model costs are outside Hublet's software/service budget.
+Use the existing MacBook, home network, Python, SQLite, Bonjour/mDNS, GitHub public-repository Actions and local `launchd`. Hardware, electricity, internet access and any existing OpenClaw/model costs are outside Hublet's software/service budget.
 
 ## 16. Backup and recovery
 
 Provide one command that snapshots all four databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
 
-Restore: stop container -> replace affected .db with chosen snapshot -> start container -> verify /health.
+Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot -> start the runtime -> verify `/health`.
 
 ## 17. Explicit non-goals
 
@@ -388,24 +375,24 @@ Restore: stop container -> replace affected .db with chosen snapshot -> start co
 
 | Phase | Deliverable / acceptance criterion |
 | --- | --- |
-| 1. Foundation | Container, /health, SQLite helper, migration helper, plugin registry. |
+| 1. Foundation | Native process, /health, SQLite helper, migration helper, plugin registry. |
 | 2. Coffee vertical slice | Discord -> OpenClaw -> MCP -> coffee.db -> response works for log_shot and history. |
 | 3. Goals | Add plugin without changing core architecture beyond registration. |
 | 4. Recipes | Link Notes recipes and store cook logs only; prove history/conclusion workflow. |
 | 5. Launcher | Pico CSS home page and four plugin pages, usable on iPhone over home Wi-Fi. |
-| 6. Operations | Independent MCP bearer and signed-cookie dashboard auth, backup command, public GitHub CI, public GHCR image, launchd auto-pull deployment. |
+| 6. Operations | Independent MCP bearer and signed-cookie dashboard auth, backup command, public GitHub CI and launchd auto-pull deployment. |
 | 7. Stop | Do not add more platform machinery until a real use case demands it. |
 
 ## 19. Definition of done
 
 - One public GitHub repository containing no personal data or secrets.
-- One Docker container and one Python process.
-- Four independent SQLite files persisted outside the container.
+- One native Python process supervised by launchd.
+- Four independent SQLite files persisted outside the checkout.
 - One MCP endpoint registered with OpenClaw.
 - Coffee, Goals, Recipes and Food usable naturally from Discord.
 - Home launcher reachable from iPhone on the LAN and styled with Pico CSS.
 - Apple Notes remains canonical for recipe content.
-- Push to main automatically tests, builds a public GHCR image, and is pulled/deployed by the MacBook.
+- Push to main is tested by GitHub Actions and polled directly by the MacBook.
 - Daily database snapshots exist and restore procedure is documented.
 - System remains understandable without an operations manual or paid cloud services.
 - Hublet incurs $0 recurring software/service cost.

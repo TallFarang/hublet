@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>io.hublet.backup</string>
+  <string>io.hublet.runtime</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/sh</string>
-    <string>__HUBLET_REPOSITORY_DIR__/ops/hublet-backup.sh</string>
+    <string>__HUBLET_REPOSITORY_DIR__/ops/hublet-runtime.sh</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>
@@ -16,16 +16,15 @@
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
-  <key>StartCalendarInterval</key>
-  <dict>
-    <key>Hour</key>
-    <integer>3</integer>
-    <key>Minute</key>
-    <integer>15</integer>
-  </dict>
+  <key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
   <key>StandardOutPath</key>
-  <string>__HUBLET_LOG_DIR__/backup.log</string>
+  <string>__HUBLET_LOG_DIR__/runtime.log</string>
   <key>StandardErrorPath</key>
-  <string>__HUBLET_LOG_DIR__/backup.log</string>
+  <string>__HUBLET_LOG_DIR__/runtime.log</string>
 </dict>
 </plist>

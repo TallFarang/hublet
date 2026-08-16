@@ -75,25 +75,6 @@ REQUIRED_ENV_KEYS = {
     "HUBLET_PUBLIC_ORIGIN",
     "HUBLET_SESSION_SECRET",
 }
-REQUIRED_DOCKERIGNORE_ENTRIES = {
-    ".coverage",
-    ".coverage.*",
-    ".env",
-    ".env.*",
-    "*.db",
-    "*.egg-info/",
-    "*.key",
-    "*.pem",
-    "*.sqlite",
-    "*.sqlite3",
-    "backups",
-    "coverage.xml",
-    "data",
-    "deploy.env",
-    "htmlcov/",
-    "secrets",
-    "secrets.env",
-}
 PINNED_REQUIREMENT = re.compile(r"^[A-Za-z0-9_.-]+==[^=\s]+$")
 
 
@@ -103,14 +84,6 @@ def read_env_example() -> dict[str, str]:
         for line in (REPOSITORY_ROOT / ".env.example").read_text().splitlines()
         if line and not line.startswith("#")
     )
-
-
-def read_ignore_entries(filename: str) -> set[str]:
-    return {
-        line.strip()
-        for line in (REPOSITORY_ROOT / filename).read_text().splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    }
 
 
 def read_lock(filename: str) -> dict[str, str]:
@@ -146,16 +119,15 @@ def test_example_environment_has_required_generic_settings() -> None:
     )
 
 
-def test_dockerignore_excludes_private_and_generated_artifacts() -> None:
-    assert REQUIRED_DOCKERIGNORE_ENTRIES <= read_ignore_entries(".dockerignore")
-
-
 def test_project_metadata_has_only_approved_exact_direct_pins() -> None:
-    project = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text())["project"]
+    configuration = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text())
+    project = configuration["project"]
+    discovery = configuration["tool"]["setuptools"]["packages"]["find"]
 
     assert project["requires-python"] == ">=3.13"
     assert set(project["dependencies"]) == EXPECTED_RUNTIME_DEPENDENCIES
     assert set(project["optional-dependencies"]["dev"]) == EXPECTED_DEV_DEPENDENCIES
+    assert discovery == {"include": ["app", "app.*"], "namespaces": False}
 
 
 def test_resolved_lock_files_are_pinned_and_separated() -> None:

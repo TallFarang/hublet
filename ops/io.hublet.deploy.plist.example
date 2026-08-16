@@ -7,8 +7,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/sh</string>
-    <string>__HUBLET_REPOSITORY_DIR__/ops/hublet-ops.sh</string>
-    <string>deploy</string>
+    <string>__HUBLET_REPOSITORY_DIR__/ops/hublet-deploy.sh</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>

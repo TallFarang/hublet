@@ -71,45 +71,57 @@ deterministic nutrition IDs and only the needed legacy variants, verifies correc
 totals, and confirms both source checksums remain unchanged.
 Keep the source CSVs outside the repository as read-only rollback archives.
 
-## CI and container images
+## CI
 
-Pull requests and pushes run Ruff and pytest on GitHub-hosted runners. A green push to
-`main` also publishes `ghcr.io/tallfarang/hublet` for both amd64 and arm64, tagged as
-`latest` and with the immutable commit SHA.
-
-After the first publish, change the package visibility to **Public** once in its GitHub
-Package settings; [GHCR packages start private by default](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+Pull requests and pushes run a clean editable install, Ruff and pytest on a GitHub-hosted
+runner. Hublet does not publish or require a container image.
 
 ## Mac deployment
 
-Keep the checkout, live data, backups, logs, and environment files in owner-chosen local
-paths. Nothing in the repository fixes a Mac username, LAN address, or private directory.
-The Compose service publishes port 8787 on the host; set `HUBLET_PUBLIC_ORIGIN` in the
-external secrets file to the real hostname or LAN address trusted devices use.
+Hublet runs directly from one Git checkout and one virtual environment under `launchd`.
+Keep the checkout, live data, backups, logs and environment files in owner-chosen local
+paths. Nothing in the repository fixes a Mac username, LAN address or private directory.
 
-Create the local directories, copy `.env.example` to an external `secrets.env`, replace its
-placeholders with three independently generated random values, and keep it mode 600. Create
-an external `deploy.env` containing the host-side paths:
+Create a private root directory, clone this repository into its `app` directory, and create
+the runtime environment:
 
 ```sh
-HUBLET_HOST_DATA_DIR=$HOME/.hublet/data
-HUBLET_HOST_BACKUP_DIR=$HOME/.hublet/backups
-HUBLET_ENV_FILE=$HOME/.hublet/secrets.env
+git clone https://github.com/TallFarang/hublet.git /absolute/path/to/hublet/app
+python3.13 -m venv /absolute/path/to/hublet/venv
+/absolute/path/to/hublet/venv/bin/python -m pip install \
+  -r /absolute/path/to/hublet/app/requirements.lock
+/absolute/path/to/hublet/venv/bin/python -m pip install \
+  --no-deps -e /absolute/path/to/hublet/app
 ```
 
-To pin or roll back the image, add `HUBLET_IMAGE=ghcr.io/tallfarang/hublet:<commit-sha>` to
-that file. Run either operation manually with:
+Copy `.env.example` to `<root>/secrets.env`, replace its placeholders, point its data and
+backup settings outside the checkout, and keep it mode 600. Create an external `deploy.env`:
 
 ```sh
-HUBLET_DEPLOY_ENV=$HOME/.hublet/deploy.env sh ops/hublet-ops.sh deploy
-HUBLET_DEPLOY_ENV=$HOME/.hublet/deploy.env sh ops/hublet-ops.sh backup
+HUBLET_ROOT=/absolute/path/to/hublet
 ```
 
-For automatic operation, copy the two templates in `ops/` to `~/Library/LaunchAgents/`,
-replace their three `__HUBLET_*__` placeholders with absolute local paths, and validate them
-with `plutil -lint`. Bootstrap them with `launchctl bootstrap gui/$(id -u) <plist>`. The
-deploy job checks every five minutes but restarts the service only when the pulled image
-changes; the backup job runs daily at 03:15. Their local log paths are set in the templates.
+Write the checkout's current SHA to the release marker:
+
+```sh
+git -C /absolute/path/to/hublet/app rev-parse HEAD \
+  > /absolute/path/to/hublet/RELEASE
+```
+
+Copy the three plist templates in `ops/` to `~/Library/LaunchAgents/`, replace their
+placeholders with absolute local paths, and validate them with `plutil -lint`. Bootstrap
+them with `launchctl bootstrap gui/$(id -u) <plist>`.
+
+The runtime is kept alive by launchd, backups run daily at 03:15, and the deploy job checks
+public GitHub `main` every five minutes. It exits when nothing changed and refuses to update
+unless the checkout is clean and a successful daily snapshot is less than 26 hours old.
+For a changed commit it updates the shared environment, restarts Hublet, checks `/health`,
+then records the SHA in `RELEASE`. Shell and Git polling do not invoke an LLM.
+
+Automatic rollback is intentionally omitted. To undo a release, unload the deploy job, stop
+the runtime, check out the SHA in `<root>/PREVIOUS_RELEASE`, reinstall the locked runtime
+requirements and editable project, restart `io.hublet.runtime`, and verify `/health`. Restore
+databases separately from the daily snapshots only when required.
 
 Never expose Hublet through router port forwarding. It is designed for one trusted user on
 a home LAN.
