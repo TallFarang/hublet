@@ -3,20 +3,13 @@
 {% block body_class %}launcher-page{% endblock %}
 {% block main_class %}launcher{% endblock %}
 {% block content %}
-  <header class="page-heading launcher-heading">
-    <h1>Personal</h1>
-    <p>Three useful places. Nothing else competing for attention.</p>
-  </header>
-  <section class="launcher-grid" aria-label="Hublet plugins">
+  <h1 class="visually-hidden">Hublet plugins</h1>
+  <nav class="launcher-grid launcher-grid--{{ plugins|length }}" aria-label="Hublet plugins">
     {% for plugin in plugins %}
-    <a class="launcher-card launcher-card--{{ plugin.name }}" href="{{ plugin.url }}">
+    <a class="launcher-tile launcher-tile--{{ plugin.name }}" href="{{ plugin.url }}">
       <span class="launcher-icon">{{ plugin_icon(plugin.icon) }}</span>
-      <span class="launcher-copy">
-        <strong>{{ plugin.name|capitalize }}</strong>
-        <small>{{ plugin.summary }}</small>
-      </span>
-      <span class="launcher-action">Open <span aria-hidden="true">→</span></span>
+      <span class="launcher-copy"><strong>{{ plugin.name|capitalize }}</strong><small>{{ plugin.summary }}</small></span>
     </a>
     {% endfor %}
-  </section>
+  </nav>
 {% endblock %}

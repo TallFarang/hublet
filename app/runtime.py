@@ -14,7 +14,7 @@ from app.db import connect, migrate
 
 @dataclass(frozen=True, slots=True)
 class Plugin:
-    """The complete convention shared by Hublet's three explicit plugins."""
+    """The complete convention shared by Hublet's explicit plugins."""
 
     name: str
     icon: str

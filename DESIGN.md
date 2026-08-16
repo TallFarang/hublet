@@ -1,250 +1,249 @@
 ---
 name: Hublet
-description: A modular home wall organizer for three small personal-memory tools.
+description: A restrained dark quick-glance dashboard for four personal-memory plugins.
 colors:
-  ink: "#152431"
-  muted-ink: "#526474"
-  utility-ground: "#e9eef2"
-  surface: "#ffffff"
-  divider: "#cbd5dc"
-  coffee: "#236bc5"
-  coffee-bay: "#9bc5ff"
-  goals: "#4d6f00"
-  goals-bay: "#c9e96b"
-  recipes: "#a33c27"
-  recipes-bay: "#ff9f87"
-  focus: "#0a72dc"
+  ground: "#0b0d10"
+  surface: "#14181d"
+  surface-raised: "#1a1f25"
+  line: "#2c333b"
+  line-strong: "#414b56"
+  text: "#f2f5f7"
+  muted: "#a9b2bc"
+  focus: "#8ac7ff"
+  goals: "#9bd47b"
+  food: "#efb56a"
+  recipes: "#ec8d82"
+  coffee: "#79bce8"
+  field: "#101318"
+  inset: "#0f1216"
+  error-ground: "#321713"
+  error-text: "#ffd5d0"
 typography:
   display:
-    fontFamily: "ui-rounded, SF Pro Rounded, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "clamp(3rem, 9vw, 5.5rem)"
-    lineHeight: 0.94
-    letterSpacing: "-0.04em"
-  title:
-    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "1.1rem"
-    fontWeight: 800
-    lineHeight: 1.5
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(1.8rem, 5vw, 2.8rem)"
+    fontWeight: 700
+    lineHeight: 1.125
+    letterSpacing: "normal"
+  launcher:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(1.05rem, 3.2vw, 2.15rem)"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "-0.025em"
   body:
-    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.45
   label:
-    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "0.86rem"
-    fontWeight: 700
-    lineHeight: 1.5
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "0.82rem"
+    fontWeight: 650
+    lineHeight: 1.45
 rounded:
-  mark: "8px 8px 8px 2px"
-  control: "10px"
+  control: "12px"
   panel: "14px"
 spacing:
+  tight: "0.5rem"
   compact: "0.65rem"
-  control-x: "0.8rem"
   base: "1rem"
-  panel-edge: "1.1rem"
-  section: "2rem"
+  panel-edge: "clamp(1rem, 3vw, 1.75rem)"
+  section: "clamp(3rem, 8vw, 6rem)"
 components:
   button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.surface}"
+    backgroundColor: "{colors.text}"
+    textColor: "{colors.ground}"
     rounded: "{rounded.control}"
-    padding: "0.7rem 0.8rem"
+    padding: "0.65rem 0.75rem"
     height: "44px"
   button-quiet:
     backgroundColor: "transparent"
-    textColor: "{colors.muted-ink}"
+    textColor: "{colors.muted}"
     rounded: "{rounded.control}"
     padding: "0.45rem 0.7rem"
     height: "40px"
   field:
-    backgroundColor: "#fbfcfd"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.field}"
+    textColor: "{colors.text}"
     rounded: "{rounded.control}"
-    padding: "0.7rem 0.8rem"
+    padding: "0.65rem 0.75rem"
   panel:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
+    textColor: "{colors.text}"
     rounded: "{rounded.panel}"
-    padding: "clamp(1.1rem, 3vw, 2rem)"
-  launcher-coffee:
-    backgroundColor: "{colors.coffee-bay}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.panel}"
-    padding: "clamp(1.25rem, 3vw, 2rem)"
-  launcher-goals:
-    backgroundColor: "{colors.goals-bay}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.panel}"
-    padding: "clamp(1.25rem, 3vw, 2rem)"
-  launcher-recipes:
-    backgroundColor: "{colors.recipes-bay}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.panel}"
-    padding: "clamp(1.25rem, 3vw, 2rem)"
-  navigation-primary:
+    padding: "{spacing.panel-edge}"
+  launcher-tile:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    height: "68px"
+    textColor: "{colors.text}"
+    rounded: "{rounded.panel}"
+    padding: "clamp(0.7rem, 2.5vw, 1.35rem)"
+  navigation-primary:
+    backgroundColor: "{colors.ground}"
+    textColor: "{colors.text}"
+    height: "56px"
 ---
 
 # Design System: Hublet
 
 ## Overview
 
-**Creative North Star: "The Modular Home Wall Organizer"**
+**Creative North Star: "Night Instruments"**
 
-Hublet feels like a compact household fixture: three purpose-built bays mounted on cool utility gray, with ink-blue structure, precise labels, and soft molded depth. It is friendly and tactile without becoming decorative, gamified, or dashboard-like.
+Hublet is a compact bank of instruments used to check personal facts in seconds. Matte near-black infrastructure, ruled charcoal surfaces, pale readings, and one quiet signal color per plugin make the interface feel precise and calm without borrowing the spectacle of an analytics suite.
 
-The interface is an operating surface for short, trusted-device sessions. Records stay visually primary, forms remain native and direct, and each plugin owns one saturated color family so the user always knows which bay they are working in.
+The system is native, factual, and dense enough for an iPhone. Status and charts occupy the first useful viewport; controls and history wait below. There are no ornamental layers, slogans, web fonts, or decorative motion. Lucide-derived line icons and tabular numerals carry most of the visual character.
 
 **Key Characteristics:**
 
-- Cool utility-gray ground with white working surfaces.
-- Ink structure and a distinct saturated family for each plugin.
-- Rounded display voice paired with restrained system UI text.
-- Molded panels, fine dividers, and soft offset depth.
-- Mobile-first task order with one reduced-motion-safe settle.
+- Matte dark ground with bordered charcoal instrument surfaces.
+- Modern system sans throughout, with tight headings and tabular readings.
+- Restrained Goals, Food, Recipes, and Coffee signal colors.
+- A compact two-column launcher built for up to eight plugins.
+- Inline charts and current status before forms, history, or definitions.
 
 ## Colors
 
-The palette keeps shared infrastructure cool and quiet while Coffee, Goals, and Recipes each receive a recognizable accent and a lighter launcher bay.
+The palette is almost monochrome infrastructure with four semantic plugin signals. Accent color identifies a domain and highlights its live readings; it does not fill large surfaces.
 
 ### Primary
 
-- **Organizer Ink:** Shared text, navigation, brand mark, and default action color.
-- **Focus Blue:** A consistent, high-contrast keyboard focus outline across all controls.
+- **Night Ground:** The continuous page canvas, header, and inverse text color for filled actions.
+- **Instrument White:** Primary text, shared filled actions, and the highest-contrast reading color.
+- **Focus Blue:** The global visible keyboard outline on links and controls.
 
 ### Secondary
 
-- **Coffee Blue:** Coffee actions and contextual emphasis.
-- **Goal Green:** Goal actions and contextual emphasis.
-- **Recipe Terracotta:** Recipe actions and contextual emphasis.
+- **Goal Signal:** Goal progress values, chart traces, completed states, and Goals actions.
+- **Food Signal:** Nutrition readings, seven-day bars, and Food identity. Food remains read-only in the dashboard, so this color does not imply an editing action.
+- **Recipe Signal:** Recipe readings, rating traces, and Recipes actions.
+- **Coffee Signal:** Coffee readings, extraction traces, and Coffee actions.
 
 ### Tertiary
 
-- **Coffee Bay Blue:** The Coffee launcher panel and brand-mark layer.
-- **Goal Bay Lime:** The Goals launcher panel and brand-mark layer.
-- **Recipe Bay Coral:** The Recipes launcher panel.
+- **Error Ground / Error Text:** A warm, dark alert pair used for server-returned form errors.
 
 ### Neutral
 
-- **Utility Ground:** The cool page canvas surrounding the organizer surfaces.
-- **Work Surface:** Cards, rails, login, and error containers.
-- **Muted Ink:** Supporting copy, labels, metadata, measurements, and quiet actions.
-- **Divider Gray:** Structural borders, record separators, and helper-note outlines.
+- **Instrument Surface:** Default launcher tiles, panels, and management surfaces.
+- **Raised Surface:** Hover feedback for launcher tiles and quiet buttons.
+- **Rule / Strong Rule:** Dividers, panel edges, chart baselines, and form control boundaries.
+- **Muted Reading:** Labels, metadata, timestamps, captions, navigation links, and empty states.
+- **Field / Inset:** Dark recessed fills for inputs, code, and chart tracks.
 
 ### Named Rules
 
-**The One Bay, One Family Rule.** A plugin uses only its assigned dark accent for actions and its matching light bay on the launcher.
+**The Signal, Not Surface Rule.** Plugin colors belong on icons, live values, chart marks, and contextual actions; large panels stay neutral.
 
-**The Cool Infrastructure Rule.** Shared chrome stays ink, white, or utility gray; plugin color communicates place, not decoration.
+**The Food Means Read Rule.** Food may use its amber signal for nutrition status, but the web dashboard exposes no Food mutation controls.
 
 ## Typography
 
-**Display Font:** UI Rounded, with SF Pro Rounded and the system sans stack as fallbacks  
-**Body Font:** System UI, with Segoe UI and sans-serif fallbacks
+**Display Font:** Native system sans, led by San Francisco on Apple platforms
 
-**Character:** Large, close-set rounded headings make a small utility feel domestic and approachable. System UI handles every working label, field, record, and measurement for speed and native familiarity.
+**Body Font:** The same native system sans stack
+
+**Character:** One modern system face keeps the interface immediate and dependency-free. Hierarchy comes from size, weight, tight tracking, color, and tabular numerals rather than a decorative display family.
 
 ### Hierarchy
 
-- **Display:** Tight line height and negative tracking for page and error headings; keep primary headings near a compact twelve-character measure.
-- **Launcher Title:** Rounded, bold, close-set type sized responsively between compact and wide layouts.
-- **Title:** Heavy system text for action-panel summaries, navigation landmarks, counts, and strong actions.
-- **Body:** Native system text at the browser root size for records, instructions, and form content; explanatory page copy is capped at 62 characters.
-- **Label:** Compact, bold system text in muted ink; labels remain sentence case.
+- **Display:** Tight, responsive page titles for plugin identity and authentication states.
+- **Launcher:** Large, compact destination names that remain legible inside short tiles.
+- **Title:** One-rem panel headings and semibold record identities; keep headings terse.
+- **Body:** Root-size operational copy, forms, records, and explanations with a compact 1.45 line height.
+- **Label:** Small, muted, semibold field labels, chart captions, metadata, and navigation.
+- **Readings:** Bold responsive values in tabular numerals; color them with the current plugin signal.
 
 ### Named Rules
 
-**The Rounded Voice Rule.** Rounded type speaks only for identity and major destinations; operational copy always returns to the system sans.
+**The One Native Voice Rule.** Do not introduce web fonts or a separate display face; the system sans is part of Hublet's speed and restraint.
+
+**The Numbers Hold Still Rule.** Measurements, counts, dates, chart endpoints, and status numerals use tabular figures wherever alignment changes over time.
 
 ## Layout
 
-The shared shell is centered at a maximum width of 1120px with responsive side gutters. Desktop plugin pages use a fluid records column beside a 290–360px action rail; the launcher uses one slightly larger first bay followed by two equal bays.
+The shared shell is centered at a maximum width of 1120px. It uses 1rem side gutters on wider screens and 0.5rem gutters at 760px and below. The header is a fixed-height 56px rail, while page content remains in normal document flow.
 
-At 760px and below, every grid becomes a single column. The action rail moves before records so the common manual action arrives first on a phone, two-column forms collapse, history rows stack, and destination links hide while the brand and sign-out control remain. Touch actions maintain at least 44px height, except the intentionally compact 40px quiet action.
+The launcher fills the remaining small viewport height and always uses two equal columns. With one to eight plugins, rows flex to fit and overflow is suppressed; this keeps the approved Goals, Food, Recipes, Coffee order visible without scrolling on an iPhone 17 and preserves room for four more destinations. Beyond eight, rows receive a 112px minimum and the launcher may scroll.
 
-Spacing uses a compact working rhythm around controls and records, then larger responsive gaps between page-level regions. Panels use fluid edge padding; headings receive substantially more separation than fields or list rows.
+Plugin pages place a 64px title row above an instrument panel sized to fill the first useful viewport. Current readings, progress, and inline charts come first. A deliberate gap separates that quick-glance layer from management. Forms and dual management panels use two columns when space allows, then collapse to one column at 760px. Primary navigation links hide at that breakpoint, leaving Home through the Hublet brand and a 44px sign-out control.
 
-**The Task-First Mobile Rule.** Responsive reordering follows what the owner came to do, not desktop source order.
+In-page cues use native smooth scrolling. The reduced-motion preference restores immediate scrolling.
+
+**The Read, Then Act Rule.** Every plugin opens on current status; forms, histories, and definitions begin below the first instrument panel.
+
+**The Eight-Fit Rule.** Preserve the launcher's two-column, viewport-fitted behavior for up to eight destinations; do not turn it into a scrolling card feed at the supported limit.
 
 ## Elevation & Depth
 
-Hublet uses a hybrid of tonal layering and soft offset shadows. White working surfaces and saturated launcher bays lift from the utility ground with a diffuse low shadow; bordered action panels and helper notes remain attached to the wall. Hover deepens a launcher bay's shadow without moving it.
-
-### Shadow Vocabulary
-
-- **Panel Depth:** `0 10px 24px rgb(21 36 49 / 12%)` for launcher bays, record panels, login, and error surfaces.
-- **Bay Hover:** `0 14px 30px rgb(21 36 49 / 18%)` for launcher-card hover only.
-- **Mark Depth:** `0 7px 16px rgb(21 36 49 / 16%)` for the layered Hublet mark.
+Hublet uses no box shadows. Tonal layering and one-pixel rules create all depth: Night Ground supports Instrument Surface, recessed fields use Field or Inset, and hover moves one tonal step to Raised Surface. Charts remain drawn directly into the panel rather than floating in nested cards.
 
 ### Named Rules
 
-**The Attached Rail Rule.** Secondary action and helper panels use borders, not shadows; depth is reserved for primary surfaces and destinations.
+**The Ruled, Not Raised Rule.** Boundaries come from color and lines; never add shadows to panels, tiles, navigation, or controls.
 
 ## Shapes
 
-The form language is softly molded: working panels and launcher bays use broad 14px corners, controls and messages use 10px corners, and the 28px brand tile uses an asymmetric 8px corner set with a tighter lower-left corner. Thin dividers organize record density without nesting extra cards.
+The form language is restrained and slightly softened. Main panels and launcher tiles use broad 14px corners; controls and error messages use 12px corners. Records, histories, reading groups, and chart tracks rely on straight one-pixel dividers inside those outer shapes rather than nesting rounded cards.
 
-**The Panel, Not Card Stack Rule.** Use one molded container with internal dividers for a record collection; do not wrap every row in its own floating card.
+Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view box and a 2px stroke. Their geometry stays recognizable and functional; plugin signal color supplies identity.
+
+**The Outer Radius Rule.** Round the containing instrument, not every row inside it.
 
 ## Components
 
 ### Buttons
 
-- **Shape:** Gently rounded controls with a minimum 44px touch height and heavy labels.
-- **Primary:** Ink in shared contexts; Coffee Blue, Goal Green, or Recipe Terracotta inside the matching plugin page.
-- **Hover / Focus:** Preserve the contextual fill and use the global 3px Focus Blue outline with a 3px offset for keyboard focus.
-- **Quiet:** Transparent with muted text and a Divider Gray stroke; hover shifts to a faint cool surface and darker border.
+- **Primary:** At least 44px tall, bold, and inverted; shared actions use Instrument White, while plugin actions use the current signal color.
+- **Quiet:** A compact 40px secondary control with muted text, a strong rule, and no fill until hover.
+- **Hover / Focus:** Hover changes tone without movement. Keyboard focus always uses the 3px Focus Blue outline with a 3px offset.
 
-### Launcher Bays
+### Launcher Tiles
 
-- **Shape:** Large molded destinations with broad corners and generous fluid padding.
-- **Color:** One light plugin color per bay, always with Organizer Ink content.
-- **Content:** A 64px line icon, rounded destination title, short factual summary, and explicit Open action.
-- **State:** Hover deepens only the ambient shadow; layout and color remain stable.
+- **Structure:** A two-column internal grid pairs a responsive line icon with a clipped name-and-summary block.
+- **State:** Neutral Instrument Surface at rest; Raised Surface and a stronger border on hover. Tiles never lift, scale, or acquire shadows.
+- **Order:** Goals, Food, Recipes, Coffee is the shipped primary sequence. Future plugins append without disturbing that order unless product priority changes.
 
-### Cards / Containers
+### Instrument Panels and Charts
 
-- **Working Panel:** White surface, broad corners, responsive internal padding, and Panel Depth.
-- **Action Panel:** White surface, broad corners, Divider Gray border, and no shadow.
-- **Helper Note:** White bordered panel with compact padding and muted supporting text.
+- **Panel:** One bordered neutral surface owns the first useful viewport.
+- **Readings:** Four values appear in a ruled grid; on compact screens it becomes a two-by-two matrix.
+- **Charts:** Inline SVG line charts and CSS bar charts use strong-rule baselines, muted target lines, and the current plugin signal for data. Empty states remain centered and quiet.
 
 ### Inputs / Fields
 
-- **Style:** Near-white fill, cool gray stroke, 10px corners, compact internal padding, and ink text.
-- **Focus:** The same visible Focus Blue outline used throughout the application.
-- **Error:** A warm pale message surface with dark terracotta text; errors use `role="alert"` and sit beside the affected form.
+- **Style:** Recessed Field fill, Strong Rule border, 12px corners, visible sentence-case labels, and native controls.
+- **Focus:** The same global Focus Blue outline used across the application.
+- **Error:** Server-returned errors use the warm error pair and `role="alert"`; no client-side UI dependency is assumed.
 
 ### Records
 
-- **Style:** Native disclosure rows separated by thin dividers inside one records panel.
-- **Summary:** At least 76px tall, with primary identity on the left and action or measurement on the right.
-- **Body:** Editing, progress, or history content opens in place; measurements use tabular numerals.
+- **Style:** Native disclosure rows inside one bordered records panel, with internal rules and at least 68px summary height.
+- **Body:** Editing, observations, cook logs, evidence, and nested histories open in place. Measurements align opposite identity on wide screens and stack left on compact screens.
 
 ### Navigation
 
-- **Desktop:** A 68px white rail with the layered Hublet mark, direct plugin links, and a quiet sign-out control.
-- **Mobile:** Hide plugin links and retain the home mark plus a compact full-width sign-out control in the trailing slot.
+- **Desktop:** A 56px Night Ground rail with the Hublet wordmark, plugin links in shipped order, and an icon-only sign-out action.
+- **Mobile:** Plugin links hide; the wordmark remains a Home affordance and sign-out retains a 44px target.
 
-### Motion
+### Food Status
 
-The page settles once on entry over 360ms using a fast-out easing curve, fading from 0.88 opacity while moving upward by 6px. Disable the motion entirely when reduced motion is requested; no other component animation is part of the system.
+- **Read-only:** Food shows four current readings, a seven-day calorie bar chart, tracking issues, stored counts, and an explicit note that changes happen through OpenClaw. Do not add dashboard forms without changing the product contract.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** keep records and the current plugin's primary action in the first useful viewport.
-- **Do** use semantic server-rendered controls, native disclosures, and visible labels.
-- **Do** use internal dividers to organize dense history inside one molded working panel.
-- **Do** preserve the single settle motion and its reduced-motion override.
+- **Do** keep the first useful viewport devoted to current status, progress, and charts.
+- **Do** preserve the compact two-column launcher and the Goals, Food, Recipes, Coffee order.
+- **Do** use semantic server-rendered HTML, native disclosures, visible labels, and accessible SVG titles.
+- **Do** keep all essential interaction targets at least 44px tall, except the intentionally compact 40px quiet button.
+- **Do** use internal rules to organize dense records and histories inside one outer panel.
 
 ### Don't:
 
-- **Don't** turn Hublet into an analytics dashboard, plugin marketplace, or generic productivity shell.
-- **Don't** mix plugin color families or spread saturated color into shared navigation and infrastructure.
-- **Don't** create a floating card for every row or add ornamental depth to secondary rails.
-- **Don't** replace the system UI body voice with a decorative typeface.
+- **Don't** add shadows, gradients, glass effects, decorative animation, or ornamental card stacks.
+- **Don't** introduce web fonts, icon fonts, external assets, JavaScript charts, or frontend-framework assumptions.
+- **Don't** fill large surfaces with plugin colors or use those signals as decoration.
+- **Don't** put forms above the current-status instrument panel.
+- **Don't** add Food mutation controls to the web dashboard while Food remains read-only there.

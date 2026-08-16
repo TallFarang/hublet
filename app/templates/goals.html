@@ -1,183 +1,85 @@
 {% extends "base.html" %}
+{% from "charts.html" import line_chart %}
+{% from "icons.html" import icon %}
 {% block body_class %}plugin-page goals-page{% endblock %}
 {% block content %}
-  <header class="page-heading plugin-heading">
-    <a class="back-link" href="/">← Personal</a>
-    <h1>Goals</h1>
-    <p>Definitions and automatically collected evidence, together in one durable registry.</p>
-  </header>
-  <div class="workspace-grid">
-    <section class="records-panel goals-registry" aria-labelledby="goals-registry-heading">
-      <div class="section-heading">
-        <h2 id="goals-registry-heading">Goal registry</h2>
-        <span>{{ domains | sum(attribute='goals', start=[]) | length }}</span>
-      </div>
-      {% for domain in domains %}
-      <section class="domain-section" aria-labelledby="domain-{{ domain.id }}">
-        <header class="domain-heading">
-          <h3 id="domain-{{ domain.id }}">{{ domain.name }}</h3>
-          <span>{{ domain.status | replace('_', ' ') }}</span>
-        </header>
-        {% if domain.goals %}
-        <div class="record-list">
-          {% for goal in domain.goals %}
-          <details class="record">
-            <summary>
-              <span class="record-summary">
-                <strong>{{ goal.outcome }}</strong>
-                <small>
-                  {{ goal.horizon | replace('_', ' ') if goal.horizon else 'No horizon' }}
-                  · {{ goal.status | replace('_', ' ') }}
-                </small>
-              </span>
-              <span class="target-line">
-                {% if goal.target %}
-                  {{ goal.target.metric | replace('_', ' ') }}
-                  {% if goal.target.value is not none %}{{ goal.target.direction | replace('_', ' ') }} {{ goal.target.value }} {{ goal.target.unit or '' }}
-                  {% else %}{{ goal.target.direction | replace('_', ' ') }}{% endif %}
-                {% else %}No structured target{% endif %}
-              </span>
-            </summary>
-            <div class="record-body goal-body">
-              {% if goal.description %}<p class="goal-description">{{ goal.description }}</p>{% endif %}
-              <div class="definition-grid">
-                <section>
-                  <h4>Target</h4>
-                  {% if goal.target %}
-                    <p><strong>{{ goal.target.metric | replace('_', ' ') }}</strong><br>
-                    {% if goal.target.value is not none %}{{ goal.target.direction | replace('_', ' ') }} {{ goal.target.value }} {{ goal.target.unit or '' }}{% else %}{{ goal.target.direction | replace('_', ' ') }}{% endif %}</p>
-                    {% if goal.target.required_duration %}
-                    <small>Required for {{ goal.target.required_duration.count }}{% if goal.target.required_duration.consecutive %} consecutive{% endif %} {{ goal.target.required_duration.unit }}</small>
-                    {% endif %}
-                  {% else %}<p class="unavailable">No structured target</p>{% endif %}
-                </section>
-                <section>
-                  <h4>Supporting systems</h4>
-                  {% if goal.systems %}<ul class="definition-list">{% for system in goal.systems %}<li>{{ system }}</li>{% endfor %}</ul>
-                  {% else %}<p class="unavailable">No systems defined</p>{% endif %}
-                </section>
-                <section>
-                  <h4>Dependencies</h4>
-                  {% if goal.dependencies %}<ul class="definition-list">{% for dependency in goal.dependencies %}<li><code>{{ dependency }}</code></li>{% endfor %}</ul>
-                  {% else %}<p class="unavailable">No dependencies</p>{% endif %}
-                </section>
-                {% if goal.notes %}
-                <section>
-                  <h4>Notes</h4>
-                  <ul class="definition-list">{% for note in goal.notes %}<li>{{ note }}</li>{% endfor %}</ul>
-                </section>
-                {% endif %}
-              </div>
-
-              <section class="evidence-section">
-                <h4>Evidence sources</h4>
-                {% if goal.evidence_sources %}
-                <ul class="source-list">
-                  {% for source in goal.evidence_sources %}
-                  <li>
-                    <div class="source-copy">
-                      <strong>{{ source.metric | replace('_', ' ') }}</strong>
-                      <small>{{ source.source }} · {{ source.cadence | replace('_', ' ') }} · {{ source.role | replace('_', ' ') }} · {{ source.tracking_status | replace('_', ' ') }}</small>
-                    </div>
-                    <div class="source-reading">
-                      {% if source.latest %}
-                        <strong>{{ source.latest.value }} {{ source.latest.unit or '' }}</strong>
-                        <small>{{ source.latest.observed_at or (source.latest.period_start ~ '–' ~ source.latest.period_end) }}</small>
-                      {% elif source.tracking_status != 'connected' %}
-                        <strong class="unavailable">Source unavailable</strong>
-                        <small>{{ source.tracking_status | replace('_', ' ') }}</small>
-                      {% else %}
-                        <strong class="unavailable">No observations recorded</strong>
-                        <small>{{ source.tracking_status | replace('_', ' ') }}</small>
-                      {% endif %}
-                    </div>
-                    {% if source.collection_notes %}<p class="source-notes"><strong>Collection:</strong> {{ source.collection_notes }}</p>{% endif %}
-                    {% if source.access_notes %}<p class="source-notes"><strong>Access:</strong> {{ source.access_notes }}</p>{% endif %}
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% else %}<p class="unavailable">No evidence sources defined</p>{% endif %}
-              </section>
-
-              <details class="history-disclosure">
-                <summary>Observation history · {{ goal.history | length }}</summary>
-                {% if goal.history %}
-                <ul class="history-list">
-                  {% for observation in goal.history %}
-                  <li>
-                    <span><strong>{{ observation.value }} {{ observation.unit or '' }}</strong><small>{{ observation.metric | replace('_', ' ') }} · {{ observation.source }}</small></span>
-                    <span class="measurement">{{ observation.observed_at or (observation.period_start ~ '–' ~ observation.period_end) }}</span>
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% else %}<p class="unavailable">No observations recorded</p>{% endif %}
-              </details>
-
-              <details class="goal-edit">
-                <summary>Edit definition</summary>
-                <form method="post" action="/goals/{{ goal.id }}/edit" class="form-grid edit-form">
-                  <label>Domain
-                    <select name="domain">{% for option in domains %}<option value="{{ option.id }}" {% if option.id == goal.domain %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select>
-                  </label>
-                  <label>Display order <input name="display_order" type="number" value="{{ goal.display_order }}" required></label>
-                  <label class="full-field">Outcome <input name="outcome" value="{{ goal.outcome }}" required></label>
-                  <label class="full-field">Description <textarea name="description">{{ goal.description or '' }}</textarea></label>
-                  <label>Horizon <input name="horizon" value="{{ goal.horizon or '' }}"></label>
-                  <label>Target metric <input name="target_metric" value="{{ goal.target.metric if goal.target else '' }}"></label>
-                  <label>Target value <input name="target_value" value="{{ goal.target.value if goal.target and goal.target.value is not none else '' }}"></label>
-                  <label>Target unit <input name="target_unit" value="{{ goal.target.unit if goal.target else '' }}"></label>
-                  <label>Direction
-                    <select name="target_direction">
-                      {% for direction in ['equals', 'above', 'at_or_above', 'at_or_below', 'increasing_trend'] %}
-                      <option value="{{ direction }}" {% if goal.target and direction == goal.target.direction %}selected{% endif %}>{{ direction | replace('_', ' ') }}</option>
-                      {% endfor %}
-                    </select>
-                  </label>
-                  <button class="full-field" type="submit">Save definition</button>
-                </form>
-              </details>
-              <form method="post" action="/goals/{{ goal.id }}/status" class="status-actions">
-                {% if goal.status == 'completed' %}<button name="status" value="active" type="submit">Reactivate</button>
-                {% else %}<button name="status" value="completed" type="submit">Complete</button>{% endif %}
-                <button name="status" value="archived" type="submit" class="quiet-button">Archive</button>
-              </form>
-            </div>
-          </details>
-          {% endfor %}
+  {% set goals = domains | sum(attribute='goals', start=[]) %}
+  <header class="plugin-title"><a href="/">Home</a><h1>Goals</h1></header>
+  <section class="instrument-panel goals-instruments" aria-labelledby="goal-status">
+    <div class="instrument-heading"><h2 id="goal-status">Current progress</h2><span>{{ goals|rejectattr('status', 'equalto', 'archived')|list|length }}</span></div>
+    <div class="goal-readouts">
+      {% for goal in goals if goal.status != 'archived' %}
+      <section class="goal-readout">
+        <header><span><strong>{{ goal.outcome }}</strong><small>{{ goal.dashboard.metric }}</small></span><span class="signal signal--{{ goal.status }}">{{ goal.dashboard.state }}</span></header>
+        <div class="goal-measurement">
+          <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
+          {% if goal.target and goal.target.value is not none %}<small>Target {{ goal.target.direction|replace('_', ' ') }} {{ goal.target.value }} {{ goal.target.unit or '' }}</small>{% endif %}
         </div>
-        {% else %}<p class="empty-state">No goals in this domain yet.</p>{% endif %}
+        {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.outcome ~ ' progress') }}
+        {% else %}<p class="chart-empty">No numeric readings</p>{% endif %}
+      </section>
+      {% else %}<p class="chart-empty">No active goals.</p>{% endfor %}
+    </div>
+    <a class="scroll-cue" href="#manage" aria-label="View goal controls">{{ icon("chevron-down") }}</a>
+  </section>
+
+  <section id="manage" class="management" aria-label="Goal controls and definitions">
+    <section class="action-panel compact-action">
+      <h2>Add goal</h2>
+      <form method="post" action="/goals" class="form-grid">
+        <label>Domain<select name="domain">{% for domain in domains %}<option value="{{ domain.id }}">{{ domain.name }}</option>{% endfor %}</select></label>
+        <label>Horizon<input name="horizon"></label>
+        <label class="full-field">Outcome<input name="outcome" required></label>
+        <label>Target metric<input name="target_metric"></label><label>Target value<input name="target_value"></label>
+        <label>Unit<input name="target_unit"></label>
+        <label>Direction<select name="target_direction">{% for direction in ['equals', 'above', 'at_or_above', 'at_or_below', 'increasing_trend'] %}<option value="{{ direction }}">{{ direction|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        <label class="full-field">Description<textarea name="description"></textarea></label>
+        <button class="full-field" type="submit">Add goal</button>
+      </form>
+    </section>
+
+    <section class="records-panel goals-registry" aria-labelledby="registry-heading">
+      <div class="section-heading"><h2 id="registry-heading">Definitions</h2><span>{{ goals|length }}</span></div>
+      {% for domain in domains %}
+      <section class="domain-section">
+        <h3>{{ domain.name }}</h3>
+        {% for goal in domain.goals %}
+        <details class="record">
+          <summary><span><strong>{{ goal.outcome }}</strong><small>{{ goal.status|replace('_', ' ') }}</small></span><span>{{ goal.dashboard.latest if goal.dashboard.latest is not none else '—' }} {{ goal.dashboard.unit }}</span></summary>
+          <div class="record-body">
+            {% if goal.description %}<p>{{ goal.description }}</p>{% endif %}
+            <h4>Evidence</h4>
+            <ul class="source-list">
+              {% for source in goal.evidence_sources %}
+              <li><span><strong>{{ source.source }}</strong><small>{{ source.metric|replace('_', ' ') }}</small></span><span class="measurement">{% if source.latest %}{{ source.latest.value }} {{ source.latest.unit or '' }}{% else %}Source unavailable{% endif %}</span></li>
+              {% else %}<li class="empty-state">No evidence sources.</li>{% endfor %}
+            </ul>
+            <details class="nested-disclosure"><summary>Observation history · {{ goal.history|length }}</summary>
+              <ol class="history-list">{% for observation in goal.history %}<li><span><strong>{{ observation.value }} {{ observation.unit or '' }}</strong><small>{{ observation.metric|replace('_', ' ') }} · {{ observation.source }}</small></span><span class="measurement">{{ observation.observed_at or observation.period_end }}</span></li>{% else %}<li class="empty-state">No observations.</li>{% endfor %}</ol>
+            </details>
+            <details class="nested-disclosure"><summary>Edit definition</summary>
+              <form method="post" action="/goals/{{ goal.id }}/edit" class="form-grid">
+                <label>Domain<select name="domain">{% for option in domains %}<option value="{{ option.id }}" {% if option.id == goal.domain %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+                <label>Display order<input name="display_order" type="number" value="{{ goal.display_order }}" required></label>
+                <label class="full-field">Outcome<input name="outcome" value="{{ goal.outcome }}" required></label>
+                <label class="full-field">Description<textarea name="description">{{ goal.description or '' }}</textarea></label>
+                <label>Horizon<input name="horizon" value="{{ goal.horizon or '' }}"></label>
+                <label>Target metric<input name="target_metric" value="{{ goal.target.metric if goal.target else '' }}"></label>
+                <label>Target value<input name="target_value" value="{{ goal.target.value if goal.target and goal.target.value is not none else '' }}"></label>
+                <label>Target unit<input name="target_unit" value="{{ goal.target.unit if goal.target else '' }}"></label>
+                <label>Direction<select name="target_direction">{% for direction in ['equals', 'above', 'at_or_above', 'at_or_below', 'increasing_trend'] %}<option value="{{ direction }}" {% if goal.target and direction == goal.target.direction %}selected{% endif %}>{{ direction|replace('_', ' ') }}</option>{% endfor %}</select></label>
+                <button class="full-field" type="submit">Save definition</button>
+              </form>
+            </details>
+            <form method="post" action="/goals/{{ goal.id }}/status" class="status-actions">
+              {% if goal.status == 'completed' %}<button name="status" value="active">Reactivate</button>{% else %}<button name="status" value="completed">Complete</button>{% endif %}
+              <button name="status" value="archived" class="quiet-button">Archive</button>
+            </form>
+          </div>
+        </details>
+        {% else %}<p class="empty-state">No goals.</p>{% endfor %}
       </section>
       {% endfor %}
     </section>
-
-    <aside class="action-rail">
-      <details class="action-panel">
-        <summary>Add a simple goal</summary>
-        <form method="post" action="/goals">
-          <label>Domain
-            <select name="domain">{% for domain in domains %}<option value="{{ domain.id }}">{{ domain.name }}</option>{% endfor %}</select>
-          </label>
-          <label>Outcome <input name="outcome" required></label>
-          <label>Description <textarea name="description"></textarea></label>
-          <label>Horizon <input name="horizon" placeholder="short_term"></label>
-          <div class="form-grid compact-grid">
-            <label>Target metric <input name="target_metric" placeholder="books_read"></label>
-            <label>Target value <input name="target_value"></label>
-            <label>Unit <input name="target_unit"></label>
-            <label>Direction
-              <select name="target_direction">
-                <option value="equals">equals</option>
-                <option value="above">above</option>
-                <option value="at_or_above">at or above</option>
-                <option value="at_or_below">at or below</option>
-                <option value="increasing_trend">increasing trend</option>
-              </select>
-            </label>
-          </div>
-          <button type="submit">Add goal</button>
-        </form>
-      </details>
-      <p class="helper-note"><strong>Evidence stays automatic.</strong> Hublet stores observations from connected sources; there is nothing to log here each week.</p>
-    </aside>
-  </div>
+  </section>
 {% endblock %}

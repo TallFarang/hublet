@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block body_class %}plugin-page food-page{% endblock %}
+{% block content %}
+  <header class="plugin-title"><a href="/">Home</a><h1>Food</h1></header>
+  <section class="instrument-panel" aria-labelledby="food-status">
+    <h2 id="food-status" class="visually-hidden">Food status</h2>
+    <dl class="readings">
+      <div><dt>Daily avg</dt><dd>{{ dashboard.average_calories }} kcal</dd></div>
+      <div><dt>Protein avg</dt><dd>{{ dashboard.average_protein }}g</dd></div>
+      <div><dt>Confirmed</dt><dd>{{ dashboard.confirmed_count }}</dd></div>
+      <div><dt>Unresolved</dt><dd>{{ dashboard.unresolved|length }}</dd></div>
+    </dl>
+    <figure class="bar-figure">
+      <figcaption>Confirmed calories · last seven days</figcaption>
+      <div class="bar-chart" role="img" aria-label="Confirmed calories for the last seven days">
+        {% for day in dashboard.days %}
+        <div class="bar-day" aria-label="{{ day.date }}: {{ day.calories }} calories, {{ day.protein_g }} grams protein">
+          <span class="bar-value">{{ day.calories|int }}</span>
+          <span class="bar-track"><span class="bar-fill" style="height: {{ day.bar }}%"></span></span>
+          <span class="bar-label">{{ day.date[5:] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </figure>
+    <a class="scroll-cue" href="#details" aria-label="View food details">{{ icon("chevron-down") }}</a>
+  </section>
+
+  <section id="details" class="management" aria-label="Food details">
+    <section class="records-panel">
+      <div class="section-heading"><h2>Tracking issues</h2><span>{{ dashboard.unresolved|length }}</span></div>
+      <ul class="issue-list">
+        {% for record in dashboard.unresolved %}
+        <li><span><strong>{{ record.item }}</strong><small>{{ record.restaurant }} · {{ record.consumption_date_local or record.purchase_date_local or 'No date' }}</small></span><code>{{ record.id }}</code></li>
+        {% else %}<li class="empty-state">No unresolved records.</li>{% endfor %}
+      </ul>
+      <dl class="stored-counts">
+        <div><dt>Records</dt><dd>{{ counts.records }}</dd></div>
+        <div><dt>Nutrition entries</dt><dd>{{ counts.nutrition }}</dd></div>
+        <div><dt>Excluded this week</dt><dd>{{ dashboard.excluded_count }}</dd></div>
+      </dl>
+      <p class="system-note">Food changes are handled through OpenClaw.</p>
+    </section>
+  </section>
+{% endblock %}

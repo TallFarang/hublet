@@ -107,7 +107,7 @@ def test_login_sets_minimal_long_lived_session(settings_env: dict[str, str]) -> 
     assert "path=/" in cookie_options
     assert "secure" not in cookie_options
     assert authenticated.status_code == 200
-    assert "Personal" in authenticated.text
+    assert "Hublet plugins" in authenticated.text
 
 
 def test_https_origin_sets_secure_cookie(settings_env: dict[str, str]) -> None:

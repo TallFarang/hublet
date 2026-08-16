@@ -61,8 +61,9 @@ def create_app(
     @application.exception_handler(ValueError)
     def invalid_input(request: Request, error: ValueError) -> Response:
         section = request.url.path.strip("/").partition("/")[0]
-        destination = section.capitalize() if section in {"coffee", "goals", "recipes"} else "Hublet"
-        back = f"/{section}" if section in {"coffee", "goals", "recipes"} else "/"
+        plugins = {plugin.name for plugin in application.state.plugins}
+        destination = section.capitalize() if section in plugins else "Hublet"
+        back = f"/{section}" if section in plugins else "/"
         response = render(
             request,
             "error.html",

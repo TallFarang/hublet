@@ -12,6 +12,7 @@ from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
+from app.dashboard import recipes_dashboard
 from app.db import connect
 from app.runtime import Plugin
 from app.web import render
@@ -202,7 +203,13 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 def recipes_page(request: Request) -> Response:
     settings = request.app.state.settings
     records = [get_recipe(settings, recipe["id"]) for recipe in search(settings)]
-    return render(request, "recipes.html", title="Recipes", recipes=records)
+    return render(
+        request,
+        "recipes.html",
+        title="Recipes",
+        recipes=records,
+        dashboard=recipes_dashboard(records),
+    )
 
 
 @router.post("")

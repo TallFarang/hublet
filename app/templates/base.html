@@ -2,37 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="color-scheme" content="dark">
   <title>{{ title }} · Hublet</title>
   <link rel="stylesheet" href="/static/pico.min.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/tokens.css">
+  <link rel="stylesheet" href="/static/shell.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <link rel="stylesheet" href="/static/forms.css">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <!--
-THESIS: A home wall organizer makes three small tools immediately graspable; it refuses an analytics dashboard.
-OWN-WORLD: Cool utility gray, ink blue and three saturated bays; molded panels, precise labels and soft offset depth.
-STORY: Choose a tool, see the remembered facts, then make a quick correction without leaving the page.
-FIRST VIEWPORT: Compact Hublet rail above a clear page title; launcher bays or the page's primary records and action.
-FORM: Modular household organizer, grounded direction seven, seed 3fa22c15.
+THESIS: Hublet is a quiet instrument panel for personal facts, not a prose-heavy analytics suite.
+OWN-WORLD: Matte black, ruled charcoal fields, native sans type, tabular readings and restrained signals.
+STORY: Choose a plugin, read its current state, then move down to history or controls only when needed.
+FIRST VIEWPORT: A compact rail frames either eight fitted destinations or the current plugin's live readings.
+FORM: Restrained night instruments, grounded direction three, seed 0d2c80e8.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
+  {% from "icons.html" import icon %}
   <header class="site-header">
     <nav class="shell" aria-label="Primary navigation">
-      <a class="brand" href="/" aria-label="Hublet home"><span aria-hidden="true"></span>Hublet</a>
+      <a class="brand" href="/">Hublet</a>
       <div class="nav-links">
-        <a href="/coffee">Coffee</a>
-        <a href="/goals">Goals</a>
-        <a href="/recipes">Recipes</a>
+        <a href="/goals">Goals</a><a href="/food">Food</a>
+        <a href="/recipes">Recipes</a><a href="/coffee">Coffee</a>
         <form method="post" action="/logout">
-          <button class="quiet-button" type="submit">Sign out</button>
+          <button class="sign-out" type="submit" aria-label="Sign out" title="Sign out">
+            {{ icon("log-out") }}
+          </button>
         </form>
       </div>
     </nav>
   </header>
-  <main class="shell {% block main_class %}{% endblock %}">
-    {% block content %}{% endblock %}
-  </main>
-  <footer class="shell">Local by design. Yours by default.</footer>
+  <main class="shell {% block main_class %}{% endblock %}">{% block content %}{% endblock %}</main>
 </body>
 </html>

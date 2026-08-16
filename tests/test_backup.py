@@ -144,7 +144,10 @@ def test_main_snapshots_databases_from_environment(
     assert (snapshot / SNAPSHOT_MARKER).is_file()
 
 
-def test_project_exposes_one_backup_command() -> None:
+def test_project_exposes_backup_and_one_time_food_import_commands() -> None:
     project = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text())
 
-    assert project["project"]["scripts"] == {"hublet-backup": "app.backup:main"}
+    assert project["project"]["scripts"] == {
+        "hublet-backup": "app.backup:main",
+        "hublet-food-import": "app.plugins.food_import:main",
+    }

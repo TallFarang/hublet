@@ -21,8 +21,8 @@ def recipe_settings(settings_env: dict[str, str]) -> Settings:
 
 
 def test_recipe_plugin_is_the_third_explicit_registration() -> None:
-    assert PLUGINS[-1] is recipes.PLUGIN
-    assert [plugin.name for plugin in PLUGINS] == ["coffee", "goals", "recipes"]
+    assert PLUGINS[2] is recipes.PLUGIN
+    assert [plugin.name for plugin in PLUGINS] == ["goals", "food", "recipes", "coffee"]
 
 
 def test_recipe_schema_keeps_notes_canonical(recipe_settings: Settings) -> None:

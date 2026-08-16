@@ -13,6 +13,7 @@ from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
+from app.dashboard import goal_dashboard
 from app.db import connect
 from app.runtime import Plugin
 from app.web import render
@@ -571,6 +572,8 @@ def goals_page(request: Request) -> Response:
             _goal_for_dashboard(request.app.state.settings, definition["id"])
             for definition in domain["goals"]
         ]
+        for goal in domain["goals"]:
+            goal["dashboard"] = goal_dashboard(goal)
     return render(
         request,
         "goals.html",

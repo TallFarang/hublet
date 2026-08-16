@@ -56,7 +56,7 @@ def example_definition(**changes):
 
 
 def test_goal_plugin_adds_one_explicit_registration() -> None:
-    assert PLUGINS[1] is goals.PLUGIN
+    assert PLUGINS[0] is goals.PLUGIN
 
 
 def test_goal_schema_is_three_tables_with_fixed_domain_order(goal_settings: Settings) -> None:
@@ -459,7 +459,6 @@ def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
         "Career",
         "Social",
         "Reach the example target",
-        "Use the automatic source.",
         "Connected source",
         "88 kg",
         "Source unavailable",

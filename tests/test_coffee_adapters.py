@@ -12,7 +12,7 @@ from app.runtime import migrate_plugins
 
 
 def test_coffee_descriptor_is_explicitly_registered() -> None:
-    assert PLUGINS[0] is coffee.PLUGIN
+    assert PLUGINS[3] is coffee.PLUGIN
     assert coffee.PLUGIN.name == "coffee"
     assert coffee.PLUGIN.db_filename == "coffee.db"
     assert coffee.PLUGIN.migrations is coffee.MIGRATIONS
@@ -156,7 +156,8 @@ def test_html_domain_validation_returns_422(settings_env: dict[str, str]) -> Non
     assert response.status_code == 422
     assert "name is required" in response.text
     assert 'role="alert"' in response.text
-    assert "history.back()" in response.text
+    assert "history.back()" not in response.text
+    assert 'href="/coffee"' in response.text
 
 
 def test_launcher_summary_counts_open_beans(settings_env: dict[str, str]) -> None:

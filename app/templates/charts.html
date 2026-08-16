@@ -1,0 +1,16 @@
+{% macro line_chart(chart, label) -%}
+<svg class="line-chart" viewBox="0 0 100 38" preserveAspectRatio="none"
+     role="img" aria-label="{{ label }}">
+  <title>{{ label }}</title>
+  <line class="chart-baseline" x1="0" y1="34" x2="100" y2="34"/>
+  {% if chart.target_y is not none %}
+  <line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>
+  {% endif %}
+  {% if chart.points %}
+  {% if chart.single %}<line class="chart-series" x1="47" y1="{{ chart.last.y }}" x2="53" y2="{{ chart.last.y }}"/>
+  {% else %}
+  <polyline class="chart-series" points="{{ chart.points }}"/>
+  {% endif %}
+  {% endif %}
+</svg>
+{%- endmacro %}

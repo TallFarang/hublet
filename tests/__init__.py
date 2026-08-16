@@ -1,1 +1,1 @@
-"""Hublet test suite."""
+"""Hublet test package."""

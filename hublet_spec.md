@@ -9,7 +9,7 @@ Implementation-ready specification for a single-user system optimized for minima
 
 **Working project name: Hublet.**
 
-Build one small Dockerized service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals and Recipes plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
+Build one small Dockerized service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes and Food plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
 
 ```text
 iPhone / Mac browser                 Discord
@@ -20,9 +20,10 @@ iPhone / Mac browser                 Discord
   one container          MCP Streamable HTTP
         |
         +-- Home launcher
-        +-- Coffee  -> coffee.db
         +-- Goals   -> goals.db
+        +-- Food    -> food.db
         +-- Recipes -> recipes.db
+        +-- Coffee  -> coffee.db
 ```
 
 ## 2. Key philosophy and decisions
@@ -71,11 +72,15 @@ hublet/
     web.py
     plugins/
       coffee.py
+      food.py
       goals.py
       recipes.py
   static/
     pico.min.css
-    app.css
+    tokens.css
+    shell.css
+    dashboard.css
+    forms.css
   tests/
   compose.yml
   Dockerfile
@@ -88,7 +93,7 @@ Start with one file per plugin. Split files only when navigation becomes painful
 
 ## 5. Plugin runtime
 
-Each plugin is one ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the three descriptors in one tuple. Do not add discovery, lifecycle hooks, configuration schemas or a dynamic plugin framework.
+Each plugin is an ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the four descriptors in one tuple. Do not add discovery, lifecycle hooks, configuration schemas or a dynamic plugin framework.
 
 ```text
 Plugin(
@@ -102,20 +107,33 @@ Plugin(
 )
 ```
 
-MCP tools and HTML form handlers must call the same ordinary Python domain functions. The descriptor is only wiring, not a repository, service or model layer. Adding a future fourth plugin should require one explicit registration entry but no rewrite of core MCP, database or launcher code.
+MCP tools and HTML form handlers must call the same ordinary Python domain functions. The descriptor is only wiring, not a repository, service or model layer. Adding a plugin requires one explicit registration entry but no rewrite of core MCP, database or launcher code.
 
-## 6. Home / launcher
+## 6. Web interface
 
-The root page is an app launcher, not an analytics dashboard. Show three large touch-friendly cards: Coffee, Goals and Recipes. Each may show one small summary such as '2 open beans', '4 active', or '12 cook logs'.
+The root page is a compact app launcher. Show plugins in the explicit order Goals, Food, Recipes,
+Coffee. Up to eight touch-friendly destinations must fit without scrolling in a 402-by-714 CSS
+pixel viewport; larger registries may overflow vertically. Each destination contains one Lucide
+icon, its name and one short factual summary.
 
 ```text
-Personal
---------------------------------
-[ Coffee ]   [ Goals ]   [ Recipes ]
- 2 open        4 active    12 cooks
+[ Goals ]    [ Food ]
+ 4 active      77 records
+[ Recipes ]  [ Coffee ]
+ 12 cooks      2 open
 ```
 
-Routes: /, /coffee, /goals, /recipes. Mutations use ordinary POSTed HTML forms followed by redirects; v1 exposes no JSON REST API. Use semantic HTML + a locally vendored Pico CSS file and a very small custom stylesheet. Optimize for iPhone width. Avoid JavaScript unless a specific interaction is materially worse without it.
+Routes: /, /goals, /food, /recipes, /coffee. Each plugin starts with compact current readings and a
+dependency-free inline chart; records and forms follow below on the same page. Food is read-only in
+the web UI and remains writable through OpenClaw MCP. Mutations use ordinary POSTed HTML forms
+followed by redirects; v1 exposes no JSON REST API. Use semantic HTML, locally vendored Pico CSS,
+small custom stylesheets and no JavaScript.
+
+The visual system is a restrained dark instrument panel: matte near-black ground, ruled charcoal
+surfaces, native system sans type, tabular readings and one accessible signal color per plugin. Do
+not use promotional copy, decorative imagery, gradients, glow effects or downloaded fonts. Charts
+must have text equivalents and cannot rely on color alone. The header sign-out action is icon-only
+with an accessible name and a 44-by-44 pixel target.
 
 Local access may use Bonjour/mDNS with a deployment-specific name kept outside the repository. Public examples use `http://hublet.example.test:8787`; `http://localhost:8787` and `http://127.0.0.1:8787` are valid loopback examples. Do not add local DNS infrastructure just for a prettier URL.
 
@@ -146,6 +164,17 @@ recipes.search
 recipes.get
 recipes.log_cook
 recipes.history
+```
+
+```text
+food_ingest_receipt
+food_record_consumption
+food_correct_record
+food_query_records
+food_upsert_nutrition
+food_find_nutrition
+food_find_gaps
+food_summary
 ```
 
 OpenClaw interprets conversational input, resolves the relevant record, invokes tools and explains results. The runtime returns structured facts and deterministic recommendations; OpenClaw supplies natural-language reasoning/presentation.
@@ -187,11 +216,22 @@ Example: 'Used sirloin instead of chuck, doubled garlic, 3/5. Sirloin worse; kee
 
 The plugin's value is historical structured memory: what changed, how it scored and what was learned.
 
-## 11. Database conventions
+## 11. Food plugin
+
+Food stores receipt provenance and confirmed consumption separately from reusable nutrition
+variants. Linked records always calculate from the current nutrition row. Only `eaten` records
+count toward confirmed totals; `uncertain` and `excluded` remain visible without inflating them.
+Corrections amend the stable record directly and retain the latest reason and timestamp. OpenClaw
+supplies expected meal slots to gap and summary calls and remains responsible for receipt parsing
+and conversational wording. Receipt items and corrections have explicit MCP object schemas.
+Nutrition search returns stable offset pages of at most 200 entries. Summaries embed compact
+uncertain-record facts while the dedicated gap query retains full investigative detail.
+
+## 12. Database conventions
 
 | Rule | Decision |
 | --- | --- |
-| Isolation | coffee.db, goals.db and recipes.db. |
+| Isolation | coffee.db, goals.db, recipes.db and food.db. |
 | Persistence | Host mount under `$HOME/.hublet/data/`. Never store live data in Git or the image. |
 | IDs | UUID text. |
 | Dates | UTC ISO-8601 timestamps; ISO date for date-only fields. |
@@ -200,7 +240,7 @@ The plugin's value is historical structured memory: what changed, how it scored 
 | Journal | SQLite defaults initially; no WAL without measured need. |
 | Backup | sqlite3 Connection.backup(), not raw copy of a live DB. |
 
-## 12. Public repository and security
+## 13. Public repository and security
 
 Hublet is intentionally developed in a **public GitHub repository**. The public repository must contain only code and generic example configuration. It must be safe to clone without exposing any personal information or credentials.
 
@@ -247,7 +287,7 @@ All dashboard writes use authenticated HTML forms. V1 has no REST API. Do not im
 
 **Do not attach a self-hosted GitHub Actions runner to this public repository.** Public repositories can receive pull requests from forks, and GitHub warns that self-hosted runners can therefore expose the host machine to dangerous code. All repository CI must run on GitHub-hosted runners.
 
-## 13. Docker
+## 14. Docker
 
 ```text
 services:
@@ -264,7 +304,7 @@ services:
 
 Use one Uvicorn worker. Add /health. Run migrations before accepting requests. The container must recover after Docker/Mac restart. Keep OpenClaw outside Docker.
 
-## 14. GitHub push-to-deploy
+## 15. GitHub push-to-deploy
 
 Goal: pushing trusted code to `main` should automatically update Hublet on the MacBook with no paid service and no inbound connection to the home network.
 
@@ -322,13 +362,13 @@ Hublet must have **$0 recurring software/service cost**. The implementation must
 
 Use the existing MacBook, home network, Docker, SQLite, Bonjour/mDNS, GitHub public-repository Actions, public GHCR and local `launchd`. Hardware, electricity, internet access and any existing OpenClaw/model costs are outside Hublet's software/service budget.
 
-## 15. Backup and recovery
+## 16. Backup and recovery
 
-Provide one command that snapshots all three databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
+Provide one command that snapshots all four databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
 
 Restore: stop container -> replace affected .db with chosen snapshot -> start container -> verify /health.
 
-## 16. Explicit non-goals
+## 17. Explicit non-goals
 
 - Public internet dashboard or remote hosting
 - Any recurring paid software/service dependency
@@ -344,7 +384,7 @@ Restore: stop container -> replace affected .db with chosen snapshot -> start co
 - Recipe master-data duplication from Apple Notes
 - Destructive agent tools
 - Projects plugin
-## 17. Implementation order
+## 18. Implementation order
 
 | Phase | Deliverable / acceptance criterion |
 | --- | --- |
@@ -352,23 +392,23 @@ Restore: stop container -> replace affected .db with chosen snapshot -> start co
 | 2. Coffee vertical slice | Discord -> OpenClaw -> MCP -> coffee.db -> response works for log_shot and history. |
 | 3. Goals | Add plugin without changing core architecture beyond registration. |
 | 4. Recipes | Link Notes recipes and store cook logs only; prove history/conclusion workflow. |
-| 5. Launcher | Pico CSS home page and three plugin pages, usable on iPhone over home Wi-Fi. |
+| 5. Launcher | Pico CSS home page and four plugin pages, usable on iPhone over home Wi-Fi. |
 | 6. Operations | Independent MCP bearer and signed-cookie dashboard auth, backup command, public GitHub CI, public GHCR image, launchd auto-pull deployment. |
 | 7. Stop | Do not add more platform machinery until a real use case demands it. |
 
-## 18. Definition of done
+## 19. Definition of done
 
 - One public GitHub repository containing no personal data or secrets.
 - One Docker container and one Python process.
-- Three independent SQLite files persisted outside the container.
+- Four independent SQLite files persisted outside the container.
 - One MCP endpoint registered with OpenClaw.
-- Coffee, Goals and Recipes usable naturally from Discord.
+- Coffee, Goals, Recipes and Food usable naturally from Discord.
 - Home launcher reachable from iPhone on the LAN and styled with Pico CSS.
 - Apple Notes remains canonical for recipe content.
 - Push to main automatically tests, builds a public GHCR image, and is pulled/deployed by the MacBook.
 - Daily database snapshots exist and restore procedure is documented.
 - System remains understandable without an operations manual or paid cloud services.
 - Hublet incurs $0 recurring software/service cost.
-## 19. Final architectural constraint
+## 20. Final architectural constraint
 
 When choosing between a cleaner architecture and fewer moving parts, choose fewer moving parts. Hublet is a personal structured-memory daemon for OpenClaw, not a software platform intended for external customers. The successful v1 is the smallest system that reliably remembers structured personal data, exposes it to the agent and provides a pleasant local browse interface.

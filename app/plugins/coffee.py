@@ -12,6 +12,7 @@ from fastapi.responses import RedirectResponse, Response
 from mcp.server import MCPServer
 
 from app.config import Settings
+from app.dashboard import coffee_dashboard
 from app.db import connect
 from app.runtime import Plugin
 from app.web import render
@@ -321,12 +322,15 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 @router.get("")
 def coffee_page(request: Request) -> Response:
     settings = request.app.state.settings
+    beans = list_beans(settings)
+    shots = history(settings, limit=10)
     return render(
         request,
         "coffee.html",
         title="Coffee",
-        beans=list_beans(settings),
-        shots=history(settings, limit=10),
+        beans=beans,
+        shots=shots,
+        dashboard=coffee_dashboard(shots, len(beans)),
     )
 
 

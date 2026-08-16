@@ -30,4 +30,4 @@ def launcher(request: Request) -> Response:
         }
         for plugin in request.app.state.plugins
     ]
-    return render(request, "launcher.html", title="Personal", plugins=plugins)
+    return render(request, "launcher.html", title="Hublet", plugins=plugins)

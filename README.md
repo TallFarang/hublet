@@ -1,12 +1,13 @@
 # Hublet
 
 Hublet is a brutally lightweight personal structured-memory daemon for OpenClaw. It will
-provide Coffee, Goals, and Recipes through one MCP endpoint and a small server-rendered
+provide Coffee, Goals, Recipes, and Food through one MCP endpoint and a small server-rendered
 dashboard.
 
 The v1 runtime is intentionally narrow: Python 3.13, FastAPI, the official MCP SDK,
 `sqlite3`, Jinja2, and a local vendored copy of Pico CSS. The dashboard uses ordinary HTML
-forms; there is no REST API, frontend framework, JavaScript dependency, or external CSS CDN.
+forms and dependency-free inline charts; there is no REST API, frontend framework, JavaScript,
+charting dependency, downloaded font, or external CSS CDN.
 
 ## Development status
 
@@ -52,13 +53,23 @@ transitive requirements.
 ## Backups
 
 Run `hublet-backup` from the installed environment. It uses SQLite's online backup API to
-write all three databases to `HUBLET_BACKUP_DIR/YYYY-MM-DD`, prints that path, and keeps the
+write all four databases to `HUBLET_BACKUP_DIR/YYYY-MM-DD`, prints that path, and keeps the
 newest 30 daily snapshots. Missing live databases or an incomplete copy fail without
 publishing a final-dated snapshot. A successful snapshot is never overwritten on the same
 date.
 
 To restore, stop Hublet, replace the affected live `.db` file with the chosen snapshot,
 start Hublet again, and verify `/health`.
+
+## Food recovery import
+
+`hublet-food-import LEDGER.csv CATALOGUE.csv --check` validates legacy Food CSVs in a
+temporary database. Run it again without `--check` to transactionally populate an empty
+`food.db`, or pass `--database PATH` to build an empty recovery candidate elsewhere. The
+importer collapses append-only legacy correction chains onto their original stable IDs, creates
+deterministic nutrition IDs and only the needed legacy variants, verifies correction-aware
+totals, and confirms both source checksums remain unchanged.
+Keep the source CSVs outside the repository as read-only rollback archives.
 
 ## CI and container images
 

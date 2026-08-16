@@ -2,25 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="color-scheme" content="dark">
   <title>Sign in · Hublet</title>
   <link rel="stylesheet" href="/static/pico.min.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/tokens.css">
+  <link rel="stylesheet" href="/static/shell.css">
+  <link rel="stylesheet" href="/static/forms.css">
 </head>
 <body class="login-page">
 <!--
-THESIS: A home wall organizer makes three small tools immediately graspable; it refuses an analytics dashboard.
-OWN-WORLD: Cool utility gray, ink blue and three saturated bays; molded panels, precise labels and soft offset depth.
-STORY: Sign in once on a trusted device, then return directly to the three tools.
-FIRST VIEWPORT: One compact credential panel with the action immediately beneath the field.
-FORM: Modular household organizer, grounded direction seven, seed 3fa22c15.
+THESIS: Hublet is a quiet instrument panel for personal facts, not a prose-heavy analytics suite.
+OWN-WORLD: Matte black, ruled charcoal fields, native sans type, tabular readings and restrained signals.
+STORY: Authenticate once, then go directly to the dashboard.
+FIRST VIEWPORT: One credential field and one action on an otherwise quiet surface.
+FORM: Restrained night instruments, grounded direction three, seed 0d2c80e8.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
   <main class="login-shell">
-    <div class="login-brand" aria-hidden="true"><span></span></div>
-    <h1>Come on in.</h1>
-    <p>Use the dashboard token once. This device will remember you.</p>
+    <a class="login-brand" href="/">Hublet</a>
+    <h1>Sign in</h1>
     {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="/login">
       <label for="token">Dashboard token</label>

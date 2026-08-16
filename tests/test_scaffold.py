@@ -11,6 +11,7 @@ EXPECTED_RUNTIME_DEPENDENCIES = {
     "itsdangerous==2.2.0",
     "jinja2==3.1.6",
     "mcp==2.0.0",
+    "pydantic==2.13.4",
     "python-multipart==0.0.32",
     "uvicorn==0.52.3",
 }

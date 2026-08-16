@@ -1,0 +1,74 @@
+:root {
+  color-scheme: dark;
+  --ground: #0b0d10;
+  --surface: #14181d;
+  --surface-raised: #1a1f25;
+  --line: #2c333b;
+  --line-strong: #414b56;
+  --text: #f2f5f7;
+  --muted: #a9b2bc;
+  --focus: #8ac7ff;
+  --goals: #9bd47b;
+  --food: #efb56a;
+  --recipes: #ec8d82;
+  --coffee: #79bce8;
+  --danger: #ff9b8f;
+  --pico-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --pico-font-size: 100%;
+  --pico-line-height: 1.45;
+  --pico-border-radius: 12px;
+  --pico-form-element-spacing-vertical: 0.65rem;
+  --pico-form-element-spacing-horizontal: 0.75rem;
+  --pico-typography-spacing-vertical: 0.65rem;
+  --pico-background-color: var(--ground);
+  --pico-color: var(--text);
+  --pico-muted-color: var(--muted);
+  --pico-card-background-color: var(--surface);
+  --pico-card-border-color: var(--line);
+  --pico-form-element-background-color: #101318;
+  --pico-form-element-border-color: var(--line-strong);
+  --pico-form-element-color: var(--text);
+  --pico-primary: #0b0d10;
+  --pico-primary-background: var(--text);
+  --pico-primary-border: var(--text);
+  --pico-primary-inverse: var(--ground);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--ground); scroll-behavior: smooth; }
+body { min-width: 320px; margin: 0; color: var(--text); background: var(--ground); }
+h1, h2, h3, h4, strong { color: var(--text); }
+h1, h2, h3, h4 { letter-spacing: -0.025em; }
+a { color: inherit; }
+small { color: var(--muted); }
+button, [type="submit"] { min-height: 44px; font-weight: 700; box-shadow: none; }
+input, textarea, select { color: var(--text); background: #101318; border-color: var(--line-strong); }
+textarea { min-height: 88px; resize: vertical; }
+label { color: var(--muted); font-size: 0.82rem; font-weight: 650; }
+code { color: var(--muted); background: #0f1216; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.plugin-page { --accent: var(--text); }
+.goals-page { --accent: var(--goals); }
+.food-page { --accent: var(--food); }
+.recipes-page { --accent: var(--recipes); }
+.coffee-page { --accent: var(--coffee); }
+.plugin-page button:not(.quiet-button) {
+  --pico-background-color: var(--accent);
+  --pico-border-color: var(--accent);
+  --pico-color: var(--ground);
+}

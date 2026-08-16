@@ -1,63 +1,64 @@
 {% extends "base.html" %}
+{% from "charts.html" import line_chart %}
+{% from "icons.html" import icon %}
 {% block body_class %}plugin-page recipes-page{% endblock %}
 {% block content %}
-  <header class="page-heading plugin-heading">
-    <a class="back-link" href="/">← Personal</a>
-    <h1>Recipes</h1>
-    <p>Recipe content stays in Apple Notes. Hublet remembers what happened in the kitchen.</p>
-  </header>
-  <div class="workspace-grid">
-    <section class="records-panel" aria-labelledby="linked-recipes-heading">
-      <div class="section-heading"><h2 id="linked-recipes-heading">Linked recipes</h2><span>{{ recipes|length }}</span></div>
-      {% if recipes %}
-      <div class="record-list">
-        {% for recipe in recipes %}
-        <details class="record">
-          <summary><span><strong>{{ recipe.name }}</strong><small>{{ recipe.tags|join(', ') or "No tags" }}</small></span><span>{{ recipe.cook_logs|length }} cooks</span></summary>
-          <div class="record-body">
-            <p class="note-reference"><span>Apple Note</span><code>{{ recipe.note_reference }}</code></p>
-            <form method="post" action="/recipes/{{ recipe.id }}/cooks" class="cook-form">
-              <div class="form-grid compact-grid">
-                <label>Rating <input name="rating" type="number" min="1" max="5" inputmode="numeric" required></label>
-                <label>Changes <input name="changes" placeholder="What was different?"></label>
-              </div>
-              <label>Notes <textarea name="notes"></textarea></label>
-              <label>Conclusion <textarea name="conclusion" placeholder="What should happen next time?"></textarea></label>
-              <button type="submit">Log cook</button>
-            </form>
-            <form method="post" action="/recipes/{{ recipe.id }}/edit" class="form-grid edit-form">
-              <label>Name <input name="name" value="{{ recipe.name }}" required></label>
-              <label>Tags <input name="tags" value="{{ recipe.tags|join(', ') }}"></label>
-              <label class="full-field">Note reference <input name="note_reference" value="{{ recipe.note_reference }}" required></label>
-              <button class="full-field" type="submit">Save reference</button>
-            </form>
-            <section class="cook-history" aria-label="Cook history">
-              <h3>Cook history</h3>
-              {% if recipe.cook_logs %}
-              <ol class="history-list">
-                {% for log in recipe.cook_logs %}
-                <li><span><strong>{{ log.rating }}/5</strong><small>{{ log.created_at[:10] }}</small></span><span><b>Changed:</b> {{ log.changes or '—' }}<br><b>Conclusion:</b> {{ log.conclusion or '—' }}</span></li>
-                {% endfor %}
-              </ol>
-              {% else %}<p class="empty-state">Nothing cooked yet.</p>{% endif %}
-            </section>
-          </div>
-        </details>
-        {% endfor %}
+  <header class="plugin-title"><a href="/">Home</a><h1>Recipes</h1></header>
+  <section class="instrument-panel" aria-labelledby="recipe-status">
+    <h2 id="recipe-status" class="visually-hidden">Recipe status</h2>
+    <dl class="readings">
+      <div><dt>Linked</dt><dd>{{ dashboard.recipe_count }}</dd></div>
+      <div><dt>Cooks</dt><dd>{{ dashboard.cook_count }}</dd></div>
+      <div><dt>Avg rating</dt><dd>{% if dashboard.average_rating is not none %}{{ dashboard.average_rating }}/5{% else %}—{% endif %}</dd></div>
+      <div><dt>Latest</dt><dd>{% if dashboard.latest_rating is not none %}{{ dashboard.latest_rating }}/5{% else %}—{% endif %}</dd></div>
+    </dl>
+    <figure class="trend-figure">
+      <figcaption>Recent cook ratings</figcaption>
+      {% if dashboard.has_series %}{{ line_chart(dashboard, "Recent cook rating trend") }}
+      <div class="chart-endpoints">
+        <span><time>{{ dashboard.start_label.date }}</time><strong>{{ dashboard.start_label.value }}</strong></span>
+        <span><time>{{ dashboard.end_label.date }}</time><strong>{{ dashboard.end_label.value }}</strong></span>
       </div>
-      {% else %}<p class="empty-state">No links yet. Point Hublet at a recipe note you already use.</p>{% endif %}
+      {% else %}<p class="chart-empty">No cooks recorded</p>{% endif %}
+    </figure>
+    <a class="scroll-cue" href="#manage" aria-label="View recipe controls">{{ icon("chevron-down") }}</a>
+  </section>
+
+  <section id="manage" class="management" aria-label="Recipe controls and history">
+    <section class="action-panel compact-action">
+      <h2>Link recipe</h2>
+      <form method="post" action="/recipes" class="form-grid">
+        <label>Name<input name="name" required></label><label>Tags<input name="tags"></label>
+        <label class="full-field">Apple Note reference<input name="note_reference" required></label>
+        <button class="full-field" type="submit">Link recipe</button>
+      </form>
     </section>
-    <aside class="action-rail">
-      <details class="action-panel" open>
-        <summary>Link a recipe</summary>
-        <form method="post" action="/recipes">
-          <label>Name <input name="name" required></label>
-          <label>Note reference <input name="note_reference" required></label>
-          <label>Tags <input name="tags" placeholder="dinner, quick"></label>
-          <button type="submit">Link recipe</button>
-        </form>
+    <section class="records-panel" aria-labelledby="recipes-heading">
+      <div class="section-heading"><h2 id="recipes-heading">Recipes</h2><span>{{ recipes|length }}</span></div>
+      {% for recipe in recipes %}
+      <details class="record">
+        <summary><span><strong>{{ recipe.name }}</strong><small>{{ recipe.tags|join(', ') or "No tags" }}</small></span><span>{{ recipe.cook_logs|length }} cooks</span></summary>
+        <div class="record-body">
+          <code class="note-reference">{{ recipe.note_reference }}</code>
+          <form method="post" action="/recipes/{{ recipe.id }}/cooks" class="form-grid record-form">
+            <label>Rating<input name="rating" type="number" min="1" max="5" required></label><label>Changes<input name="changes"></label>
+            <label class="full-field">Notes<textarea name="notes"></textarea></label><label class="full-field">Conclusion<textarea name="conclusion"></textarea></label>
+            <button class="full-field" type="submit">Log cook</button>
+          </form>
+          <details class="nested-disclosure"><summary>Edit link</summary>
+            <form method="post" action="/recipes/{{ recipe.id }}/edit" class="form-grid">
+              <label>Name<input name="name" value="{{ recipe.name }}" required></label><label>Tags<input name="tags" value="{{ recipe.tags|join(', ') }}"></label>
+              <label class="full-field">Apple Note reference<input name="note_reference" value="{{ recipe.note_reference }}" required></label>
+              <button class="full-field" type="submit">Save link</button>
+            </form>
+          </details>
+          <ol class="history-list">
+            {% for log in recipe.cook_logs %}<li><span><strong>{{ log.rating }}/5</strong><small>{{ log.created_at[:10] }}</small></span><span>{{ log.conclusion or log.changes or 'No conclusion' }}</span></li>
+            {% else %}<li class="empty-state">No cooks recorded.</li>{% endfor %}
+          </ol>
+        </div>
       </details>
-      <p class="helper-note"><strong>Keep one master.</strong> Ingredients and steps stay in Apple Notes; only experiments live here.</p>
-    </aside>
-  </div>
+      {% else %}<p class="empty-state">No linked recipes.</p>{% endfor %}
+    </section>
+  </section>
 {% endblock %}

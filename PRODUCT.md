@@ -18,27 +18,30 @@ recipe cook notes—durable and easy to inspect without becoming a general produ
 
 ## Positioning
 
-One tiny local process gives an agent and a human the same domain functions over three independent
+One tiny local process gives an agent and a human the same domain functions over four independent
 SQLite files. It stores only useful structure and leaves canonical data, such as recipe content, in
 the app that already owns it.
 
 ## Operating Context
 
-The launcher and forms are used in short sessions, often at iPhone width. Discord and OpenClaw are
-the primary conversational interface. The dashboard is a private LAN utility, not a public service.
+The launcher and dashboards are used in short sessions, often at iPhone width. Discord and
+OpenClaw are the primary conversational interface. The web UI is a private, quick-glance LAN
+instrument rather than a reporting suite.
 
 ## Capabilities and Constraints
 
 - Coffee beans, shots and conservative history-first recommendations.
 - Goals with timestamped absolute progress measurements.
 - Apple Notes recipe references with cooking experiments and conclusions.
-- Server-rendered HTML forms, almost no JavaScript, no frontend framework and no new dependency.
+- Receipt-backed food consumption with current linked nutrition and explicit tracking gaps.
+- Server-rendered HTML forms and inline data graphics, with no JavaScript, frontend framework,
+  chart library, web font or external asset dependency.
 - One signed-cookie dashboard login and a separately protected MCP endpoint.
-- No user accounts, destructive agent tools, analytics dashboard or plugin framework.
+- No user accounts, destructive agent tools, general analytics suite or plugin framework.
 
 ## Brand Commitments
 
-Hublet is a fun personal app. It should feel deliberate and pleasant without enterprise polish,
+Hublet is a restrained dark instrument panel: factual, fast and modern without slogans,
 gamification, fake claims or ornamental complexity.
 
 ## Evidence on Hand
@@ -50,5 +53,6 @@ photography, testimonials or other brand assets exist and none should be fabrica
 
 - Keep what earns its place.
 - Preserve useful function while deleting machinery.
-- Make the common manual action obvious on a phone.
+- Put current status before manual controls on every plugin page.
+- Keep up to eight launcher destinations inside one small iPhone viewport.
 - Let structured history, not generic advice, provide the value.
