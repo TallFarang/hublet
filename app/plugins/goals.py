@@ -578,6 +578,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 @router.get("")
 def goals_page(request: Request) -> Response:
     registry = get_registry(request.app.state.settings)
+    active_goals = []
     for domain in registry["domains"]:
         domain["goals"] = [
             _goal_for_dashboard(request.app.state.settings, definition["id"])
@@ -585,11 +586,14 @@ def goals_page(request: Request) -> Response:
         ]
         for goal in domain["goals"]:
             goal["dashboard"] = goal_dashboard(goal)
+            if goal["status"] == "active":
+                active_goals.append(goal)
     return render(
         request,
         "goals.html",
         title="Goals",
         domains=registry["domains"],
+        active_goals=active_goals,
     )
 
 
@@ -669,7 +673,7 @@ def status_form(
 
 
 def launcher_summary(settings: Settings) -> str:
-    count = len([goal for goal in list_goals(settings) if goal["status"] != "archived"])
+    count = len(list_goals(settings, status="active"))
     return f"{count} {'goal' if count == 1 else 'goals'}"
 
 

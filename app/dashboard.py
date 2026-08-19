@@ -36,8 +36,7 @@ def plot(values: list[float], target: float | None = None) -> dict[str, Any]:
 
 def goal_dashboard(goal: dict[str, Any]) -> dict[str, Any]:
     target = goal.get("target") or {}
-    sources = goal.get("evidence_sources") or []
-    metric = target.get("metric") or (sources[0]["metric"] if sources else None)
+    metric = target.get("metric")
     history = [row for row in goal.get("history", []) if row["metric"] == metric]
     numeric = [row for row in reversed(history) if _number(row["value"]) is not None]
     values = [float(row["value"]) for row in numeric]

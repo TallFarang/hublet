@@ -6,9 +6,9 @@
   {% set goals = domains | sum(attribute='goals', start=[]) %}
   <header class="plugin-title"><a href="/">Home</a><h1>Goals</h1></header>
   <section class="instrument-panel goals-instruments" aria-labelledby="goal-status">
-    <div class="instrument-heading"><h2 id="goal-status">Current progress</h2><span>{{ goals|rejectattr('status', 'equalto', 'archived')|list|length }}</span></div>
+    <div class="instrument-heading"><h2 id="goal-status">Current progress</h2><span>{{ active_goals|length }}</span></div>
     <div class="goal-readouts">
-      {% for goal in goals if goal.status != 'archived' %}
+      {% for goal in active_goals %}
       <section class="goal-readout">
         <header><span><strong>{{ goal.title }}</strong><small>{{ goal.dashboard.metric }}</small></span><span class="signal signal--{{ goal.status }}">{{ goal.dashboard.state }}</span></header>
         <div class="goal-measurement">
