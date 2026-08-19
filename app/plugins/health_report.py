@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 from typing import Any
 
@@ -38,13 +39,16 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
         rows = [
             dict(row)
             for row in connection.execute(
-                """SELECT id, uuid, type, local_date, start_at, end_at, unit,
-                          normalized_value, normalized_unit
+                """SELECT id, uuid, type, kind, local_date, start_at, end_at, unit,
+                          normalized_value, normalized_unit, duration_seconds,
+                          activity_type, raw_json
                    FROM records WHERE local_date BETWEEN ? AND ?
                    AND type IN (?, ?, ?, ?) ORDER BY local_date, COALESCE(start_at, end_at), id""",
                 (start.isoformat(), end.isoformat(), *MAPPINGS),
             )
         ]
+    raw_record_count = len(rows)
+    rows = _semantic_records(rows)
     metrics, evidence = {}, []
     for type_name, (metric, expected_unit) in MAPPINGS.items():
         typed = [row for row in rows if row["type"] == type_name]
@@ -91,9 +95,36 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
             "exported_dates": sorted(exported),
             "missing_dates": [day for day in requested if day not in exported],
         },
+        "record_counts": {
+            "raw": raw_record_count,
+            "reported": len(rows),
+            "duplicates_suppressed": raw_record_count - len(rows),
+        },
         "metrics": metrics,
         "evidence": evidence,
     }
+
+
+def _semantic_records(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one deterministic representative of each reported measurement."""
+
+    unique = {}
+    for row in rows:
+        raw = json.loads(row["raw_json"])
+        key = (
+            row["type"],
+            row["kind"],
+            row["local_date"],
+            row["start_at"],
+            row["end_at"],
+            row["normalized_value"],
+            row["normalized_unit"] or row["unit"],
+            row["duration_seconds"],
+            row["activity_type"],
+            json.dumps(raw.get("source"), sort_keys=True, separators=(",", ":")),
+        )
+        unique.setdefault(key, row)
+    return list(unique.values())
 
 
 def _metric(
