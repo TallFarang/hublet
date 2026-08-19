@@ -25,6 +25,7 @@ def example_definition(**changes):
         "goal_id": "reach_example",
         "domain": "health",
         "display_order": 20,
+        "title": "Example target",
         "outcome": "Reach the example target",
         "description": "A complete structured goal.",
         "horizon": "short_term",
@@ -91,6 +92,22 @@ def test_schema_replacement_refuses_nonempty_legacy_database(settings_env: dict[
         migrate(database, goals.MIGRATIONS)
 
 
+def test_title_migration_backfills_existing_outcomes(settings_env: dict[str, str]) -> None:
+    settings = Settings.from_env(settings_env)
+    database = settings.data_dir / goals.DB_FILENAME
+    migrate(database, goals.MIGRATIONS[:2])
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            """INSERT INTO goals
+               (id, domain_id, display_order, outcome, status, created_at, updated_at)
+               VALUES ('existing', 'health', 10, 'Existing outcome', 'active', 'now', 'now')"""
+        )
+
+    migrate(database, goals.MIGRATIONS)
+
+    assert goals.get_goal(settings, "existing")["title"] == "Existing outcome"
+
+
 def test_create_get_list_and_registry_round_trip(goal_settings: Settings) -> None:
     goals.create_goal(goal_settings, **example_definition(goal_id="prepare_example", display_order=10))
     created = goals.create_goal(goal_settings, **example_definition())
@@ -100,6 +117,7 @@ def test_create_get_list_and_registry_round_trip(goal_settings: Settings) -> Non
     registry = goals.get_registry(goal_settings)
 
     assert fetched["id"] == "reach_example"
+    assert fetched["title"] == "Example target"
     assert fetched["target"]["required_duration"] == {
         "count": 3,
         "unit": "months",
@@ -158,6 +176,7 @@ def test_goal_update_status_and_validation(goal_settings: Settings) -> None:
             key: value
             for key, value in example_definition(
                 domain="career",
+                title="Updated title",
                 outcome="Updated outcome",
                 status="awaiting_automatic_data",
                 systems=[],
@@ -169,6 +188,7 @@ def test_goal_update_status_and_validation(goal_settings: Settings) -> None:
     completed = goals.set_status(goal_settings, "reach_example", "completed")
 
     assert updated["domain"] == "career"
+    assert updated["title"] == "Updated title"
     assert updated["outcome"] == "Updated outcome"
     assert completed["status"] == "completed"
     with pytest.raises(ValueError, match="domain"):
@@ -393,6 +413,7 @@ def test_mcp_exposes_only_the_new_goal_contract(goal_settings: Settings) -> None
     goals.register_mcp(server, goal_settings)
 
     tools = asyncio.run(server.list_tools())
+    schemas = {tool.name: tool.input_schema for tool in tools}
 
     assert {tool.name for tool in tools} == {
         "goals_registry_get",
@@ -405,6 +426,8 @@ def test_mcp_exposes_only_the_new_goal_contract(goal_settings: Settings) -> None
         "goals_query_evidence",
         "goals_report_snapshot",
     }
+    assert "title" in schemas["goals_create"]["properties"]
+    assert "title" in schemas["goals_update"]["required"]
 
 
 def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
@@ -454,11 +477,15 @@ def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
         response = client.get("/goals")
 
     assert response.status_code == 200
+    instrument = response.text.split('id="manage"', 1)[0]
+    assert "Example target" in instrument
+    assert "Reach the example target" not in instrument
     assert all(text in response.text for text in [
         "Health",
         "Career",
         "Social",
         "Reach the example target",
+        "Example target",
         "Connected source",
         "88 kg",
         "Source unavailable",
@@ -480,6 +507,7 @@ def test_goal_html_forms_create_edit_and_complete_simple_goal(
             "/goals",
             data={
                 "domain": "career",
+                "title": "Read",
                 "outcome": "Read more",
                 "description": "Use useful books",
                 "horizon": "short_term",
@@ -497,6 +525,7 @@ def test_goal_html_forms_create_edit_and_complete_simple_goal(
             data={
                 "domain": "career",
                 "display_order": "10",
+                "title": "Thoughtful reading",
                 "outcome": "Read thoughtfully",
                 "description": "Take notes",
                 "horizon": "medium_term",
@@ -518,5 +547,6 @@ def test_goal_html_forms_create_edit_and_complete_simple_goal(
     saved = goals.get_goal(settings, goal["id"])
     assert {created.status_code, edited.status_code, completed.status_code} == {303}
     assert saved["outcome"] == "Read thoughtfully"
+    assert saved["title"] == "Thoughtful reading"
     assert saved["target"]["value"] == 8
     assert saved["status"] == "completed"

@@ -108,10 +108,10 @@ def import_registry(settings: Settings, registry: dict[str, Any]) -> dict[str, i
         for definition in registry["goals"]:
             connection.execute(
                 """INSERT INTO goals
-                   (id, domain_id, display_order, outcome, description, horizon, status,
+                   (id, domain_id, display_order, title, outcome, description, horizon, status,
                     target_json, systems_json, dependencies_json, evidence_sources_json,
                     notes_json, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 goals._definition_values(definition) + (now, now),
             )
     return {"domains": len(registry["domains"]), "goals": len(registry["goals"])}
@@ -141,6 +141,7 @@ def _normalise_goal(domain: str, display_order: int, source: Any) -> dict[str, A
         goal_id=source.get("id"),
         domain=domain,
         display_order=display_order,
+        title=source.get("title") or source.get("outcome"),
         outcome=source.get("outcome"),
         description=source.get("description"),
         horizon=source.get("horizon"),

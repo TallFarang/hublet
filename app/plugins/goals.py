@@ -114,6 +114,10 @@ MIGRATIONS = (
         SELECT RAISE(ABORT, 'observations are immutable');
     END;
     """,
+    """
+    ALTER TABLE goals ADD COLUMN title TEXT NOT NULL DEFAULT '';
+    UPDATE goals SET title = outcome WHERE title = '';
+    """,
 )
 router = APIRouter(prefix="/goals")
 
@@ -131,6 +135,7 @@ def create_goal(
     goal_id: str,
     domain: str,
     outcome: str,
+    title: str | None = None,
     display_order: int = 0,
     description: str | None = None,
     horizon: str | None = None,
@@ -145,6 +150,7 @@ def create_goal(
         goal_id=goal_id,
         domain=domain,
         display_order=display_order,
+        title=outcome if title is None else title,
         outcome=outcome,
         description=description,
         horizon=horizon,
@@ -160,10 +166,10 @@ def create_goal(
         _require_domain(connection, definition["domain"])
         connection.execute(
             """INSERT INTO goals
-               (id, domain_id, display_order, outcome, description, horizon, status,
+               (id, domain_id, display_order, title, outcome, description, horizon, status,
                 target_json, systems_json, dependencies_json, evidence_sources_json,
                 notes_json, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             _definition_values(definition) + (now, now),
         )
     return get_goal(settings, goal_id)
@@ -175,6 +181,7 @@ def update_goal(
     *,
     domain: str,
     display_order: int,
+    title: str,
     outcome: str,
     description: str | None,
     horizon: str | None,
@@ -190,6 +197,7 @@ def update_goal(
         goal_id=goal_id,
         domain=domain,
         display_order=display_order,
+        title=title,
         outcome=outcome,
         description=description,
         horizon=horizon,
@@ -204,8 +212,8 @@ def update_goal(
         _require_domain(connection, definition["domain"])
         connection.execute(
             """UPDATE goals SET
-               domain_id = ?, display_order = ?, outcome = ?, description = ?, horizon = ?,
-               status = ?, target_json = ?, systems_json = ?, dependencies_json = ?,
+               domain_id = ?, display_order = ?, title = ?, outcome = ?, description = ?,
+               horizon = ?, status = ?, target_json = ?, systems_json = ?, dependencies_json = ?,
                evidence_sources_json = ?, notes_json = ?, updated_at = ?
                WHERE id = ?""",
             _definition_values(definition)[1:] + (_now(), goal_id),
@@ -446,6 +454,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         goal_id: str,
         domain: str,
         outcome: str,
+        title: str | None = None,
         display_order: int = 0,
         description: str | None = None,
         horizon: str | None = None,
@@ -462,21 +471,23 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
             goal_id,
             domain,
             outcome,
-            display_order,
-            description,
-            horizon,
-            status,
-            target,
-            systems,
-            dependencies,
-            evidence_sources,
-            notes,
+            title=title,
+            display_order=display_order,
+            description=description,
+            horizon=horizon,
+            status=status,
+            target=target,
+            systems=systems,
+            dependencies=dependencies,
+            evidence_sources=evidence_sources,
+            notes=notes,
         )
 
     def update_tool(
         goal_id: str,
         domain: str,
         display_order: int,
+        title: str,
         outcome: str,
         description: str | None,
         horizon: str | None,
@@ -493,6 +504,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
             goal_id,
             domain=domain,
             display_order=display_order,
+            title=title,
             outcome=outcome,
             description=description,
             horizon=horizon,
@@ -585,6 +597,7 @@ def goals_page(request: Request) -> Response:
 def create_goal_form(
     request: Request,
     domain: Annotated[str, Form()],
+    title: Annotated[str, Form()],
     outcome: Annotated[str, Form()],
     description: Annotated[str, Form()] = "",
     horizon: Annotated[str, Form()] = "",
@@ -597,6 +610,7 @@ def create_goal_form(
         request.app.state.settings,
         goal_id=str(uuid4()),
         domain=domain,
+        title=title,
         outcome=outcome,
         description=description or None,
         horizon=horizon or None,
@@ -611,6 +625,7 @@ def edit_goal_form(
     goal_id: str,
     domain: Annotated[str, Form()],
     display_order: Annotated[int, Form()],
+    title: Annotated[str, Form()],
     outcome: Annotated[str, Form()],
     description: Annotated[str, Form()] = "",
     horizon: Annotated[str, Form()] = "",
@@ -625,6 +640,7 @@ def edit_goal_form(
         goal_id,
         domain=domain,
         display_order=display_order,
+        title=title,
         outcome=outcome,
         description=description or None,
         horizon=horizon or None,
@@ -701,6 +717,7 @@ def _normalise_definition(**definition: Any) -> dict[str, Any]:
     if ID_PATTERN.fullmatch(goal_id) is None:
         raise ValueError("goal_id must contain only letters, numbers, dots, colons, underscores or hyphens")
     domain = _name(definition["domain"], "domain")
+    title = _required_text(definition["title"], "title")
     outcome = _required_text(definition["outcome"], "outcome")
     status = _name(definition["status"], "status")
     display_order = definition["display_order"]
@@ -711,6 +728,7 @@ def _normalise_definition(**definition: Any) -> dict[str, Any]:
         "id": goal_id,
         "domain": domain,
         "display_order": display_order,
+        "title": title,
         "outcome": outcome,
         "description": _optional_text(definition["description"]),
         "horizon": _optional_text(definition["horizon"]),
@@ -801,6 +819,7 @@ def _definition_values(definition: dict[str, Any]) -> tuple[Any, ...]:
         definition["id"],
         definition["domain"],
         definition["display_order"],
+        definition["title"],
         definition["outcome"],
         definition["description"],
         definition["horizon"],
@@ -819,6 +838,7 @@ def _goal_from_row(row: Any) -> dict[str, Any]:
         "domain": row["domain_id"],
         "domain_name": row["domain_name"],
         "display_order": row["display_order"],
+        "title": row["title"],
         "outcome": row["outcome"],
         "description": row["description"],
         "horizon": row["horizon"],

@@ -10,12 +10,12 @@
     <div class="goal-readouts">
       {% for goal in goals if goal.status != 'archived' %}
       <section class="goal-readout">
-        <header><span><strong>{{ goal.outcome }}</strong><small>{{ goal.dashboard.metric }}</small></span><span class="signal signal--{{ goal.status }}">{{ goal.dashboard.state }}</span></header>
+        <header><span><strong>{{ goal.title }}</strong><small>{{ goal.dashboard.metric }}</small></span><span class="signal signal--{{ goal.status }}">{{ goal.dashboard.state }}</span></header>
         <div class="goal-measurement">
           <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
           {% if goal.target and goal.target.value is not none %}<small>Target {{ goal.target.direction|replace('_', ' ') }} {{ goal.target.value }} {{ goal.target.unit or '' }}</small>{% endif %}
         </div>
-        {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.outcome ~ ' progress') }}
+        {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.title ~ ' progress') }}
         {% else %}<p class="chart-empty">No numeric readings</p>{% endif %}
       </section>
       {% else %}<p class="chart-empty">No active goals.</p>{% endfor %}
@@ -29,6 +29,7 @@
       <form method="post" action="/goals" class="form-grid">
         <label>Domain<select name="domain">{% for domain in domains %}<option value="{{ domain.id }}">{{ domain.name }}</option>{% endfor %}</select></label>
         <label>Horizon<input name="horizon"></label>
+        <label class="full-field">Title<input name="title" required></label>
         <label class="full-field">Outcome<input name="outcome" required></label>
         <label>Target metric<input name="target_metric"></label><label>Target value<input name="target_value"></label>
         <label>Unit<input name="target_unit"></label>
@@ -45,8 +46,9 @@
         <h3>{{ domain.name }}</h3>
         {% for goal in domain.goals %}
         <details class="record">
-          <summary><span><strong>{{ goal.outcome }}</strong><small>{{ goal.status|replace('_', ' ') }}</small></span><span>{{ goal.dashboard.latest if goal.dashboard.latest is not none else '—' }} {{ goal.dashboard.unit }}</span></summary>
+          <summary><span><strong>{{ goal.title }}</strong><small>{{ goal.status|replace('_', ' ') }}</small></span><span>{{ goal.dashboard.latest if goal.dashboard.latest is not none else '—' }} {{ goal.dashboard.unit }}</span></summary>
           <div class="record-body">
+            <p>{{ goal.outcome }}</p>
             {% if goal.description %}<p>{{ goal.description }}</p>{% endif %}
             <h4>Evidence</h4>
             <ul class="source-list">
@@ -61,6 +63,7 @@
               <form method="post" action="/goals/{{ goal.id }}/edit" class="form-grid">
                 <label>Domain<select name="domain">{% for option in domains %}<option value="{{ option.id }}" {% if option.id == goal.domain %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
                 <label>Display order<input name="display_order" type="number" value="{{ goal.display_order }}" required></label>
+                <label class="full-field">Title<input name="title" value="{{ goal.title }}" required></label>
                 <label class="full-field">Outcome<input name="outcome" value="{{ goal.outcome }}" required></label>
                 <label class="full-field">Description<textarea name="description">{{ goal.description or '' }}</textarea></label>
                 <label>Horizon<input name="horizon" value="{{ goal.horizon or '' }}"></label>

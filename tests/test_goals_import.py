@@ -20,6 +20,7 @@ domains:
     status: active
     goals:
       - id: durable_target
+        title: Durable target
         outcome: Reach a durable target
         horizon: medium_term
         outcome_target:
@@ -91,6 +92,7 @@ def test_yaml_mapping_preserves_goal_semantics_and_excludes_reporting(tmp_path: 
 
     assert [domain["id"] for domain in mapped["domains"]] == ["health", "career", "social"]
     assert durable["id"] == "durable_target"
+    assert durable["title"] == "Durable target"
     assert durable["target"]["required_duration"] == {
         "count": 3,
         "unit": "months",
@@ -124,6 +126,7 @@ def test_import_is_atomic_round_trips_ids_and_leaves_source_untouched(
         "durable_target",
         "trend_target",
     ]
+    assert saved["domains"][0]["goals"][0]["title"] == "Durable target"
     assert saved["domains"][2]["status"] == "tbc"
     with pytest.raises(ValueError, match="empty"):
         import_registry(goal_settings, registry)
