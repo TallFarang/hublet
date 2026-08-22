@@ -9,7 +9,7 @@ web
 ## Users
 
 One trusted owner using an iPhone or Mac on a home network. OpenClaw handles conversational
-capture; the web interface handles quick browsing and manual corrections.
+capture and all changes; the web interface is a read-only dashboard.
 
 ## Product Purpose
 
@@ -36,7 +36,7 @@ instrument rather than a reporting suite.
 - Apple Notes recipe references with cooking experiments and conclusions.
 - Receipt-backed food consumption with current linked nutrition and explicit tracking gaps.
 - Read-only Agentbridge HealthKit snapshots with compact evidence for Goals.
-- Server-rendered HTML forms and inline data graphics, with no JavaScript, frontend framework,
+- Server-rendered HTML, read-only filters and inline data graphics, with no JavaScript, frontend framework,
   chart library, web font or external asset dependency.
 - One signed-cookie dashboard login and a separately protected MCP endpoint.
 - No user accounts, destructive agent tools, general analytics suite or plugin framework.
@@ -55,6 +55,6 @@ photography, testimonials or other brand assets exist and none should be fabrica
 
 - Keep what earns its place.
 - Preserve useful function while deleting machinery.
-- Put current status before manual controls on every plugin page.
+- Put current status before read-only history on every plugin page.
 - Keep up to eight launcher destinations inside one small iPhone viewport.
 - Let structured history, not generic advice, provide the value.

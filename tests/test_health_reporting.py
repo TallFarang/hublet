@@ -146,5 +146,6 @@ def test_health_mcp_contract_and_private_dashboard(settings_env: dict[str, str])
         login(client, settings)
         page = client.get("/health")
     assert page.status_code == 200
-    assert "HealthKit" in page.text and "Agentbridge" in page.text
+    assert "HealthKit" not in page.text and "Agentbridge" not in page.text
+    assert 'class="period-toggle"' in page.text
     assert page.text.count("<form") == 1 and "<script" not in page.text

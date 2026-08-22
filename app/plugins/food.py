@@ -1,6 +1,7 @@
 """Food plugin wiring and stable public domain imports."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -16,38 +17,78 @@ from app.plugins.food_records import query_records, record_consumption
 from app.plugins.food_reporting import find_gaps, summary
 from app.plugins.food_schema import DB_FILENAME, MIGRATIONS
 from app.runtime import Plugin
-from app.web import render
+from app.web import dashboard_period, render
 
 router = APIRouter(prefix="/food")
 
 
 @router.get("")
-def food_page(request: Request) -> Response:
+def food_page(
+    request: Request,
+    period: str = "week",
+    q: str = "",
+    restaurant: str = "",
+    sort: str = "name",
+) -> Response:
     settings = request.app.state.settings
-    end = datetime.now().astimezone().date()
-    start = end - timedelta(days=6)
-    report = summary(settings, start.isoformat(), end.isoformat(), [])
+    selected = dashboard_period(period, datetime.now().astimezone().date())
+    report = summary(settings, selected["start"], selected["end"], [])
     records = query_records(
-        settings, start_date=start.isoformat(), end_date=end.isoformat(), limit=500
+        settings,
+        start_date=selected["start"],
+        end_date=selected["end"],
+        limit=500,
     )
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        counts = dict(
-            connection.execute(
-                """SELECT
-                   (SELECT COUNT(*) FROM records) AS records,
-                   (SELECT COUNT(*) FROM nutrition) AS nutrition,
-                   (SELECT COUNT(*) FROM records
-                    WHERE status = 'uncertain'
-                       OR (status = 'eaten' AND nutrition_id IS NULL)) AS unresolved"""
-            ).fetchone()
-        )
     return render(
         request,
         "food.html",
         title="Food",
-        counts=counts,
         dashboard=food_dashboard(report, records),
+        catalogue=_catalogue(settings, q, restaurant, sort),
+        period=selected,
     )
+
+
+def _catalogue(
+    settings: Settings, query: str, restaurant: str, sort: str
+) -> dict[str, Any]:
+    query = query.strip()[:100]
+    restaurant = restaurant.strip()[:100]
+    orders = {
+        "name": "restaurant, item, portion_basis, id",
+        "calories_asc": "calories, protein_g DESC, restaurant, item, id",
+        "calories_desc": "calories DESC, protein_g DESC, restaurant, item, id",
+        "protein_desc": "protein_g DESC, calories, restaurant, item, id",
+        "protein_asc": "protein_g, calories, restaurant, item, id",
+    }
+    selected_sort = sort if sort in orders else "name"
+    clauses, parameters = [], []
+    if query:
+        clauses.append("(item LIKE ? COLLATE NOCASE OR category LIKE ? COLLATE NOCASE)")
+        parameters.extend([f"%{query}%", f"%{query}%"])
+    if restaurant:
+        clauses.append("restaurant = ? COLLATE NOCASE")
+        parameters.append(restaurant)
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    with connect(settings.data_dir / DB_FILENAME) as connection:
+        restaurants = [
+            row[0]
+            for row in connection.execute(
+                "SELECT DISTINCT restaurant FROM nutrition ORDER BY restaurant COLLATE NOCASE"
+            )
+        ]
+        rows = connection.execute(
+            f"""SELECT restaurant, item, portion_basis, calories, protein_g
+                FROM nutrition{where} ORDER BY {orders[selected_sort]} LIMIT 10""",
+            parameters,
+        ).fetchall()
+    return {
+        "items": [dict(row) for row in rows],
+        "query": query,
+        "restaurant": restaurant,
+        "restaurants": restaurants,
+        "sort": selected_sort,
+    }
 
 
 def launcher_summary(settings: Settings) -> str:

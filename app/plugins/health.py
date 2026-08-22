@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Request
@@ -17,7 +17,7 @@ from app.plugins.health_report import summary
 from app.plugins.health_schema import DB_FILENAME, MIGRATIONS
 from app.plugins.health_sync import sync_agentbridge
 from app.runtime import Plugin
-from app.web import render
+from app.web import dashboard_period, render
 
 router = APIRouter(prefix="/health")
 QueryLimit = Annotated[int, Field(ge=1, le=200)]
@@ -60,7 +60,7 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 
 
 @router.get("")
-def health_page(request: Request) -> Response:
+def health_page(request: Request, period: str = "week") -> Response:
     settings = request.app.state.settings
     status = sync_status(settings)
     end = (
@@ -68,12 +68,14 @@ def health_page(request: Request) -> Response:
         if status["latest_export_date"]
         else datetime.now().astimezone().date()
     )
-    report = summary(settings, (end - timedelta(days=29)).isoformat(), end.isoformat())
+    selected = dashboard_period(period, end)
+    report = summary(settings, selected["start"], selected["end"])
     return render(
         request,
         "health.html",
         title="Health",
         dashboard=health_dashboard(report),
+        period=selected,
     )
 
 

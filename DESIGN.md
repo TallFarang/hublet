@@ -22,10 +22,30 @@ colors:
 typography:
   display:
     fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
-    fontSize: "clamp(1.8rem, 5vw, 2.8rem)"
+    fontSize: "1.5rem"
     fontWeight: 700
     lineHeight: 1.125
     letterSpacing: "normal"
+  title:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.2
+  reading:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(1.15rem, 3vw, 1.8rem)"
+    fontWeight: 750
+    lineHeight: 1.2
+  reading-compact:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 750
+    lineHeight: 1.2
+  login-display:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(2rem, 8vw, 3rem)"
+    fontWeight: 700
+    lineHeight: 1.125
   launcher:
     fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
     fontSize: "clamp(1.05rem, 3.2vw, 2.15rem)"
@@ -82,7 +102,7 @@ components:
   navigation-primary:
     backgroundColor: "{colors.ground}"
     textColor: "{colors.text}"
-    height: "56px"
+    height: "64px"
 ---
 
 # Design System: Hublet
@@ -93,7 +113,7 @@ components:
 
 Hublet is a compact bank of instruments used to check personal facts in seconds. Matte near-black infrastructure, ruled charcoal surfaces, pale readings, and one quiet signal color per plugin make the interface feel precise and calm without borrowing the spectacle of an analytics suite.
 
-The system is native, factual, and dense enough for an iPhone. Status and charts occupy the first useful viewport; controls and history wait below. There are no ornamental layers, slogans, web fonts, or decorative motion. Lucide-derived line icons and tabular numerals carry most of the visual character.
+The system is native, factual, and dense enough for an iPhone. Status and charts occupy the first useful viewport; read-only history waits below. There are no ornamental layers, slogans, web fonts, or decorative motion. Lucide-derived line icons and tabular numerals carry most of the visual character.
 
 **Key Characteristics:**
 
@@ -101,7 +121,7 @@ The system is native, factual, and dense enough for an iPhone. Status and charts
 - Modern system sans throughout, with tight headings and tabular readings.
 - Restrained Goals, Food, Recipes, Coffee, and Health signal colors.
 - A compact two-column launcher built for up to eight plugins.
-- Inline charts and current status before forms, history, or definitions.
+- Inline charts and current status before history or definitions.
 
 ## Colors
 
@@ -116,7 +136,7 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 ### Secondary
 
 - **Goal Signal:** Goal progress values, chart traces, completed states, and Goals actions.
-- **Food Signal:** Nutrition readings, seven-day bars, and Food identity. Food remains read-only in the dashboard, so this color does not imply an editing action.
+- **Food Signal:** Nutrition readings, seven- or thirty-day bars, and Food identity. Food is read-only in the dashboard, so this color does not imply an editing action.
 - **Recipe Signal:** Recipe readings, rating traces, and Recipes actions.
 - **Coffee Signal:** Coffee readings, extraction traces, and Coffee actions.
 - **Health Signal:** HealthKit measurements, freshness, and Health identity.
@@ -152,7 +172,7 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 - **Display:** Tight, responsive page titles for plugin identity and authentication states.
 - **Launcher:** Large, compact destination names that remain legible inside short tiles.
 - **Title:** One-rem panel headings and semibold record identities; keep headings terse.
-- **Body:** Root-size operational copy, forms, records, and explanations with a compact 1.45 line height.
+- **Body:** Root-size operational copy, filters and records with a compact 1.45 line height.
 - **Label:** Small, muted, semibold field labels, chart captions, metadata, and navigation.
 - **Readings:** Bold responsive values in tabular numerals; color them with the current plugin signal.
 
@@ -164,15 +184,15 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 
 ## Layout
 
-The shared shell is centered at a maximum width of 1120px. It uses 1rem side gutters on wider screens and 0.5rem gutters at 760px and below. The header is a fixed-height 56px rail, while page content remains in normal document flow.
+The shared shell is centered at a maximum width of 1120px. It uses 1rem side gutters on wider screens and 0.5rem gutters at 760px and below. The header is a fixed-height 64px rail, while page content remains in normal document flow.
 
 The launcher fills the remaining small viewport height and always uses two equal columns. With one to eight plugins, rows flex to fit and overflow is suppressed; this keeps the approved Goals, Food, Recipes, Coffee, Health order visible without scrolling on an iPhone 17 and preserves room for three more destinations. Beyond eight, rows receive a 112px minimum and the launcher may scroll.
 
-Plugin pages place a 64px title row above an instrument panel sized to fill the first useful viewport. Current readings, progress, and inline charts come first. A deliberate gap separates that quick-glance layer from management. Forms and dual management panels use two columns when space allows, then collapse to one column at 760px. Primary navigation links hide at that breakpoint, leaving Home through the Hublet brand and a 44px sign-out control.
+Plugin pages place a compact title and Week/Month control above an instrument panel sized to fill the first useful viewport. The Hublet wordmark is larger than plugin titles and provides the only Home affordance. Current readings, progress and inline charts come first; a deliberate gap separates them from read-only history and Food catalogue filters.
 
 In-page cues use native smooth scrolling. The reduced-motion preference restores immediate scrolling.
 
-**The Read, Then Act Rule.** Every plugin opens on current status; forms, histories, and definitions begin below the first instrument panel.
+**The Read, Then Inspect Rule.** Every plugin opens on current status; histories and definitions begin below the first instrument panel.
 
 **The Eight-Fit Rule.** Preserve the launcher's two-column, viewport-fitted behavior for up to eight destinations; do not turn it into a scrolling card feed at the supported limit.
 
@@ -186,7 +206,7 @@ Hublet uses no box shadows. Tonal layering and one-pixel rules create all depth:
 
 ## Shapes
 
-The form language is restrained and slightly softened. Main panels and launcher tiles use broad 14px corners; controls and error messages use 12px corners. Records, histories, reading groups, and chart tracks rely on straight one-pixel dividers inside those outer shapes rather than nesting rounded cards.
+The control language is restrained and slightly softened. Main panels and launcher tiles use broad 14px corners; filters and error messages use 12px corners. Records, histories, reading groups, and chart tracks rely on straight one-pixel dividers inside those outer shapes rather than nesting rounded cards.
 
 Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view box and a 2px stroke. Their geometry stays recognizable and functional; plugin signal color supplies identity.
 
@@ -212,25 +232,25 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 - **Readings:** Four values appear in a ruled grid; on compact screens it becomes a two-by-two matrix.
 - **Charts:** Inline SVG line charts and CSS bar charts use strong-rule baselines, muted target lines, and the current plugin signal for data. Empty states remain centered and quiet.
 
-### Inputs / Fields
+### Filters / Fields
 
 - **Style:** Recessed Field fill, Strong Rule border, 12px corners, visible sentence-case labels, and native controls.
 - **Focus:** The same global Focus Blue outline used across the application.
-- **Error:** Server-returned errors use the warm error pair and `role="alert"`; no client-side UI dependency is assumed.
+- **Use:** Fields are limited to authentication and read-only Food catalogue filtering.
 
 ### Records
 
 - **Style:** Native disclosure rows inside one bordered records panel, with internal rules and at least 68px summary height.
-- **Body:** Editing, observations, cook logs, evidence, and nested histories open in place. Measurements align opposite identity on wide screens and stack left on compact screens.
+- **Body:** Observations, cook logs, evidence, and histories open in place. Measurements align opposite identity on wide screens and stack left on compact screens.
 
 ### Navigation
 
-- **Desktop:** A 56px Night Ground rail with the Hublet wordmark, plugin links in shipped order, and an icon-only sign-out action.
+- **Desktop:** A 64px Night Ground rail with the Hublet wordmark, plugin links in shipped order, and an icon-only sign-out action.
 - **Mobile:** Plugin links hide; the wordmark remains a Home affordance and sign-out retains a 44px target.
 
 ### Food Status
 
-- **Read-only:** Food shows four current readings, a seven-day calorie bar chart, tracking issues, stored counts, and an explicit note that changes happen through OpenClaw. Do not add dashboard forms without changing the product contract.
+- **Read-only:** Food shows a seven- or thirty-day calorie chart, a native meal disclosure, four readings underneath, and a ten-result filterable nutrition catalogue. Week reveals meals by day; Month reveals only days with fewer than two recorded meals.
 
 ### Health Status
 
@@ -251,5 +271,4 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 - **Don't** add shadows, gradients, glass effects, decorative animation, or ornamental card stacks.
 - **Don't** introduce web fonts, icon fonts, external assets, JavaScript charts, or frontend-framework assumptions.
 - **Don't** fill large surfaces with plugin colors or use those signals as decoration.
-- **Don't** put forms above the current-status instrument panel.
-- **Don't** add Food mutation controls to the web dashboard while Food remains read-only there.
+- **Don't** add plugin mutation controls to the web dashboard.

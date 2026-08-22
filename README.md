@@ -5,8 +5,8 @@ provide Coffee, Goals, Recipes, Food, and Health through one MCP endpoint and a 
 dashboard.
 
 The v1 runtime is intentionally narrow: Python 3.13, FastAPI, the official MCP SDK,
-`sqlite3`, Jinja2, and a local vendored copy of Pico CSS. The dashboard uses ordinary HTML
-forms and dependency-free inline charts; there is no REST API, frontend framework, JavaScript,
+`sqlite3`, Jinja2, and a local vendored copy of Pico CSS. The read-only dashboard uses HTML GET
+filters and dependency-free inline charts; there is no REST API, frontend framework, JavaScript,
 charting dependency, downloaded font, or external CSS CDN.
 
 ## Development status

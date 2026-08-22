@@ -1,45 +1,70 @@
 {% extends "base.html" %}
-{% from "icons.html" import icon %}
+{% from "charts.html" import period_toggle %}
 {% block body_class %}plugin-page food-page{% endblock %}
 {% block content %}
-  <header class="plugin-title"><a href="/">Home</a><h1>Food</h1></header>
-  <section class="instrument-panel" aria-labelledby="food-status">
-    <h2 id="food-status" class="visually-hidden">Food status</h2>
-    <dl class="readings">
-      <div><dt>Daily avg</dt><dd>{{ dashboard.average_calories }} kcal</dd></div>
-      <div><dt>Protein avg</dt><dd>{{ dashboard.average_protein }}g</dd></div>
-      <div><dt>Confirmed</dt><dd>{{ dashboard.confirmed_count }}</dd></div>
-      <div><dt>Unresolved</dt><dd>{{ dashboard.unresolved|length }}</dd></div>
-    </dl>
+  <header class="plugin-title"><h1>Food</h1>{{ period_toggle(period) }}</header>
+  <section class="instrument-panel" aria-label="Food summary">
     <figure class="bar-figure">
-      <figcaption>Confirmed calories · last seven days</figcaption>
-      <div class="bar-chart" role="img" aria-label="Confirmed calories for the last seven days">
+      <figcaption>Confirmed calories</figcaption>
+      <div class="bar-chart bar-chart--{{ period.key }}" role="img"
+           aria-label="Confirmed calories for {{ period.days }} days">
         {% for day in dashboard.days %}
-        <div class="bar-day" aria-label="{{ day.date }}: {{ day.calories }} calories, {{ day.protein_g }} grams protein">
-          <span class="bar-value">{{ day.calories|int }}</span>
+        <div class="bar-day" aria-label="{{ day.date|uk_date }}: {{ day.calories }} calories, {{ day.protein_g }} grams protein">
+          {% if period.key == 'week' %}<span class="bar-value">{{ day.calories|int }}</span>{% endif %}
           <span class="bar-track"><span class="bar-fill" style="height: {{ day.bar }}%"></span></span>
-          <span class="bar-label">{{ day.date[5:] }}</span>
+          <span class="bar-label">{% if period.key == 'week' or loop.first or loop.last %}{{ day.date|uk_date(true) }}{% endif %}</span>
         </div>
         {% endfor %}
       </div>
+      <details class="meal-disclosure">
+        <summary>{% if period.key == 'week' %}Meals{% else %}Days under two meals{% endif %}</summary>
+        <ol class="meal-days">
+          {% for day in dashboard.days %}
+            {% if period.key == 'week' %}
+            <li>
+              <time>{{ day.date|uk_date }}</time>
+              <span class="day-meals">
+                {% for meal in day.meals %}<span><strong>{{ meal.slot|capitalize }}</strong>{% for item in meal['items'] %}<small>{{ item.item }} · {{ item.restaurant }}</small>{% endfor %}</span>{% else %}—{% endfor %}
+              </span>
+            </li>
+            {% elif day.meal_count < 2 %}
+            <li><time>{{ day.date|uk_date }}</time><span>{{ day.meal_count }} {% if day.meal_count == 1 %}meal{% else %}meals{% endif %}</span></li>
+            {% endif %}
+          {% endfor %}
+        </ol>
+      </details>
     </figure>
-    <a class="scroll-cue" href="#details" aria-label="View food details">{{ icon("chevron-down") }}</a>
+    <dl class="readings readings--below">
+      <div><dt>Daily avg</dt><dd>{{ dashboard.average_calories }} kcal</dd></div>
+      <div><dt>Protein avg</dt><dd>{{ dashboard.average_protein }}g</dd></div>
+      <div><dt>Confirmed</dt><dd>{{ dashboard.confirmed_count }}</dd></div>
+      <div><dt>Unresolved</dt><dd>{{ dashboard.unresolved_count }}</dd></div>
+    </dl>
   </section>
 
-  <section id="details" class="management" aria-label="Food details">
-    <section class="records-panel">
-      <div class="section-heading"><h2>Tracking issues</h2><span>{{ dashboard.unresolved|length }}</span></div>
-      <ul class="issue-list">
-        {% for record in dashboard.unresolved %}
-        <li><span><strong>{{ record.item }}</strong><small>{{ record.restaurant }} · {{ record.consumption_date_local or record.purchase_date_local or 'No date' }}</small></span><code>{{ record.id }}</code></li>
-        {% else %}<li class="empty-state">No unresolved records.</li>{% endfor %}
-      </ul>
-      <dl class="stored-counts">
-        <div><dt>Records</dt><dd>{{ counts.records }}</dd></div>
-        <div><dt>Nutrition entries</dt><dd>{{ counts.nutrition }}</dd></div>
-        <div><dt>Excluded this week</dt><dd>{{ dashboard.excluded_count }}</dd></div>
-      </dl>
-      <p class="system-note">Food changes are handled through OpenClaw.</p>
+  <section class="dashboard-details" aria-label="Food database">
+    <section class="records-panel catalogue-panel">
+      <h2>Food database</h2>
+      <form class="catalogue-filters" method="get" action="/food">
+        <input type="hidden" name="period" value="{{ period.key }}">
+        <label>Search<input name="q" value="{{ catalogue.query }}" placeholder="Rice bowl"></label>
+        <label>Restaurant<select name="restaurant">
+          <option value="">All</option>
+          {% for option in catalogue.restaurants %}<option value="{{ option }}"{% if option == catalogue.restaurant %} selected{% endif %}>{{ option }}</option>{% endfor %}
+        </select></label>
+        <label>Sort<select name="sort">
+          {% for value, label in [('name', 'A–Z'), ('calories_asc', 'Calories · low'), ('calories_desc', 'Calories · high'), ('protein_desc', 'Protein · high'), ('protein_asc', 'Protein · low')] %}<option value="{{ value }}"{% if value == catalogue.sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select></label>
+        <button type="submit">View</button>
+      </form>
+      <ol class="catalogue-results">
+        {% for item in catalogue['items'] %}
+        <li class="catalogue-result">
+          <span><strong>{{ item.item }}</strong><small>{{ item.restaurant }} · {{ item.portion_basis }}</small></span>
+          <span><strong>{{ item.calories|round|int }} kcal</strong><small>{{ item.protein_g }}g protein</small></span>
+        </li>
+        {% else %}<li class="empty-state">No matches</li>{% endfor %}
+      </ol>
     </section>
   </section>
 {% endblock %}

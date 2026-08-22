@@ -9,7 +9,7 @@ Implementation-ready specification for a single-user system optimized for minima
 
 **Working project name: Hublet.**
 
-Build one small native Python service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes, Food and Health plugins plus a simple mobile-friendly launcher. OpenClaw remains the primary conversational interface through Discord. The web UI is for browsing, quick manual edits and seeing records at a glance.
+Build one small native Python service on the dedicated MacBook that already runs OpenClaw. It provides Coffee, Goals, Recipes, Food and Health plugins plus a simple mobile-friendly launcher. OpenClaw remains the sole mutation interface through Discord. The web UI is a read-only dashboard for browsing records at a glance.
 
 ```text
 iPhone / Mac browser                 Discord
@@ -36,7 +36,7 @@ iPhone / Mac browser                 Discord
 | Plugins are modules | No separate services, dynamic marketplace, internal RPC, queue or event bus. |
 | No duplicate master data | If another app is authoritative, store only additional structured memory. Apple Notes remains canonical for recipes. |
 | Agent-first | Discord/OpenClaw handles natural-language capture and reasoning. |
-| Simple web UI | Server-rendered pages for browse/edit. No SPA. |
+| Simple web UI | Server-rendered read-only pages. No SPA. |
 | Semantic tools | Expose coffee.log_shot rather than generic database.insert. |
 | No destructive tools | Archive/complete instead of agent-accessible delete in v1. |
 | Local by default | Dashboard only needs home-LAN access. No public hosting/TLS/reverse proxy in v1. |
@@ -49,7 +49,7 @@ iPhone / Mac browser                 Discord
 | Layer | Choice |
 | --- | --- |
 | Language | Python 3.13+ |
-| Web | FastAPI + Uvicorn; one worker; server-rendered HTML forms, not REST |
+| Web | FastAPI + Uvicorn; one worker; server-rendered read-only HTML, not REST |
 | Agent interface | Official MCP Python SDK v2; Streamable HTTP mounted in FastAPI |
 | Database | Built-in sqlite3; one SQLite file per plugin |
 | UI | Server-rendered HTML + a vendored local copy of Pico CSS; no CDN |
@@ -124,10 +124,11 @@ icon, its name and one short factual summary.
 ```
 
 Routes: /, /goals, /food, /recipes, /coffee, /health. Each plugin starts with compact current readings and a
-dependency-free inline chart; records and forms follow below on the same page. Food is read-only in
-the web UI and remains writable through OpenClaw MCP. Mutations use ordinary POSTed HTML forms
-followed by redirects; v1 exposes no JSON REST API. Use semantic HTML, locally vendored Pico CSS,
-small custom stylesheets and no JavaScript.
+dependency-free inline chart; useful read-only records follow below. Week and Month GET controls
+change the displayed period, and Food adds read-only catalogue filters. All plugin mutations remain
+available only through OpenClaw MCP; v1 exposes no JSON REST API. Use semantic HTML, locally
+vendored Pico CSS, small custom stylesheets and no JavaScript. Display dates as DD/MM/YYYY while
+keeping stored values and MCP contracts in ISO format.
 
 The visual system is a restrained dark instrument panel: matte near-black ground, ruled charcoal
 surfaces, native system sans type, tabular readings and one accessible signal color per plugin. Do
@@ -298,10 +299,10 @@ htmlcov/
 Runtime threat model: one trusted user on a home LAN plus OpenClaw on the same Mac. Never router-port-forward Hublet. Dashboard and MCP authentication are deliberately independent:
 
 - `HUBLET_DASHBOARD_TOKEN` authenticates the dashboard login form. A successful login uses Starlette `SessionMiddleware`, backed by itsdangerous, to create a signed cookie using the separate `HUBLET_SESSION_SECRET`. Its only semantic payload is `{"authenticated": true}`; the raw dashboard token and other user data are never stored in the cookie. The middleware enforces a server-side signature `max_age` of 90 days. The cookie is HttpOnly, SameSite=Lax and Path=/. It is Secure if and only if `HUBLET_PUBLIC_ORIGIN` uses HTTPS, so plain HTTP remains supported for the home-LAN deployment. Credential rotation is explicit: rotating `HUBLET_SESSION_SECRET` revokes all existing sessions; dashboard token rotation alone does not revoke existing sessions.
-- Every state-changing dashboard request, including login, must have an `Origin` exactly matching `HUBLET_PUBLIC_ORIGIN`. If `Origin` is absent, the origin parsed from `Referer` must match exactly. Reject requests when both are absent or either supplied value is malformed or mismatched. Repository examples use only `http://hublet.example.test:8787`, `http://localhost:8787` or `http://127.0.0.1:8787`; the real deployment origin stays outside Git.
+- Every state-changing dashboard authentication request must have an `Origin` exactly matching `HUBLET_PUBLIC_ORIGIN`. If `Origin` is absent, the origin parsed from `Referer` must match exactly. Reject requests when both are absent or either supplied value is malformed or mismatched. Repository examples use only `http://hublet.example.test:8787`, `http://localhost:8787` or `http://127.0.0.1:8787`; the real deployment origin stays outside Git.
 - `HUBLET_MCP_TOKEN` protects every `/mcp` transport method through an `Authorization: Bearer` header. `HUBLET_MCP_ALLOWED_HOSTS` is the comma-separated allowlist for MCP Host-header validation and uses the SDK wildcard-port syntax `hublet.example.test:*,localhost:*,127.0.0.1:*` in public examples. A dashboard cookie never grants MCP access, and the MCP bearer never grants dashboard access.
 
-All dashboard writes use authenticated HTML forms. V1 has no REST API. Do not implement accounts, OAuth, roles, JWT refresh or cloud identity.
+Plugin writes are unavailable from the dashboard and remain MCP-only. Login and logout are the only dashboard POSTs. V1 has no REST API. Do not implement accounts, OAuth, roles, JWT refresh or cloud identity.
 
 **Do not attach a self-hosted GitHub Actions runner to this public repository.** Public repositories can receive pull requests from forks, and GitHub warns that self-hosted runners can therefore expose the host machine to dangerous code. All repository CI must run on GitHub-hosted runners.
 

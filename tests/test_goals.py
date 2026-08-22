@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -251,7 +252,7 @@ def test_idempotency_conflicts_and_observation_mutation_are_rejected(
             metric="example_metric",
             value=2,
             source="Example source",
-            observed_at="2026-08-14T00:00:00Z",
+            observed_at=datetime.now(UTC).isoformat(),
             idempotency_key="one-reading",
         )
     with pytest.raises(ValueError, match="different observation"):
@@ -470,32 +471,27 @@ def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
             value=88,
             unit="kg",
             source="Connected source",
-            observed_at="2026-08-14T00:00:00Z",
+            observed_at=datetime.now(UTC).isoformat(),
             idempotency_key="dashboard-reading",
         )
 
         response = client.get("/goals")
 
     assert response.status_code == 200
-    instrument = response.text.split('id="manage"', 1)[0]
+    instrument, definitions = response.text.split('class="dashboard-details"', 1)
     assert "Example target" in instrument
     assert "Reach the example target" not in instrument
-    assert all(text in response.text for text in [
-        "Health",
-        "Career",
-        "Social",
-        "Reach the example target",
-        "Example target",
-        "Connected source",
-        "88 kg",
-        "Source unavailable",
-        "Observation history",
-    ])
+    assert all(
+        text in definitions
+        for text in ["Health", "Career", "Social", "Reach the example target", "88 kg"]
+    )
+    assert "Source unavailable" not in response.text
+    assert "Observation history" not in response.text
     assert "Record evidence" not in response.text
     assert 'action="/goals/reach_example/evidence"' not in response.text
 
 
-def test_goal_html_forms_create_edit_and_complete_simple_goal(
+def test_goal_dashboard_post_routes_are_removed(
     settings_env: dict[str, str],
 ) -> None:
     settings = Settings.from_env(settings_env)
@@ -503,50 +499,12 @@ def test_goal_html_forms_create_edit_and_complete_simple_goal(
     headers = {"Origin": settings.public_origin}
     with TestClient(app, base_url=settings.public_origin) as client:
         client.post("/login", data={"token": settings.dashboard_token}, headers=headers)
-        created = client.post(
+        responses = [client.post(
             "/goals",
-            data={
-                "domain": "career",
-                "title": "Read",
-                "outcome": "Read more",
-                "description": "Use useful books",
-                "horizon": "short_term",
-                "target_metric": "books_read",
-                "target_value": "12",
-                "target_unit": "books",
-                "target_direction": "at_or_above",
-            },
+            data={"domain": "career", "title": "Read", "outcome": "Read more"},
             headers=headers,
             follow_redirects=False,
-        )
-        goal = goals.list_goals(settings)[0]
-        edited = client.post(
-            f"/goals/{goal['id']}/edit",
-            data={
-                "domain": "career",
-                "display_order": "10",
-                "title": "Thoughtful reading",
-                "outcome": "Read thoughtfully",
-                "description": "Take notes",
-                "horizon": "medium_term",
-                "target_metric": "books_read",
-                "target_value": "8",
-                "target_unit": "books",
-                "target_direction": "at_or_above",
-            },
-            headers=headers,
-            follow_redirects=False,
-        )
-        completed = client.post(
-            f"/goals/{goal['id']}/status",
-            data={"status": "completed"},
-            headers=headers,
-            follow_redirects=False,
-        )
+        )]
 
-    saved = goals.get_goal(settings, goal["id"])
-    assert {created.status_code, edited.status_code, completed.status_code} == {303}
-    assert saved["outcome"] == "Read thoughtfully"
-    assert saved["title"] == "Thoughtful reading"
-    assert saved["target"]["value"] == 8
-    assert saved["status"] == "completed"
+    assert all(response.status_code in {404, 405} for response in responses)
+    assert goals.list_goals(settings) == []

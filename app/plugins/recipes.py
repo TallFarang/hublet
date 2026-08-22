@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import APIRouter, Request
+from fastapi.responses import Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import recipes_dashboard
 from app.db import connect
 from app.runtime import Plugin
-from app.web import render
+from app.web import dashboard_period, render
 
 DB_FILENAME = "recipes.db"
 MIGRATIONS = (
@@ -200,65 +200,24 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 
 
 @router.get("")
-def recipes_page(request: Request) -> Response:
+def recipes_page(request: Request, period: str = "week") -> Response:
     settings = request.app.state.settings
+    selected = dashboard_period(period)
     records = [get_recipe(settings, recipe["id"]) for recipe in search(settings)]
+    for record in records:
+        record["cook_logs"] = [
+            log
+            for log in record["cook_logs"]
+            if selected["start"] <= log["created_at"][:10] <= selected["end"]
+        ]
     return render(
         request,
         "recipes.html",
         title="Recipes",
         recipes=records,
         dashboard=recipes_dashboard(records),
+        period=selected,
     )
-
-
-@router.post("")
-def link_form(
-    request: Request,
-    name: Annotated[str, Form()],
-    note_reference: Annotated[str, Form()],
-    tags: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    link_recipe(request.app.state.settings, name, note_reference, tags.split(","))
-    return RedirectResponse("/recipes", status_code=303)
-
-
-@router.post("/{recipe_id}/edit")
-def edit_form(
-    request: Request,
-    recipe_id: str,
-    name: Annotated[str, Form()],
-    note_reference: Annotated[str, Form()],
-    tags: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    update_recipe(
-        request.app.state.settings,
-        recipe_id,
-        name=name,
-        note_reference=note_reference,
-        tags=tags.split(","),
-    )
-    return RedirectResponse("/recipes", status_code=303)
-
-
-@router.post("/{recipe_id}/cooks")
-def cook_form(
-    request: Request,
-    recipe_id: str,
-    rating: Annotated[int, Form()],
-    changes: Annotated[str, Form()] = "",
-    notes: Annotated[str, Form()] = "",
-    conclusion: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    log_cook(
-        request.app.state.settings,
-        recipe_id,
-        rating=rating,
-        changes=changes or None,
-        notes=notes or None,
-        conclusion=conclusion or None,
-    )
-    return RedirectResponse("/recipes", status_code=303)
 
 
 def launcher_summary(settings: Settings) -> str:

@@ -147,7 +147,7 @@ def test_recipe_mcp_tools_use_domain(recipe_settings: Settings) -> None:
     assert recipes.history(recipe_settings, recipe["id"])[0]["conclusion"] == "Repeat"
 
 
-def test_recipe_html_forms_link_edit_and_log(settings_env: dict[str, str]) -> None:
+def test_recipe_dashboard_is_read_only(settings_env: dict[str, str]) -> None:
     settings = Settings.from_env(settings_env)
     app = create_app(settings=settings, plugins=(recipes.PLUGIN,))
 
@@ -157,40 +157,20 @@ def test_recipe_html_forms_link_edit_and_log(settings_env: dict[str, str]) -> No
             data={"token": settings.dashboard_token},
             headers={"Origin": settings.public_origin},
         )
-        linked = client.post(
+        recipe = recipes.link_recipe(settings, "Best pasta", "notes://example/best-pasta")
+        recipes.log_cook(settings, recipe["id"], rating=5, conclusion="Keep it")
+        unavailable = client.post(
             "/recipes",
-            data={
-                "name": "Pasta",
-                "note_reference": "notes://example/pasta",
-                "tags": "dinner, quick",
-            },
-            headers={"Origin": settings.public_origin},
-            follow_redirects=False,
-        )
-        recipe = recipes.search(settings, "Pasta")[0]
-        edited = client.post(
-            f"/recipes/{recipe['id']}/edit",
-            data={
-                "name": "Best pasta",
-                "note_reference": "notes://example/best-pasta",
-                "tags": "dinner, tested",
-            },
-            headers={"Origin": settings.public_origin},
-            follow_redirects=False,
-        )
-        cooked = client.post(
-            f"/recipes/{recipe['id']}/cooks",
-            data={"rating": "5", "changes": "More garlic", "conclusion": "Keep it"},
+            data={"name": "Dashboard recipe", "note_reference": "notes://example"},
             headers={"Origin": settings.public_origin},
             follow_redirects=False,
         )
         page = client.get("/recipes")
 
-    assert {linked.status_code, edited.status_code, cooked.status_code} == {303}
+    assert unavailable.status_code in {404, 405}
     assert "Best pasta" in page.text
     assert "Keep it" in page.text
-    assert 'name="ingredients"' not in page.text
-    assert 'name="steps"' not in page.text
+    assert page.text.count("<form") == 1
     assert recipes.get_recipe(settings, recipe["id"])["cook_logs"][0]["rating"] == 5
 
 
@@ -203,7 +183,7 @@ def test_recipe_launcher_summary_counts_cooks(recipe_settings: Settings) -> None
     assert recipes.launcher_summary(recipe_settings) == "101 cooks"
 
 
-def test_recipe_invalid_html_returns_422(settings_env: dict[str, str]) -> None:
+def test_removed_recipe_post_route_does_not_accept_input(settings_env: dict[str, str]) -> None:
     settings = Settings.from_env(settings_env)
     app = create_app(settings=settings, plugins=(recipes.PLUGIN,))
 
@@ -219,6 +199,4 @@ def test_recipe_invalid_html_returns_422(settings_env: dict[str, str]) -> None:
             headers={"Origin": settings.public_origin},
         )
 
-    assert response.status_code == 422
-    assert "note_reference is required" in response.text
-    assert 'role="alert"' in response.text
+    assert response.status_code in {404, 405}

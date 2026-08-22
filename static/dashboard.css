@@ -1,15 +1,35 @@
-.plugin-page main { padding-block: clamp(1rem, 3vw, 2rem) 4rem; }
+.plugin-page main { padding-block: 1.5rem 4rem; }
 .plugin-title {
-  height: 64px;
+  min-height: 52px;
   display: flex;
-  align-items: baseline;
+  align-items: start;
+  justify-content: space-between;
   gap: 1rem;
-  margin: 0;
 }
-.plugin-title a { color: var(--muted); font-size: 0.82rem; font-weight: 650; text-decoration: none; }
-.plugin-title h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.8rem); }
+.plugin-title h1 { margin: 0; font-size: 1.25rem; line-height: 1.2; }
+.period-toggle {
+  display: flex;
+  min-width: 148px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.period-toggle a {
+  min-height: 44px;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding-inline: 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.period-toggle a + a { border-left: 1px solid var(--line-strong); }
+.period-toggle a[aria-current="page"] { color: var(--ground); background: var(--text); }
 .instrument-panel {
-  min-height: min(680px, calc(100svh - 136px));
+  min-height: min(680px, calc(100svh - 140px));
   display: flex;
   flex-direction: column;
   padding: clamp(1rem, 3vw, 1.75rem);
@@ -17,14 +37,6 @@
   border: 1px solid var(--line);
   border-radius: 14px;
 }
-.instrument-heading, .section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.instrument-heading h2, .section-heading h2 { margin: 0; font-size: 1rem; }
-.instrument-heading > span, .section-heading > span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .readings {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -32,7 +44,7 @@
   border-block: 1px solid var(--line);
 }
 .readings div { min-width: 0; padding: clamp(0.8rem, 2vw, 1.25rem) 0; }
-.readings dt { color: var(--muted); font-size: 0.75rem; font-weight: 650; }
+.readings dt { color: var(--muted); font-size: 0.82rem; font-weight: 650; }
 .readings dd {
   margin: 0.25rem 0 0;
   color: var(--accent);
@@ -40,70 +52,92 @@
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
+.readings--below { margin-top: 1rem; border-top: 1px solid var(--line); border-bottom: 0; }
 .trend-figure, .bar-figure { flex: 1; display: flex; flex-direction: column; margin: 1.25rem 0 0; }
 .trend-figure figcaption, .bar-figure figcaption { color: var(--muted); font-size: 0.8rem; font-weight: 650; }
-.line-chart { width: 100%; min-height: 180px; flex: 1; margin-top: 1rem; overflow: visible; }
+.chart-wrap { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.line-chart { width: 100%; min-height: 160px; flex: 1; margin-top: 0.75rem; overflow: visible; }
 .line-chart line, .line-chart polyline { vector-effect: non-scaling-stroke; }
 .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
 .chart-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart-series { fill: none; stroke: var(--accent); stroke-width: 2.5; }
-.chart-empty { margin: auto; color: var(--muted); text-align: center; }
-.chart-endpoints { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
-.chart-endpoints > span { display: flex; gap: 0.35rem; }
-.chart-endpoints strong { color: var(--muted); }
-.scroll-cue {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  align-self: center;
-  margin-top: auto;
+.chart-endpoints {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
   color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
-.scroll-cue svg { width: 18px; }
-.management { display: grid; gap: 1rem; padding-top: clamp(3rem, 8vw, 6rem); scroll-margin-top: 1rem; }
+.chart-endpoints > span { display: flex; gap: 0.35rem; }
+.chart-endpoints > span:last-child strong { color: var(--accent); }
+.dashboard-details { display: grid; gap: 1rem; padding-top: clamp(3rem, 8vw, 6rem); }
 
-.goal-readouts { display: grid; margin-top: 0.5rem; }
-.goal-readout { margin: 0; padding: 0.9rem 0; background: transparent; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
-.goal-readout header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
-.goal-readout header > span:first-child { display: grid; }
-.goal-readout .line-chart { min-height: 58px; height: 58px; margin-top: 0.4rem; }
-.goal-measurement { display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.5rem; }
-.goal-measurement > strong { color: var(--accent); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-.signal { color: var(--muted); font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
-.signal--completed { color: var(--goals); }
+.goal-readouts { display: grid; }
+.goal-readout {
+  margin: 0;
+  padding: 1rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+}
+.goal-readout > summary, .goal-summary { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem 1rem; }
+.goal-readout > summary { padding: 0; color: var(--text); }
+.goal-name, .goal-measurement { display: grid; }
+.goal-measurement { justify-items: end; }
+.goal-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.goal-readout .chart-wrap { grid-column: 1 / -1; }
+.goal-readout .line-chart { min-height: 64px; height: 64px; margin-top: 0.3rem; }
+.tracking-charts { display: grid; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.tracking-chart header { display: flex; justify-content: space-between; gap: 1rem; }
+.tracking-chart header span { display: grid; }
+.tracking-chart header > strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.tracking-chart .line-chart { min-height: 56px; height: 56px; }
 
+.health-freshness { align-self: end; margin-bottom: 0.5rem; }
 .health-readouts { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 .health-readout { min-width: 0; display: flex; flex-direction: column; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
 .health-readout header { display: flex; justify-content: space-between; gap: 0.75rem; }
-.health-readout header small { font-size: 0.7rem; white-space: nowrap; }
+.health-readout header small { font-size: 0.82rem; white-space: nowrap; }
 .health-measurement { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.35rem; }
-.health-measurement strong { color: var(--accent); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-.health-readout .line-chart { min-height: 58px; height: 58px; margin-top: 0.4rem; }
-.health-sync-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0.8rem 0 0; }
-.health-sync-strip div { min-width: 0; }
-.health-sync-strip dt { color: var(--muted); font-size: 0.68rem; }
-.health-sync-strip dd { margin: 0.1rem 0 0; color: var(--text); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.health-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.health-readout .line-chart { min-height: 58px; height: 58px; margin-top: 0.35rem; }
+.health-sync-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0.8rem 0 0; }
+.health-sync-strip dt { color: var(--muted); font-size: 0.82rem; }
+.health-sync-strip dd { margin: 0.1rem 0 0; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.signal { color: var(--muted); font-size: 0.82rem; font-weight: 700; }
 .signal--fresh { color: var(--health); }
 
-.bar-chart { flex: 1; min-height: 230px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.45rem; margin-top: 1rem; }
+.bar-chart { flex: 1; min-height: 230px; display: grid; gap: 0.4rem; margin-top: 1rem; }
+.bar-chart--week { grid-template-columns: repeat(7, 1fr); }
+.bar-chart--month { grid-template-columns: repeat(30, 1fr); gap: 0.16rem; }
 .bar-day { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 0.35rem; text-align: center; }
-.bar-value, .bar-label { color: var(--muted); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+.bar-value, .bar-label { min-height: 1em; color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 .bar-track { min-height: 120px; display: flex; align-items: end; background: #0f1216; border-bottom: 1px solid var(--line-strong); }
 .bar-fill { width: 100%; min-height: 1px; display: block; background: var(--accent); }
+.meal-disclosure { margin-top: 1rem; border-top: 1px solid var(--line); }
+.meal-disclosure summary { min-height: 44px; padding-block: 0.75rem; font-size: 0.82rem; font-weight: 700; }
+.meal-days { margin: 0; padding: 0; list-style: none; }
+.meal-days li { display: grid; grid-template-columns: 110px 1fr; gap: 1rem; padding: 0.7rem 0; border-top: 1px solid var(--line); }
+.meal-days time { color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.day-meals, .day-meals > span { display: grid; }
+.day-meals { gap: 0.55rem; }
 
 @media (max-width: 760px) {
-  .plugin-page main { padding-top: 0.5rem; }
-  .plugin-title { height: 58px; }
-  .instrument-panel { min-height: calc(100svh - 122px); padding: 0.85rem; }
+  .plugin-page main { padding-top: 1rem; }
+  .plugin-title { min-height: 58px; }
+  .instrument-panel { min-height: calc(100svh - 138px); padding: 0.85rem; }
   .readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .readings div:nth-child(odd) { border-right: 1px solid var(--line); }
-  .readings div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .readings div:nth-child(even) { padding-left: 0.8rem; }
-  .line-chart { min-height: 150px; }
-  .goals-instruments { min-height: calc(100svh - 122px); }
-  .goal-readout .line-chart { min-height: 48px; height: 48px; }
-  .bar-chart { min-height: 200px; gap: 0.3rem; }
+  .readings:not(.readings--below) div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .readings--below div:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .line-chart { min-height: 140px; }
+  .goal-readout .line-chart { min-height: 52px; height: 52px; }
   .health-readouts { gap: 0 0.65rem; }
-  .health-sync-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+  .bar-chart { min-height: 200px; gap: 0.25rem; }
+  .bar-chart--month { gap: 0.1rem; }
+  .meal-days li { grid-template-columns: 1fr; gap: 0.25rem; }
 }

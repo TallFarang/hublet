@@ -1,11 +1,11 @@
 .shell { width: min(100% - 2rem, 1120px); margin-inline: auto; }
 .site-header {
-  height: 56px;
+  height: 64px;
   background: var(--ground);
   border-bottom: 1px solid var(--line);
 }
 .site-header nav {
-  height: 56px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -13,7 +13,7 @@
 }
 .brand, .login-brand {
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 760;
   letter-spacing: -0.02em;
   text-decoration: none;
@@ -38,8 +38,8 @@
 
 .launcher-page { height: 100svh; overflow: hidden; }
 .launcher {
-  height: calc(100svh - 56px);
-  padding-block: 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+  height: calc(100svh - 64px);
+  padding-block: 1rem max(0.75rem, env(safe-area-inset-bottom));
 }
 .launcher-grid {
   height: 100%;
@@ -92,8 +92,8 @@
   .shell { width: min(100% - 1rem, 1120px); }
   .nav-links > a { display: none; }
   .nav-links { gap: 0; }
-  .launcher { padding-block: 0.5rem max(0.5rem, env(safe-area-inset-bottom)); }
+  .launcher { padding-block: 0.75rem max(0.5rem, env(safe-area-inset-bottom)); }
   .launcher-grid { gap: 0.5rem; }
   .launcher-tile { padding: 0.65rem; }
-  .launcher-copy small { font-size: 0.72rem; }
+  .launcher-copy small { font-size: 0.82rem; }
 }

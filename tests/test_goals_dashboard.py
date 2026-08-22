@@ -71,13 +71,14 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
         )
         response = client.get("/goals")
 
-    instrument, management = response.text.split('id="manage"', 1)
+    instrument, definitions = response.text.split('class="dashboard-details"', 1)
     assert instrument.count('class="goal-readout"') == 2
-    assert instrument.count('class="line-chart"') == 1
+    assert instrument.count('class="line-chart"') == 2
     assert instrument.index("Primary goal") < instrument.index("Tracking context")
     assert "Completed goal" not in instrument and "Archived goal" not in instrument
-    assert "Completed goal" in management and "Archived goal" in management
-    assert "99" not in instrument
+    assert "Completed goal" in definitions and "Archived goal" in definitions
+    assert "99" in instrument
+    assert "18/08" in instrument
     assert goals.launcher_summary(settings) == "2 goals"
 
 

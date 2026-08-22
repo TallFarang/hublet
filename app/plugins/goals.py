@@ -5,18 +5,18 @@ from __future__ import annotations
 import json
 import re
 from datetime import UTC, date, datetime, timedelta
-from typing import Annotated, Any
+from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import APIRouter, Request
+from fastapi.responses import Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import goal_dashboard
 from app.db import connect
 from app.runtime import Plugin
-from app.web import render
+from app.web import dashboard_period, render
 
 DB_FILENAME = "goals.db"
 DIRECTIONS = {"above", "at_or_above", "at_or_below", "increasing_trend", "equals"}
@@ -576,12 +576,18 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 
 
 @router.get("")
-def goals_page(request: Request) -> Response:
+def goals_page(request: Request, period: str = "week") -> Response:
+    selected = dashboard_period(period)
     registry = get_registry(request.app.state.settings)
     active_goals = []
     for domain in registry["domains"]:
         domain["goals"] = [
-            _goal_for_dashboard(request.app.state.settings, definition["id"])
+            _goal_for_dashboard(
+                request.app.state.settings,
+                definition["id"],
+                selected["start"],
+                selected["end"],
+            )
             for definition in domain["goals"]
         ]
         for goal in domain["goals"]:
@@ -594,82 +600,8 @@ def goals_page(request: Request) -> Response:
         title="Goals",
         domains=registry["domains"],
         active_goals=active_goals,
+        period=selected,
     )
-
-
-@router.post("")
-def create_goal_form(
-    request: Request,
-    domain: Annotated[str, Form()],
-    title: Annotated[str, Form()],
-    outcome: Annotated[str, Form()],
-    description: Annotated[str, Form()] = "",
-    horizon: Annotated[str, Form()] = "",
-    target_metric: Annotated[str, Form()] = "",
-    target_value: Annotated[str, Form()] = "",
-    target_unit: Annotated[str, Form()] = "",
-    target_direction: Annotated[str, Form()] = "equals",
-) -> RedirectResponse:
-    create_goal(
-        request.app.state.settings,
-        goal_id=str(uuid4()),
-        domain=domain,
-        title=title,
-        outcome=outcome,
-        description=description or None,
-        horizon=horizon or None,
-        target=_form_target(target_metric, target_value, target_unit, target_direction),
-    )
-    return RedirectResponse("/goals", status_code=303)
-
-
-@router.post("/{goal_id}/edit")
-def edit_goal_form(
-    request: Request,
-    goal_id: str,
-    domain: Annotated[str, Form()],
-    display_order: Annotated[int, Form()],
-    title: Annotated[str, Form()],
-    outcome: Annotated[str, Form()],
-    description: Annotated[str, Form()] = "",
-    horizon: Annotated[str, Form()] = "",
-    target_metric: Annotated[str, Form()] = "",
-    target_value: Annotated[str, Form()] = "",
-    target_unit: Annotated[str, Form()] = "",
-    target_direction: Annotated[str, Form()] = "equals",
-) -> RedirectResponse:
-    current = get_goal(request.app.state.settings, goal_id)
-    update_goal(
-        request.app.state.settings,
-        goal_id,
-        domain=domain,
-        display_order=display_order,
-        title=title,
-        outcome=outcome,
-        description=description or None,
-        horizon=horizon or None,
-        status=current["status"],
-        target=_form_target(
-            target_metric,
-            target_value,
-            target_unit,
-            target_direction,
-            current["target"],
-        ),
-        systems=current["systems"],
-        dependencies=current["dependencies"],
-        evidence_sources=current["evidence_sources"],
-        notes=current["notes"],
-    )
-    return RedirectResponse("/goals", status_code=303)
-
-
-@router.post("/{goal_id}/status")
-def status_form(
-    request: Request, goal_id: str, status: Annotated[str, Form()]
-) -> RedirectResponse:
-    set_status(request.app.state.settings, goal_id, status)
-    return RedirectResponse("/goals", status_code=303)
 
 
 def launcher_summary(settings: Settings) -> str:
@@ -677,8 +609,17 @@ def launcher_summary(settings: Settings) -> str:
     return f"{count} {'goal' if count == 1 else 'goals'}"
 
 
-def _goal_for_dashboard(settings: Settings, goal_id: str) -> dict[str, Any]:
-    goal = get_goal(settings, goal_id, history_limit=50)
+def _goal_for_dashboard(
+    settings: Settings, goal_id: str, start_date: str, end_date: str
+) -> dict[str, Any]:
+    goal = get_goal(settings, goal_id, history_limit=1)
+    goal["history"] = query_evidence(
+        settings,
+        goal_id=goal_id,
+        start_date=start_date,
+        end_date=end_date,
+        limit=500,
+    )
     latest = {
         (observation["metric"], observation["source"]): observation
         for observation in goal["latest_observations"]
@@ -688,32 +629,6 @@ def _goal_for_dashboard(settings: Settings, goal_id: str) -> dict[str, Any]:
         for source in goal["evidence_sources"]
     ]
     return goal
-
-
-def _form_target(
-    metric: str,
-    value: str,
-    unit: str,
-    direction: str,
-    previous: dict[str, Any] | None = None,
-) -> dict[str, Any] | None:
-    if not metric.strip():
-        return None
-    parsed_value: int | float | str | None = value.strip() or None
-    if isinstance(parsed_value, str):
-        try:
-            numeric = float(parsed_value)
-            parsed_value = int(numeric) if numeric.is_integer() else numeric
-        except ValueError:
-            pass
-    return {
-        "metric": metric,
-        "value": parsed_value,
-        "unit": unit or None,
-        "direction": direction,
-        "required_duration": previous.get("required_duration") if previous else None,
-        "qualifiers": previous.get("qualifiers", {}) if previous else {},
-    }
 
 
 def _normalise_definition(**definition: Any) -> dict[str, Any]:

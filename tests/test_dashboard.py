@@ -25,11 +25,12 @@ def test_plot_handles_empty_single_and_target_series() -> None:
     assert series["target_y"] == 4.0
 
 
-def test_goal_dashboard_evaluates_target_directions_and_missing_data() -> None:
-    assert goal_dashboard(goal([8, 10]))["state"] == "Target met"
-    assert goal_dashboard(goal([12], direction="at_or_below"))["state"] == "Target not met"
-    assert goal_dashboard(goal([8, 9], direction="increasing_trend"))["state"] == "Trending up"
-    assert goal_dashboard(goal(["done"]))["state"] == "No numeric data"
+def test_goal_dashboard_projects_values_without_status_copy() -> None:
+    projected = goal_dashboard(goal([8, 10]))
+
+    assert "state" not in projected
+    assert projected["latest"] == 10
+    assert goal_dashboard(goal(["done"]))["latest"] is None
     assert goal_dashboard(goal([]))["has_series"] is False
 
 
@@ -69,8 +70,22 @@ def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
         "excluded_count": 1,
     }
     records = [
-        {"status": "eaten", "nutrition_id": "n1"},
-        {"status": "eaten", "nutrition_id": None},
+        {
+            "status": "eaten",
+            "nutrition_id": "n1",
+            "consumption_date_local": "2026-08-15",
+            "meal_slot": "lunch",
+            "item": "Rice bowl",
+            "restaurant": "Kitchen",
+        },
+        {
+            "status": "eaten",
+            "nutrition_id": None,
+            "consumption_date_local": "2026-08-15",
+            "meal_slot": "dinner",
+            "item": "Soup",
+            "restaurant": "Kitchen",
+        },
         {"status": "uncertain", "nutrition_id": "n1"},
         {"status": "excluded", "nutrition_id": "n1"},
     ]
@@ -78,6 +93,7 @@ def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
     dashboard = food_dashboard(report, records)
 
     assert dashboard["confirmed_count"] == 1
-    assert len(dashboard["unresolved"]) == 2
+    assert dashboard["unresolved_count"] == 2
+    assert dashboard["days"][0]["meal_count"] == 2
     assert dashboard["average_calories"] == 200
     assert dashboard["average_protein"] == 20

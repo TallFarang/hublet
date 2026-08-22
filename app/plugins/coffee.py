@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import APIRouter, Request
+from fastapi.responses import Response
 from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import coffee_dashboard
 from app.db import connect
 from app.runtime import Plugin
-from app.web import render
+from app.web import dashboard_period, render
 
 DB_FILENAME = "coffee.db"
 MIGRATIONS = (
@@ -189,17 +189,31 @@ def log_shot(
 
 
 def history(
-    settings: Settings, bean_id: str | None = None, limit: int = 20
+    settings: Settings,
+    bean_id: str | None = None,
+    limit: int = 20,
+    *,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> list[dict[str, Any]]:
     if limit < 1:
         raise ValueError("limit must be positive")
     query = """SELECT shots.*, beans.name AS bean_name
                FROM shots JOIN beans ON beans.id = shots.bean_id"""
+    clauses = []
     parameters: list[Any] = []
     if bean_id is not None:
         get_bean(settings, bean_id)
-        query += " WHERE shots.bean_id = ?"
+        clauses.append("shots.bean_id = ?")
         parameters.append(bean_id)
+    if start_date is not None:
+        clauses.append("date(shots.created_at) >= ?")
+        parameters.append(start_date)
+    if end_date is not None:
+        clauses.append("date(shots.created_at) <= ?")
+        parameters.append(end_date)
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
     query += " ORDER BY shots.created_at DESC, shots.id DESC LIMIT ?"
     parameters.append(min(limit, 100))
     with connect(settings.data_dir / DB_FILENAME) as connection:
@@ -320,10 +334,16 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 
 
 @router.get("")
-def coffee_page(request: Request) -> Response:
+def coffee_page(request: Request, period: str = "week") -> Response:
     settings = request.app.state.settings
+    selected = dashboard_period(period)
     beans = list_beans(settings)
-    shots = history(settings, limit=10)
+    shots = history(
+        settings,
+        limit=100,
+        start_date=selected["start"],
+        end_date=selected["end"],
+    )
     return render(
         request,
         "coffee.html",
@@ -331,83 +351,8 @@ def coffee_page(request: Request) -> Response:
         beans=beans,
         shots=shots,
         dashboard=coffee_dashboard(shots, len(beans)),
+        period=selected,
     )
-
-
-@router.post("/beans")
-def create_bean(
-    request: Request,
-    name: Annotated[str, Form()],
-    roaster: Annotated[str | None, Form()] = None,
-    roast_date: Annotated[str | None, Form()] = None,
-    origin: Annotated[str | None, Form()] = None,
-    process: Annotated[str | None, Form()] = None,
-    notes: Annotated[str | None, Form()] = None,
-) -> RedirectResponse:
-    add_bean(
-        request.app.state.settings,
-        name,
-        roaster=roaster or None,
-        roast_date=roast_date or None,
-        origin=origin or None,
-        process=process or None,
-        notes=notes or None,
-    )
-    return RedirectResponse("/coffee", status_code=303)
-
-
-@router.post("/beans/{bean_id}")
-def edit_bean(
-    request: Request,
-    bean_id: str,
-    name: Annotated[str, Form()],
-    roaster: Annotated[str, Form()] = "",
-    roast_date: Annotated[str, Form()] = "",
-    origin: Annotated[str, Form()] = "",
-    process: Annotated[str, Form()] = "",
-    notes: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    update_bean(
-        request.app.state.settings,
-        bean_id,
-        name=name,
-        roaster=roaster,
-        roast_date=roast_date,
-        origin=origin,
-        process=process,
-        notes=notes,
-    )
-    return RedirectResponse("/coffee", status_code=303)
-
-
-@router.post("/beans/{bean_id}/archive")
-def archive_bean(request: Request, bean_id: str) -> RedirectResponse:
-    update_bean(request.app.state.settings, bean_id, status="archived")
-    return RedirectResponse("/coffee", status_code=303)
-
-
-@router.post("/shots")
-def create_shot(
-    request: Request,
-    bean_id: Annotated[str, Form()],
-    dose_g: Annotated[float, Form()],
-    yield_g: Annotated[float, Form()],
-    time_s: Annotated[float, Form()],
-    grind_setting: Annotated[str, Form()],
-    rating: Annotated[int | None, Form()] = None,
-    taste_tags: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    log_shot(
-        request.app.state.settings,
-        bean_id,
-        dose_g=dose_g,
-        yield_g=yield_g,
-        time_s=time_s,
-        grind_setting=grind_setting,
-        rating=rating,
-        taste_tags=taste_tags.split(","),
-    )
-    return RedirectResponse("/coffee", status_code=303)
 
 
 def launcher_summary(settings: Settings) -> str:
