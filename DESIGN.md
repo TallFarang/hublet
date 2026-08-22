@@ -136,7 +136,7 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 ### Secondary
 
 - **Goal Signal:** Goal progress values, chart traces, completed states, and Goals actions.
-- **Food Signal:** Nutrition readings, seven- or thirty-day bars, and Food identity. Food is read-only in the dashboard, so this color does not imply an editing action.
+- **Food Signal:** Nutrition readings, weekly bars, the monthly line, and Food identity. Food is read-only in the dashboard, so this color does not imply an editing action.
 - **Recipe Signal:** Recipe readings, rating traces, and Recipes actions.
 - **Coffee Signal:** Coffee readings, extraction traces, and Coffee actions.
 - **Health Signal:** HealthKit measurements, freshness, and Health identity.
@@ -250,11 +250,11 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 ### Food Status
 
-- **Read-only:** Food shows a seven- or thirty-day calorie chart, a native meal disclosure, four readings underneath, and a ten-result filterable nutrition catalogue. Week reveals meals by day; Month reveals only days with fewer than two recorded meals.
+- **Read-only:** Food shows seven daily bars or a same-height thirty-day line, a native meal disclosure, four readings underneath, and a ten-result nutrition catalogue. Month uses five date anchors and one latest-value callout. The catalogue defaults to Grain facts; estimates are explicitly included with one checkbox.
 
 ### Goals Status
 
-- **Read-only:** Goals shows active titles, current and target numbers, primary progress, and UK-formatted endpoints. Numeric supporting evidence expands beneath its primary chart; definitions, statuses, sources, prose, and inactive goals stay out of the dashboard.
+- **Read-only:** Goals separates active Health, Career and Social goals into content-sized category panels. Current values stay beside titles; target values label their dashed chart line. Numeric supporting evidence expands beneath its primary chart, while definitions, statuses, sources, prose, and inactive goals stay out of the dashboard.
 
 ### Health Status
 

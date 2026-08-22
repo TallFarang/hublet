@@ -97,3 +97,5 @@ def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
     assert dashboard["days"][0]["meal_count"] == 2
     assert dashboard["average_calories"] == 200
     assert dashboard["average_protein"] == 20
+    assert dashboard["calorie_chart"]["callout"]["value"] == "300 kcal"
+    assert dashboard["calorie_chart"]["axis_labels"] == ["2026-08-15", "2026-08-16"]

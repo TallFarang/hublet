@@ -3,15 +3,16 @@
 {% block body_class %}plugin-page goals-page{% endblock %}
 {% block content %}
   <header class="plugin-title"><h1>Goals</h1>{{ period_toggle(period) }}</header>
-  <section class="instrument-panel goals-instruments" aria-label="Goal progress">
-    <div class="goal-readouts">
-      {% for goal in active_goals %}
+  <div class="goal-domains">
+    {% for domain in active_domains %}<section class="instrument-panel goal-domain" aria-labelledby="domain-{{ domain.id }}">
+      <h2 id="domain-{{ domain.id }}">{{ domain.name }}</h2>
+      <div class="goal-readouts">
+      {% for goal in domain.goals %}
         {% if goal.dashboard.tracking %}<details class="goal-readout"><summary>
         {% else %}<section class="goal-readout"><div class="goal-summary">{% endif %}
           <strong class="goal-name">{{ goal.title }}</strong>
           <span class="goal-measurement">
             <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
-            {% if goal.dashboard.target_label %}<small>{{ goal.dashboard.target_label }}</small>{% endif %}
           </span>
           {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.title ~ ' progress') }}{% endif %}
         {% if goal.dashboard.tracking %}</summary>
@@ -25,6 +26,7 @@
           </div>
         </details>{% else %}</div></section>{% endif %}
       {% endfor %}
-    </div>
-  </section>
+      </div>
+    </section>{% endfor %}
+  </div>
 {% endblock %}

@@ -144,7 +144,7 @@ def test_food_catalogue_filters_sorts_and_caps_results(settings_env: dict[str, s
                 "one bowl",
                 "menu",
                 "high",
-                "official",
+                "fact",
                 category="rice bowls",
             )
         response = client.get(
@@ -155,6 +155,43 @@ def test_food_catalogue_filters_sorts_and_caps_results(settings_env: dict[str, s
     assert response.text.count('class="catalogue-result"') == 10
     assert response.text.index("Rice bowl 11") < response.text.index("Rice bowl 10")
     assert 'name="period" value="month"' in response.text
+
+
+def test_food_catalogue_defaults_to_grain_facts_and_can_include_estimates(
+    settings_env: dict[str, str],
+) -> None:
+    settings = Settings.from_env(settings_env)
+    with TestClient(create_app(settings=settings), base_url=settings.public_origin) as client:
+        sign_in(client, settings)
+        for nutrition_id, restaurant, item, evidence in (
+            ("grain-fact", "Grain", "Verified bowl", "fact"),
+            ("grain-estimate", "Grain", "Estimated bowl", "estimate"),
+            ("other-fact", "Other", "Other bowl", "fact"),
+        ):
+            food.upsert_nutrition(
+                settings,
+                nutrition_id,
+                restaurant,
+                item,
+                500,
+                30,
+                50,
+                15,
+                "one bowl",
+                "menu",
+                "high",
+                evidence,
+            )
+        default = client.get("/food")
+        estimates = client.get("/food?include_estimates=true")
+        every_restaurant = client.get("/food?restaurant=&include_estimates=true")
+
+    assert '<option value="Grain" selected>' in default.text
+    assert "Verified bowl" in default.text
+    assert "Estimated bowl" not in default.text and "Other bowl" not in default.text
+    assert "Estimated bowl" in estimates.text and 'name="include_estimates"' in estimates.text
+    assert 'value="true" checked' in estimates.text
+    assert all(item in every_restaurant.text for item in ("Verified bowl", "Estimated bowl", "Other bowl"))
 
 
 def test_food_meal_disclosure_changes_with_period(settings_env: dict[str, str]) -> None:
@@ -195,6 +232,13 @@ def test_food_meal_disclosure_changes_with_period(settings_env: dict[str, str]) 
         month = client.get("/food?period=month")
 
     assert "Meals" in week.text and all(item in week.text for item in ("Rice", "Soup", "Salad"))
+    assert 'class="bar-chart bar-chart--week"' in week.text
+    assert 'class="food-month-chart"' in month.text and 'class="line-chart"' in month.text
+    month_chart = month.text.split('class="food-month-chart"', 1)[1].split(
+        'class="meal-disclosure"', 1
+    )[0]
+    assert month_chart.count("<time>") == 5
+    assert 'class="chart-callout"' in month_chart and "1000 kcal" in month_chart
     monthly_meals = month.text.split('class="meal-days"', 1)[1].split("</ol>", 1)[0]
     assert "Days under two meals" in month.text
     assert yesterday.strftime("%d/%m/%Y") in monthly_meals and "1 meal" in monthly_meals

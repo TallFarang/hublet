@@ -582,8 +582,9 @@ def goals_page(request: Request, period: str = "week") -> Response:
     live = live_tracking_series(
         request.app.state.settings, selected["start"], selected["end"]
     )
-    active_goals = []
+    active_domains = []
     for domain in registry["domains"]:
+        domain_goals = []
         for definition in domain["goals"]:
             if definition["status"] != "active":
                 continue
@@ -594,12 +595,16 @@ def goals_page(request: Request, period: str = "week") -> Response:
                 selected["end"],
             )
             goal["dashboard"] = goal_dashboard(goal, live)
-            active_goals.append(goal)
+            domain_goals.append(goal)
+        if domain_goals:
+            active_domains.append(
+                {"id": domain["id"], "name": domain["name"], "goals": domain_goals}
+            )
     return render(
         request,
         "goals.html",
         title="Goals",
-        active_goals=active_goals,
+        active_domains=active_domains,
         period=selected,
     )
 

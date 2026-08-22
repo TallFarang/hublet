@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% from "charts.html" import period_toggle %}
+{% from "charts.html" import line_chart, period_toggle %}
 {% block body_class %}plugin-page food-page{% endblock %}
 {% block content %}
   <header class="plugin-title"><h1>Food</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel" aria-label="Food summary">
     <figure class="bar-figure">
       <figcaption>Confirmed calories</figcaption>
-      <div class="bar-chart bar-chart--{{ period.key }}" role="img"
+      {% if period.key == 'week' %}<div class="bar-chart bar-chart--week" role="img"
            aria-label="Confirmed calories for {{ period.days }} days">
         {% for day in dashboard.days %}
         <div class="bar-day" aria-label="{{ day.date|uk_date }}: {{ day.calories }} calories, {{ day.protein_g }} grams protein">
-          {% if period.key == 'week' %}<span class="bar-value">{{ day.calories|int }}</span>{% endif %}
+          <span class="bar-value">{{ day.calories|int }}</span>
           <span class="bar-track"><span class="bar-fill" style="height: {{ day.bar }}%"></span></span>
-          <span class="bar-label">{% if period.key == 'week' or loop.first or loop.last %}{{ day.date|uk_date(true) }}{% endif %}</span>
+          <span class="bar-label">{{ day.date|uk_date(true) }}</span>
         </div>
         {% endfor %}
-      </div>
+      </div>{% else %}<div class="food-month-chart">{{ line_chart(dashboard.calorie_chart, "Confirmed calories for 30 days") }}</div>{% endif %}
       <details class="meal-disclosure">
         <summary>{% if period.key == 'week' %}Meals{% else %}Days under two meals{% endif %}</summary>
         <ol class="meal-days">
@@ -55,6 +55,7 @@
         <label>Sort<select name="sort">
           {% for value, label in [('name', 'A–Z'), ('calories_asc', 'Calories · low'), ('calories_desc', 'Calories · high'), ('protein_desc', 'Protein · high'), ('protein_asc', 'Protein · low')] %}<option value="{{ value }}"{% if value == catalogue.sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
         </select></label>
+        <label class="catalogue-check"><input type="checkbox" name="include_estimates" value="true"{% if catalogue.include_estimates %} checked{% endif %}>Include estimates</label>
         <button type="submit">View</button>
       </form>
       <ol class="catalogue-results">

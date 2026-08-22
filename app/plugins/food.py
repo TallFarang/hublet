@@ -27,8 +27,9 @@ def food_page(
     request: Request,
     period: str = "week",
     q: str = "",
-    restaurant: str = "",
+    restaurant: str = "Grain",
     sort: str = "name",
+    include_estimates: bool = False,
 ) -> Response:
     settings = request.app.state.settings
     selected = dashboard_period(period, datetime.now().astimezone().date())
@@ -44,13 +45,17 @@ def food_page(
         "food.html",
         title="Food",
         dashboard=food_dashboard(report, records),
-        catalogue=_catalogue(settings, q, restaurant, sort),
+        catalogue=_catalogue(settings, q, restaurant, sort, include_estimates),
         period=selected,
     )
 
 
 def _catalogue(
-    settings: Settings, query: str, restaurant: str, sort: str
+    settings: Settings,
+    query: str,
+    restaurant: str,
+    sort: str,
+    include_estimates: bool,
 ) -> dict[str, Any]:
     query = query.strip()[:100]
     restaurant = restaurant.strip()[:100]
@@ -63,6 +68,8 @@ def _catalogue(
     }
     selected_sort = sort if sort in orders else "name"
     clauses, parameters = [], []
+    if not include_estimates:
+        clauses.append("evidence_class = 'fact'")
     if query:
         clauses.append("(item LIKE ? COLLATE NOCASE OR category LIKE ? COLLATE NOCASE)")
         parameters.extend([f"%{query}%", f"%{query}%"])
@@ -88,6 +95,7 @@ def _catalogue(
         "restaurant": restaurant,
         "restaurants": restaurants,
         "sort": selected_sort,
+        "include_estimates": include_estimates,
     }
 
 

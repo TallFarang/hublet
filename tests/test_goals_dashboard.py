@@ -12,7 +12,7 @@ from tests.test_auth import login
 def definition(goal_id: str, title: str, status: str, order: int, *, target=True) -> dict:
     return {
         "goal_id": goal_id,
-        "domain": "health" if order < 20 else "social",
+        "domain": "health" if order < 20 else "career" if order < 30 else "social",
         "display_order": order,
         "title": title,
         "outcome": f"Complete {title.lower()}",
@@ -48,7 +48,8 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
                 "active_without_target", "Tracking context", "active", 20, target=False
             ),
         )
-        goals.create_goal(settings, **definition("completed", "Completed goal", "completed", 30))
+        goals.create_goal(settings, **definition("active_social", "Social goal", "active", 30))
+        goals.create_goal(settings, **definition("completed", "Completed goal", "completed", 31))
         goals.create_goal(settings, **definition("archived", "Archived goal", "archived", 40))
         goals.record_evidence(
             settings,
@@ -72,14 +73,18 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
         response = client.get("/goals")
 
     page = response.text
-    assert page.count('class="goal-readout"') == 2
+    assert page.count('class="goal-readout"') == 3
+    assert page.count('class="instrument-panel goal-domain"') == 3
     assert page.count('class="line-chart"') == 2
     assert page.index("Primary goal") < page.index("Tracking context")
+    assert page.index("Health") < page.index("Career") < page.index("Social")
     assert "Completed goal" not in page and "Archived goal" not in page
     assert 'class="dashboard-details"' not in page
     assert "99" in page
     assert "18/08" in page
-    assert goals.launcher_summary(settings) == "2 goals"
+    assert 'class="chart-target-label"' in page and ">10 points<" in page
+    assert "≥ 10 points" not in page
+    assert goals.launcher_summary(settings) == "3 goals"
 
 
 def test_supporting_evidence_never_becomes_an_implicit_primary_graph() -> None:
@@ -126,7 +131,8 @@ def test_dashboard_projects_every_numeric_supporting_series_without_text() -> No
         }
     )
 
-    assert projected["target_label"] == "≤ 90 kg"
+    assert projected["target_line_label"] == "90 kg"
+    assert projected["target_y_percent"] is not None
     assert [chart["label"] for chart in projected["tracking"]] == [
         "Workouts",
         "Sleep hours",

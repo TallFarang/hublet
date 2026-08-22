@@ -60,6 +60,17 @@ def recipes_dashboard(recipes: list[dict[str, Any]]) -> dict[str, Any]:
 def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, Any]:
     days = summary["daily_confirmed_totals"]
     peak = max((day["calories"] for day in days), default=0) or 1
+    calorie_chart = plot([float(day["calories"]) for day in days])
+    if days:
+        calorie_chart.update(
+            {
+                "axis_labels": [days[index]["date"] for index in _axis_indices(len(days))],
+                "callout": {
+                    "value": f"{round(days[-1]['calories'])} kcal",
+                    "y": round(calorie_chart["last"]["y"] / 38 * 100, 2),
+                },
+            }
+        )
     unresolved_count = sum(
         record["status"] == "uncertain"
         or (record["status"] == "eaten" and record["nutrition_id"] is None)
@@ -87,6 +98,7 @@ def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> di
         )
     return {
         "days": projected_days,
+        "calorie_chart": calorie_chart,
         "average_calories": round(sum(day["calories"] for day in days) / len(days)) if days else 0,
         "average_protein": round(sum(day["protein_g"] for day in days) / len(days), 1)
         if days
@@ -152,3 +164,9 @@ def _cook_label(log: dict[str, Any]) -> dict[str, str]:
 
 def _health_label(point: dict[str, Any], value: float, unit: str) -> dict[str, str]:
     return {"date": point["date"], "value": f"{round(value, 1)} {unit}".strip()}
+
+
+def _axis_indices(length: int) -> list[int]:
+    if length <= 1:
+        return [0] if length else []
+    return sorted({round(index * (length - 1) / 4) for index in range(5)})

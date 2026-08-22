@@ -18,14 +18,6 @@ LABELS = {
     "resting_heart_rate": "Resting heart rate",
     "vo2_max": "VO₂ max",
 }
-TARGET_SYMBOLS = {
-    "above": ">",
-    "at_or_above": "≥",
-    "at_or_below": "≤",
-    "equals": "=",
-}
-
-
 def goal_dashboard(goal: dict[str, Any], live: LiveSeries | None = None) -> dict[str, Any]:
     """Project one active goal into only the readings its dashboard needs."""
 
@@ -35,12 +27,16 @@ def goal_dashboard(goal: dict[str, Any], live: LiveSeries | None = None) -> dict
     values = [float(row["value"]) for row in numeric]
     latest = numeric[-1] if numeric else None
     target_value = _number(target.get("value"))
+    geometry = plot(values, target_value)
     return {
-        **plot(values, target_value),
+        **geometry,
         "latest": latest["value"] if latest else None,
         "unit": (latest or {}).get("unit") or target.get("unit") or "",
         "has_series": bool(values),
-        "target_label": _target_label(target),
+        "target_line_label": _target_label(target),
+        "target_y_percent": round(geometry["target_y"] / 38 * 100, 2)
+        if geometry["target_y"] is not None
+        else None,
         "start_label": _observation_label(numeric[0]) if numeric else None,
         "end_label": _observation_label(numeric[-1]) if numeric else None,
         "tracking": _tracking_charts(goal, live or {}),
@@ -135,8 +131,7 @@ def _target_label(target: dict[str, Any]) -> str | None:
     if value is None:
         return None
     displayed = f"{value:g}" if _number(value) is not None else str(value)
-    symbol = TARGET_SYMBOLS.get(target.get("direction"), "")
-    return " ".join(part for part in (symbol, displayed, target.get("unit")) if part)
+    return " ".join(part for part in (displayed, target.get("unit")) if part)
 
 
 def _label(metric: str) -> str:

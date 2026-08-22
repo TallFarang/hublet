@@ -37,13 +37,15 @@
 
 .catalogue-filters {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.7fr) minmax(150px, 0.7fr) auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.65fr) minmax(140px, 0.65fr) auto auto;
   align-items: end;
   gap: 0.75rem;
   margin: 0 0 1rem;
 }
 .catalogue-filters label { margin: 0; }
 .catalogue-filters input, .catalogue-filters select { margin: 0.3rem 0 0; }
+.catalogue-check { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.catalogue-filters .catalogue-check input { margin: 0; }
 .catalogue-filters button { width: auto; margin: 0; padding-inline: 1rem; }
 .catalogue-results { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .catalogue-results li {

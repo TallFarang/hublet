@@ -1,18 +1,27 @@
 {% macro line_chart(chart, label) -%}
 <div class="chart-wrap">
-  <svg class="line-chart" viewBox="0 0 100 38" preserveAspectRatio="none"
-       role="img" aria-label="{{ label }}">
-    <title>{{ label }}</title>
-    <line class="chart-baseline" x1="0" y1="34" x2="100" y2="34"/>
-    {% if chart.target_y is not none %}
-    <line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>
-    {% endif %}
-    {% if chart.points %}
-    {% if chart.single %}<line class="chart-series" x1="47" y1="{{ chart.last.y }}" x2="53" y2="{{ chart.last.y }}"/>
-    {% else %}<polyline class="chart-series" points="{{ chart.points }}"/>{% endif %}
-    {% endif %}
-  </svg>
-  {% if chart.start_label and chart.end_label %}
+  <div class="chart-plot">
+    <svg class="line-chart" viewBox="0 0 100 38" preserveAspectRatio="none"
+         role="img" aria-label="{{ label }}">
+      <title>{{ label }}</title>
+      <line class="chart-baseline" x1="0" y1="34" x2="100" y2="34"/>
+      {% if chart.target_y is not none %}
+      <line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>
+      {% endif %}
+      {% if chart.points %}
+      {% if chart.single %}<line class="chart-series" x1="47" y1="{{ chart.last.y }}" x2="53" y2="{{ chart.last.y }}"/>
+      {% else %}<polyline class="chart-series" points="{{ chart.points }}"/>{% endif %}
+      {% endif %}
+    </svg>
+    {% if chart.callout %}<span class="chart-dot" style="--chart-y: {{ chart.callout.y }}%" aria-hidden="true"></span>{% endif %}
+    {% if chart.callout %}<strong class="chart-callout" style="--chart-y: {{ chart.callout.y }}%">{{ chart.callout.value }}</strong>{% endif %}
+    {% if chart.target_line_label %}<span class="chart-target-label" style="--chart-y: {{ chart.target_y_percent }}%">{{ chart.target_line_label }}</span>{% endif %}
+  </div>
+  {% if chart.axis_labels %}
+  <div class="chart-axis-labels" aria-hidden="true">
+    {% for date in chart.axis_labels %}<time>{{ date|uk_date(true) }}</time>{% endfor %}
+  </div>
+  {% elif chart.start_label and chart.end_label %}
   <div class="chart-endpoints" aria-hidden="true">
     <span><time>{{ chart.start_label.date|uk_date(true) }}</time><strong>{{ chart.start_label.value }}</strong></span>
     <span><time>{{ chart.end_label.date|uk_date(true) }}</time><strong>{{ chart.end_label.value }}</strong></span>

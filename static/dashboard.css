@@ -58,11 +58,45 @@
 .trend-figure, .bar-figure { flex: 1; display: flex; flex-direction: column; margin: 1.25rem 0 0; }
 .trend-figure figcaption, .bar-figure figcaption { color: var(--muted); font-size: 0.8rem; font-weight: 650; }
 .chart-wrap { min-height: 0; flex: 1; display: flex; flex-direction: column; }
-.line-chart { width: 100%; min-height: 160px; flex: 1; margin-top: 0.75rem; overflow: visible; }
+.chart-plot { position: relative; min-height: 0; flex: 1; display: flex; margin-top: 0.75rem; }
+.line-chart { width: 100%; min-height: 160px; flex: 1; margin: 0; overflow: visible; }
 .line-chart line, .line-chart polyline { vector-effect: non-scaling-stroke; }
 .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
 .chart-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart-series { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.chart-dot {
+  position: absolute;
+  right: -4px;
+  top: var(--chart-y);
+  width: 8px;
+  height: 8px;
+  transform: translateY(-50%);
+  background: var(--accent);
+  border-radius: 50%;
+}
+.chart-callout, .chart-target-label {
+  position: absolute;
+  right: 0;
+  top: var(--chart-y);
+  padding-left: 0.35rem;
+  transform: translateY(-115%);
+  background: var(--surface);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.chart-callout { color: var(--accent); }
+.chart-target-label { color: var(--muted); transform: translateY(-50%); }
+.chart-axis-labels {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+.chart-axis-labels time { text-align: center; }
+.chart-axis-labels time:first-child { text-align: left; }
+.chart-axis-labels time:last-child { text-align: right; }
 .chart-endpoints {
   display: flex;
   justify-content: space-between;
@@ -75,7 +109,9 @@
 .chart-endpoints > span:last-child strong { color: var(--accent); }
 .dashboard-details { display: grid; gap: 1rem; padding-top: clamp(3rem, 8vw, 6rem); }
 
-.goals-instruments { min-height: 0; }
+.goal-domains { display: grid; gap: 1rem; }
+.goal-domain { min-height: 0; }
+.goal-domain > h2 { margin: 0; font-size: 1rem; }
 .goal-readouts { display: grid; }
 .goal-readout {
   margin: 0;
@@ -106,7 +142,9 @@
 .goal-measurement { justify-items: end; }
 .goal-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
 .goal-readout .chart-wrap { grid-column: 1 / -1; }
-.goal-readout .line-chart { min-height: 64px; height: 64px; margin-top: 0.3rem; }
+.goal-readout .chart-plot { margin-top: 0.3rem; }
+.goal-readout .line-chart { min-height: 64px; height: 64px; }
+.goal-readout:last-child { padding-bottom: 0; border-bottom: 0; }
 .tracking-charts { display: grid; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .tracking-chart header { display: flex; justify-content: space-between; gap: 1rem; }
 .tracking-chart header > strong { color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -129,11 +167,12 @@
 
 .bar-chart { flex: 1; min-height: 230px; display: grid; gap: 0.4rem; margin-top: 1rem; }
 .bar-chart--week { grid-template-columns: repeat(7, 1fr); }
-.bar-chart--month { grid-template-columns: repeat(30, 1fr); gap: 0.16rem; }
 .bar-day { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 0.35rem; text-align: center; }
 .bar-value, .bar-label { min-height: 1em; color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 .bar-track { min-height: 120px; display: flex; align-items: end; background: #0f1216; border-bottom: 1px solid var(--line-strong); }
 .bar-fill { width: 100%; min-height: 1px; display: block; background: var(--accent); }
+.food-month-chart { min-height: 230px; flex: 1; display: flex; margin-top: 1rem; }
+.food-month-chart .line-chart { min-height: 0; height: 100%; }
 .meal-disclosure { margin-top: 1rem; border-top: 1px solid var(--line); }
 .meal-disclosure summary { min-height: 44px; padding-block: 0.75rem; font-size: 0.82rem; font-weight: 700; }
 .meal-days { margin: 0; padding: 0; list-style: none; }
@@ -146,6 +185,7 @@
   .plugin-page main { padding-top: 1rem; }
   .plugin-title { min-height: 58px; }
   .instrument-panel { min-height: calc(100svh - 138px); padding: 0.85rem; }
+  .goal-domain { min-height: 0; }
   .readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .readings div:nth-child(odd) { border-right: 1px solid var(--line); }
   .readings div:nth-child(even) { padding-left: 0.8rem; }
@@ -155,6 +195,6 @@
   .goal-readout .line-chart { min-height: 52px; height: 52px; }
   .health-readouts { gap: 0 0.65rem; }
   .bar-chart { min-height: 200px; gap: 0.25rem; }
-  .bar-chart--month { gap: 0.1rem; }
+  .food-month-chart { min-height: 200px; }
   .meal-days li { grid-template-columns: 1fr; gap: 0.25rem; }
 }
