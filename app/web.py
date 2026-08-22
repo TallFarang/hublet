@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -10,8 +11,12 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
-TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 STATIC_DIR = Path(__file__).parents[1] / "static"
+TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
+STATIC_VERSION = sha256(
+    b"".join(path.read_bytes() for path in sorted(STATIC_DIR.glob("*.css")))
+).hexdigest()[:12]
+TEMPLATES.env.globals["static_version"] = STATIC_VERSION
 router = APIRouter()
 PERIOD_DAYS = {"week": 7, "month": 30}
 

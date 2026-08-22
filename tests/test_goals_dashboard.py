@@ -71,14 +71,14 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
         )
         response = client.get("/goals")
 
-    instrument, definitions = response.text.split('class="dashboard-details"', 1)
-    assert instrument.count('class="goal-readout"') == 2
-    assert instrument.count('class="line-chart"') == 2
-    assert instrument.index("Primary goal") < instrument.index("Tracking context")
-    assert "Completed goal" not in instrument and "Archived goal" not in instrument
-    assert "Completed goal" in definitions and "Archived goal" in definitions
-    assert "99" in instrument
-    assert "18/08" in instrument
+    page = response.text
+    assert page.count('class="goal-readout"') == 2
+    assert page.count('class="line-chart"') == 2
+    assert page.index("Primary goal") < page.index("Tracking context")
+    assert "Completed goal" not in page and "Archived goal" not in page
+    assert 'class="dashboard-details"' not in page
+    assert "99" in page
+    assert "18/08" in page
     assert goals.launcher_summary(settings) == "2 goals"
 
 
@@ -91,5 +91,44 @@ def test_supporting_evidence_never_becomes_an_implicit_primary_graph() -> None:
         }
     )
 
-    assert projected["metric"] == "No metric"
+    assert "metric" not in projected
     assert projected["has_series"] is False
+
+
+def test_dashboard_projects_every_numeric_supporting_series_without_text() -> None:
+    projected = goal_dashboard(
+        {
+            "target": {
+                "metric": "weight",
+                "value": 90,
+                "unit": "kg",
+                "direction": "at_or_below",
+            },
+            "evidence_sources": [
+                {
+                    "metric": metric,
+                    "source": "Example",
+                    "role": "supporting_indicator",
+                }
+                for metric in ("workouts_completed", "sleep_hours", "on_plan")
+            ],
+            "history": [
+                {"metric": "weight", "source": "Example", "value": 93, "unit": "kg"},
+                {
+                    "metric": "workouts_completed",
+                    "source": "Example",
+                    "value": 3,
+                    "unit": "workouts",
+                },
+                {"metric": "sleep_hours", "source": "Example", "value": 7.5, "unit": "h"},
+                {"metric": "on_plan", "source": "Example", "value": True, "unit": None},
+            ],
+        }
+    )
+
+    assert projected["target_label"] == "≤ 90 kg"
+    assert [chart["label"] for chart in projected["tracking"]] == [
+        "Workouts",
+        "Sleep hours",
+    ]
+    assert all("source" not in chart for chart in projected["tracking"])

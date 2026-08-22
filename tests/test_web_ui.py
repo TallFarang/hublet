@@ -62,8 +62,9 @@ def test_pages_share_local_css_and_no_javascript(settings_env: dict[str, str]) -
 
     for page in pages:
         assert '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' in page.text
-        assert 'href="/static/pico.min.css"' in page.text
-        assert 'href="/static/tokens.css"' in page.text
+        assert 'href="/static/pico.min.css?v=' in page.text
+        assert 'href="/static/tokens.css?v=' in page.text
+        assert 'href="/static/dashboard.css?v=' in page.text
         assert "<script" not in page.text
         assert "onclick=" not in page.text
         assert "https://" not in page.text

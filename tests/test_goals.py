@@ -431,7 +431,7 @@ def test_mcp_exposes_only_the_new_goal_contract(goal_settings: Settings) -> None
     assert "title" in schemas["goals_update"]["required"]
 
 
-def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
+def test_goal_dashboard_omits_definitions_and_evidence_prose(
     settings_env: dict[str, str],
 ) -> None:
     settings = Settings.from_env(settings_env)
@@ -478,13 +478,12 @@ def test_goal_dashboard_groups_definitions_and_shows_evidence_states(
         response = client.get("/goals")
 
     assert response.status_code == 200
-    instrument, definitions = response.text.split('class="dashboard-details"', 1)
-    assert "Example target" in instrument
-    assert "Reach the example target" not in instrument
-    assert all(
-        text in definitions
-        for text in ["Health", "Career", "Social", "Reach the example target", "88 kg"]
-    )
+    assert "Example target" in response.text
+    assert "88 kg" in response.text
+    assert "Reach the example target" not in response.text
+    assert 'class="dashboard-details"' not in response.text
+    assert "Connected source" not in response.text
+    assert "supporting metric" not in response.text
     assert "Source unavailable" not in response.text
     assert "Observation history" not in response.text
     assert "Record evidence" not in response.text

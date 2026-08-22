@@ -7,23 +7,14 @@ from typing import Any
 from app.charts import plot
 
 
-def goal_dashboard(goal: dict[str, Any]) -> dict[str, Any]:
-    target = goal.get("target") or {}
-    metric = target.get("metric")
-    numeric = _numeric_series(goal.get("history", []), metric)
-    values = [float(row["value"]) for row in numeric]
-    latest = numeric[-1] if numeric else None
-    target_value = _number(target.get("value"))
-    return {
-        **plot(values, target_value),
-        "metric": str(metric or "No metric").replace("_", " "),
-        "latest": latest["value"] if latest else None,
-        "unit": (latest or {}).get("unit") or target.get("unit") or "",
-        "has_series": bool(values),
-        "start_label": _observation_label(numeric[0]) if numeric else None,
-        "end_label": _observation_label(numeric[-1]) if numeric else None,
-        "tracking": _tracking_charts(goal),
-    }
+def goal_dashboard(
+    goal: dict[str, Any], live: dict[tuple[str, str], dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    """Keep the established projection import without loading plugin adapters eagerly."""
+
+    from app.goals_dashboard import goal_dashboard as project_goal
+
+    return project_goal(goal, live)
 
 
 def coffee_dashboard(shots: list[dict[str, Any]], bean_count: int) -> dict[str, Any]:
@@ -150,10 +141,6 @@ def health_dashboard(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _number(value: Any) -> float | None:
-    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
-
-
 def _shot_label(shot: dict[str, Any]) -> dict[str, str]:
     ratio = round(shot["yield_g"] / shot["dose_g"], 2)
     return {"date": shot["created_at"][:10], "value": f"{ratio}×"}
@@ -161,48 +148,6 @@ def _shot_label(shot: dict[str, Any]) -> dict[str, str]:
 
 def _cook_label(log: dict[str, Any]) -> dict[str, str]:
     return {"date": log["created_at"][:10], "value": f"{log['rating']}/5"}
-
-
-def _numeric_series(
-    history: list[dict[str, Any]], metric: str | None, source: str | None = None
-) -> list[dict[str, Any]]:
-    return [
-        row
-        for row in reversed(history)
-        if row["metric"] == metric
-        and (source is None or row["source"] == source)
-        and _number(row["value"]) is not None
-    ]
-
-
-def _tracking_charts(goal: dict[str, Any]) -> list[dict[str, Any]]:
-    charts = []
-    for source in goal.get("evidence_sources", []):
-        if source.get("role") != "supporting_indicator":
-            continue
-        series = _numeric_series(goal.get("history", []), source["metric"], source["source"])
-        if not series:
-            continue
-        values = [float(row["value"]) for row in series]
-        expectation = source.get("expectation") or {}
-        chart = {
-            **plot(values, _number(expectation.get("value"))),
-            "label": source["metric"].replace("_", " "),
-            "source": source["source"],
-            "latest": series[-1]["value"],
-            "unit": series[-1].get("unit") or expectation.get("unit") or "",
-            "start_label": _observation_label(series[0]),
-            "end_label": _observation_label(series[-1]),
-        }
-        charts.append(chart)
-    return charts
-
-
-def _observation_label(observation: dict[str, Any]) -> dict[str, str]:
-    return {
-        "date": observation.get("observed_at") or observation.get("period_end"),
-        "value": f"{observation['value']} {observation.get('unit') or ''}".strip(),
-    }
 
 
 def _health_label(point: dict[str, Any], value: float, unit: str) -> dict[str, str]:

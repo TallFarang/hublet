@@ -13,8 +13,8 @@ from fastapi.responses import Response
 from mcp.server import MCPServer
 
 from app.config import Settings
-from app.dashboard import goal_dashboard
 from app.db import connect
+from app.goals_dashboard import goal_dashboard, live_tracking_series
 from app.runtime import Plugin
 from app.web import dashboard_period, render
 
@@ -579,26 +579,26 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 def goals_page(request: Request, period: str = "week") -> Response:
     selected = dashboard_period(period)
     registry = get_registry(request.app.state.settings)
+    live = live_tracking_series(
+        request.app.state.settings, selected["start"], selected["end"]
+    )
     active_goals = []
     for domain in registry["domains"]:
-        domain["goals"] = [
-            _goal_for_dashboard(
+        for definition in domain["goals"]:
+            if definition["status"] != "active":
+                continue
+            goal = _goal_for_dashboard(
                 request.app.state.settings,
                 definition["id"],
                 selected["start"],
                 selected["end"],
             )
-            for definition in domain["goals"]
-        ]
-        for goal in domain["goals"]:
-            goal["dashboard"] = goal_dashboard(goal)
-            if goal["status"] == "active":
-                active_goals.append(goal)
+            goal["dashboard"] = goal_dashboard(goal, live)
+            active_goals.append(goal)
     return render(
         request,
         "goals.html",
         title="Goals",
-        domains=registry["domains"],
         active_goals=active_goals,
         period=selected,
     )

@@ -2,24 +2,23 @@
 {% from "charts.html" import line_chart, period_toggle %}
 {% block body_class %}plugin-page goals-page{% endblock %}
 {% block content %}
-  {% set goals = domains | sum(attribute='goals', start=[]) %}
   <header class="plugin-title"><h1>Goals</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel goals-instruments" aria-label="Goal progress">
     <div class="goal-readouts">
       {% for goal in active_goals %}
         {% if goal.dashboard.tracking %}<details class="goal-readout"><summary>
         {% else %}<section class="goal-readout"><div class="goal-summary">{% endif %}
-          <span class="goal-name"><strong>{{ goal.title }}</strong><small>{{ goal.dashboard.metric }}</small></span>
+          <strong class="goal-name">{{ goal.title }}</strong>
           <span class="goal-measurement">
             <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
-            {% if goal.target and goal.target.value is not none %}<small>Target {{ goal.target.value }} {{ goal.target.unit or '' }}</small>{% endif %}
+            {% if goal.dashboard.target_label %}<small>{{ goal.dashboard.target_label }}</small>{% endif %}
           </span>
           {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.title ~ ' progress') }}{% endif %}
         {% if goal.dashboard.tracking %}</summary>
           <div class="tracking-charts">
             {% for chart in goal.dashboard.tracking %}
             <section class="tracking-chart">
-              <header><span><strong>{{ chart.label }}</strong><small>{{ chart.source }}</small></span><strong>{{ chart.latest }} {{ chart.unit }}</strong></header>
+              <header><strong>{{ chart.label }}</strong><strong>{{ chart.latest }} {{ chart.unit }}</strong></header>
               {{ line_chart(chart, goal.title ~ ' ' ~ chart.label) }}
             </section>
             {% endfor %}
@@ -28,25 +27,4 @@
       {% endfor %}
     </div>
   </section>
-
-  {% if goals %}<section class="dashboard-details" aria-label="Goal definitions">
-    <section class="records-panel goals-registry" aria-labelledby="registry-heading">
-      <h2 id="registry-heading" class="visually-hidden">All goals</h2>
-      {% for domain in domains %}
-      <section class="domain-section">
-        <h3>{{ domain.name }}</h3>
-        {% for goal in domain.goals %}
-        <details class="record">
-          <summary><span><strong>{{ goal.title }}</strong><small>{{ goal.status|replace('_', ' ') }}</small></span><span>{{ goal.dashboard.latest if goal.dashboard.latest is not none else '—' }} {{ goal.dashboard.unit }}</span></summary>
-          <div class="record-body">
-            <p>{{ goal.outcome }}</p>
-            {% if goal.description %}<p>{{ goal.description }}</p>{% endif %}
-            {% if goal.history %}<ol class="history-list">{% for observation in goal.history %}<li><span><strong>{{ observation.value }} {{ observation.unit or '' }}</strong><small>{{ observation.metric|replace('_', ' ') }} · {{ observation.source }}</small></span><time>{{ (observation.observed_at or observation.period_end)|uk_date }}</time></li>{% endfor %}</ol>{% endif %}
-          </div>
-        </details>
-        {% endfor %}
-      </section>
-      {% endfor %}
-    </section>
-  </section>{% endif %}
 {% endblock %}

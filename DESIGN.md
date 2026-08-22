@@ -188,11 +188,11 @@ The shared shell is centered at a maximum width of 1120px. It uses 1rem side gut
 
 The launcher fills the remaining small viewport height and always uses two equal columns. With one to eight plugins, rows flex to fit and overflow is suppressed; this keeps the approved Goals, Food, Recipes, Coffee, Health order visible without scrolling on an iPhone 17 and preserves room for three more destinations. Beyond eight, rows receive a 112px minimum and the launcher may scroll.
 
-Plugin pages place a compact title and Week/Month control above an instrument panel sized to fill the first useful viewport. The Hublet wordmark is larger than plugin titles and provides the only Home affordance. Current readings, progress and inline charts come first; a deliberate gap separates them from read-only history and Food catalogue filters.
+Plugin pages place a compact title and Week/Month segmented control above an instrument panel. The Hublet wordmark is larger than plugin titles and provides the only Home affordance. Most instrument panels fill the first useful viewport; Goals stays content-sized so inactive data does not create empty space. Current readings, progress and inline charts come first; a deliberate gap separates them from read-only history and Food catalogue filters.
 
 In-page cues use native smooth scrolling. The reduced-motion preference restores immediate scrolling.
 
-**The Read, Then Inspect Rule.** Every plugin opens on current status; histories and definitions begin below the first instrument panel.
+**The Read, Then Inspect Rule.** Every plugin opens on current status; optional histories begin below the first instrument panel only where they remain useful.
 
 **The Eight-Fit Rule.** Preserve the launcher's two-column, viewport-fitted behavior for up to eight destinations; do not turn it into a scrolling card feed at the supported limit.
 
@@ -251,6 +251,10 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 ### Food Status
 
 - **Read-only:** Food shows a seven- or thirty-day calorie chart, a native meal disclosure, four readings underneath, and a ten-result filterable nutrition catalogue. Week reveals meals by day; Month reveals only days with fewer than two recorded meals.
+
+### Goals Status
+
+- **Read-only:** Goals shows active titles, current and target numbers, primary progress, and UK-formatted endpoints. Numeric supporting evidence expands beneath its primary chart; definitions, statuses, sources, prose, and inactive goals stay out of the dashboard.
 
 ### Health Status
 

@@ -11,6 +11,7 @@
   display: flex;
   min-width: 148px;
   margin: 0;
+  background: #0f1216;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
   overflow: hidden;
@@ -27,6 +28,7 @@
   text-decoration: none;
 }
 .period-toggle a + a { border-left: 1px solid var(--line-strong); }
+.period-toggle a:hover { color: var(--text); background: var(--surface-raised); }
 .period-toggle a[aria-current="page"] { color: var(--ground); background: var(--text); }
 .instrument-panel {
   min-height: min(680px, calc(100svh - 140px));
@@ -73,6 +75,7 @@
 .chart-endpoints > span:last-child strong { color: var(--accent); }
 .dashboard-details { display: grid; gap: 1rem; padding-top: clamp(3rem, 8vw, 6rem); }
 
+.goals-instruments { min-height: 0; }
 .goal-readouts { display: grid; }
 .goal-readout {
   margin: 0;
@@ -84,16 +87,30 @@
   box-shadow: none;
 }
 .goal-readout > summary, .goal-summary { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem 1rem; }
-.goal-readout > summary { padding: 0; color: var(--text); }
-.goal-name, .goal-measurement { display: grid; }
+.goal-readout > summary { position: relative; padding: 0 1.4rem 0 0; color: var(--text); }
+.goal-readout > summary::after {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.1rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: rotate(45deg);
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  background: none;
+  content: "";
+}
+.goal-readout[open] > summary::after { top: 0.6rem; transform: rotate(225deg); }
+.goal-name { min-width: 0; }
+.goal-measurement { display: grid; }
 .goal-measurement { justify-items: end; }
 .goal-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
 .goal-readout .chart-wrap { grid-column: 1 / -1; }
 .goal-readout .line-chart { min-height: 64px; height: 64px; margin-top: 0.3rem; }
 .tracking-charts { display: grid; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .tracking-chart header { display: flex; justify-content: space-between; gap: 1rem; }
-.tracking-chart header span { display: grid; }
 .tracking-chart header > strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.tracking-chart header > strong:first-child { color: var(--text); }
 .tracking-chart .line-chart { min-height: 56px; height: 56px; }
 
 .health-freshness { align-self: end; margin-bottom: 0.5rem; }
