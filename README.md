@@ -76,13 +76,15 @@ Keep the source CSVs outside the repository as read-only rollback archives.
 
 Set `HUBLET_AGENTBRIDGE_DIR` to the directory containing Agentbridge daily JSON exports. The
 `health_sync_agentbridge` MCP tool scans that directory itself; callers cannot supply a path. Each
-successful sync atomically replaces Health's current snapshot, while invalid or disappearing
-exports leave the previous `health.db` intact. Unknown HealthKit types remain queryable as raw JSON.
+successful sync atomically merges the current export window into retained Health history. Current
+revisions replace matching dates, while dates that roll out of Agentbridge remain in `health.db`.
+Invalid exports leave the previous Health data intact. Unknown HealthKit types remain queryable as
+raw JSON.
 
 For a weekly Goals report, OpenClaw should call Health sync, request `health_summary`, record the
 returned mapped evidence through `goals_record_evidence`, and then request
-`goals_report_snapshot`. Hublet keeps no Health import history because the Agentbridge exports and
-daily SQLite snapshots already provide recovery.
+`goals_report_snapshot`. Agentbridge exports and daily SQLite snapshots remain the rollback
+archives for retained Health history.
 
 ## CI
 

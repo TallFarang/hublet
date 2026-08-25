@@ -1,7 +1,9 @@
-"""Atomically replace Health with Agentbridge's current daily snapshot."""
+"""Atomically merge Agentbridge's current window into retained Health history."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 from datetime import UTC, datetime
 from typing import Any
@@ -17,12 +19,7 @@ def sync_agentbridge(settings: Settings, dry_run: bool = False) -> dict[str, Any
     if not isinstance(dry_run, bool):
         raise TypeError("dry_run must be a boolean")
     try:
-        snapshot = build_snapshot(settings.agentbridge_dir)
-        previous_dates, previous_digest = _previous(settings)
-        current_dates = {day["export_date"] for day in snapshot["days"]}
-        disappeared = sorted(previous_dates - current_dates)
-        if disappeared:
-            raise ValueError(f"previously imported dates disappeared: {', '.join(disappeared)}")
+        snapshot, previous_digest = _merge(settings, build_snapshot(settings.agentbridge_dir))
         result = {
             "dry_run": dry_run,
             "changed": snapshot["dataset_digest"] != previous_digest,
@@ -51,13 +48,55 @@ def sync_agentbridge(settings: Settings, dry_run: bool = False) -> dict[str, Any
         raise
 
 
-def _previous(settings: Settings) -> tuple[set[str], str | None]:
+def _merge(settings: Settings, current: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
+    current_dates = {day["export_date"] for day in current["days"]}
     with connect(settings.data_dir / DB_FILENAME) as connection:
-        dates = {row[0] for row in connection.execute("SELECT export_date FROM days")}
+        days = {row["export_date"]: dict(row) for row in connection.execute("SELECT * FROM days")}
+        types = [
+            tuple(row)
+            for row in connection.execute("SELECT * FROM types")
+            if row["export_date"] not in current_dates
+        ]
+        records = [dict(row) for row in connection.execute("SELECT * FROM records")]
         digest = connection.execute(
             "SELECT dataset_digest FROM sync_state WHERE id = 1"
         ).fetchone()[0]
-    return dates, digest
+    days.update((day["export_date"], day) for day in current["days"])
+    merged_records = {}
+    for record in records:
+        source_dates = set(json.loads(record["source_dates_json"])) - current_dates
+        if source_dates:
+            record["local_date"] = min(source_dates)
+            record["source_dates_json"] = _dump(source_dates)
+            merged_records[record["id"]] = record
+    for record in current["records"]:
+        source_dates = set(json.loads(record["source_dates_json"]))
+        existing = merged_records.get(record["id"])
+        if existing and existing["raw_json"] != record["raw_json"]:
+            raise ValueError(f"conflicting HealthKit UUID: {record['id']}")
+        if existing:
+            source_dates.update(json.loads(existing["source_dates_json"]))
+        record = dict(record)
+        record["local_date"] = min(source_dates)
+        record["source_dates_json"] = _dump(source_dates)
+        merged_records[record["id"]] = record
+    ordered_days = [days[day] for day in sorted(days)]
+    signature = "\n".join(
+        f"{day['export_date']}:r{day['revision']}:{day['content_digest']}" for day in ordered_days
+    )
+    return (
+        {
+            "days": ordered_days,
+            "types": sorted(types + current["types"]),
+            "records": list(merged_records.values()),
+            "dataset_digest": "sha256:" + hashlib.sha256(signature.encode()).hexdigest(),
+        },
+        digest,
+    )
+
+
+def _dump(dates: set[str]) -> str:
+    return json.dumps(sorted(dates), separators=(",", ":"))
 
 
 def _replace(settings: Settings, snapshot: dict[str, Any]) -> None:
@@ -74,9 +113,7 @@ def _replace(settings: Settings, snapshot: dict[str, Any]) -> None:
                 :generated_at, :timezone, :period_start, :period_end)""",
             days,
         )
-        connection.executemany(
-            "INSERT INTO types VALUES (?, ?, ?, ?)", snapshot["types"]
-        )
+        connection.executemany("INSERT INTO types VALUES (?, ?, ?, ?)", snapshot["types"])
         connection.executemany(
             """INSERT INTO records VALUES
                (:id, :uuid, :type, :kind, :local_date, :start_at, :end_at, :value_json,

@@ -110,25 +110,84 @@ def test_revision_replaces_snapshot_and_invalid_revision_rolls_back(health_setti
     assert query_records(health_settings, type_name, day, day)["total"] == 1
 
 
-def test_disappearing_day_and_database_failure_preserve_snapshot(health_settings: Settings) -> None:
+def test_database_failure_preserves_snapshot(health_settings: Settings) -> None:
     day = export_date()
-    path = write_export(health_settings.agentbridge_dir, day, [section("Unknown", "new", [{"uuid": "one"}])])
+    write_export(health_settings.agentbridge_dir, day, [section("Unknown", "new", [{"uuid": "one"}])])
     sync_agentbridge(health_settings)
     snapshot = build_snapshot(health_settings.agentbridge_dir)
     snapshot["dataset_digest"] = "sha256:changed"
     snapshot["records"].append(dict(snapshot["records"][0]))
     with (
-        patch("app.plugins.health_sync.build_snapshot", return_value=snapshot),
+        patch("app.plugins.health_sync._merge", return_value=(snapshot, "sha256:old")),
         pytest.raises(sqlite3.IntegrityError),
     ):
         sync_agentbridge(health_settings)
     assert query_records(health_settings, "Unknown", day, day)["total"] == 1
 
-    path.unlink()
-    write_export(health_settings.agentbridge_dir, export_date(0), [section("Unknown", "new", [])])
-    with pytest.raises(ValueError, match="disappeared"):
+
+def test_rolling_window_retains_history_and_replaces_current_dates(
+    health_settings: Settings,
+) -> None:
+    old_day, current_day, new_day = export_date(3), export_date(2), export_date(1)
+    type_name = "HKQuantityTypeIdentifierVO2Max"
+    old_path = write_export(
+        health_settings.agentbridge_dir,
+        old_day,
+        [section(type_name, "quantity", [quantity("old", 31, "ml/(kg*min)", old_day)])],
+    )
+    write_export(
+        health_settings.agentbridge_dir,
+        current_day,
+        [section(type_name, "quantity", [quantity("current", 32, "ml/(kg*min)", current_day)])],
+    )
+    sync_agentbridge(health_settings)
+
+    old_path.unlink()
+    write_export(
+        health_settings.agentbridge_dir,
+        current_day,
+        [section(type_name, "quantity", [quantity("current", 42, "ml/(kg*min)", current_day)])],
+        revision=2,
+    )
+    write_export(
+        health_settings.agentbridge_dir,
+        new_day,
+        [section(type_name, "quantity", [quantity("new", 33, "ml/(kg*min)", new_day)])],
+    )
+
+    dry_run = sync_agentbridge(health_settings, dry_run=True)
+    assert dry_run["changed"] is True and dry_run["days"] == 3
+    assert query_records(health_settings, type_name, old_day, new_day)["total"] == 2
+
+    result = sync_agentbridge(health_settings)
+    rows = query_records(health_settings, type_name, old_day, new_day)["records"]
+    type_summary = next(row for row in list_types(health_settings) if row["type"] == type_name)
+    assert result["days"] == 3 and result["records"] == 3
+    assert [row["normalized_value"] for row in rows] == [33, 42, 31]
+    assert (type_summary["first_date"], type_summary["latest_date"]) == (old_day, new_day)
+    assert sync_agentbridge(health_settings)["changed"] is False
+
+
+def test_uuid_conflict_with_retained_history_aborts(health_settings: Settings) -> None:
+    old_day, new_day = export_date(2), export_date(1)
+    type_name = "HKQuantityTypeIdentifierRestingHeartRate"
+    old_path = write_export(
+        health_settings.agentbridge_dir,
+        old_day,
+        [section(type_name, "quantity", [quantity("repeat", 55, "count/min", old_day)])],
+    )
+    sync_agentbridge(health_settings)
+    old_path.unlink()
+    write_export(
+        health_settings.agentbridge_dir,
+        new_day,
+        [section(type_name, "quantity", [quantity("repeat", 60, "count/min", new_day)])],
+    )
+
+    with pytest.raises(ValueError, match="conflicting HealthKit UUID"):
         sync_agentbridge(health_settings)
-    assert query_records(health_settings, "Unknown", day, day)["total"] == 1
+    rows = query_records(health_settings, type_name, old_day, new_day)["records"]
+    assert len(rows) == 1 and rows[0]["normalized_value"] == 55
 
 
 def test_symlink_cannot_escape_configured_directory(health_settings: Settings, tmp_path) -> None:

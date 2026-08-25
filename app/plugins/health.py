@@ -1,4 +1,4 @@
-"""Health plugin wiring over the current Agentbridge snapshot."""
+"""Health plugin wiring over retained Agentbridge history."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ QueryOffset = Annotated[int, Field(ge=0)]
 
 def register_mcp(server: MCPServer, settings: Settings) -> None:
     def sync_tool(dry_run: bool = False) -> dict[str, Any]:
-        """Synchronize the configured Agentbridge directory atomically."""
+        """Merge the configured Agentbridge exports atomically."""
         return sync_agentbridge(settings, dry_run)
 
     def query_tool(
