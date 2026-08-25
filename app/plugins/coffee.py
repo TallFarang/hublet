@@ -13,6 +13,7 @@ from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import coffee_dashboard
+from app.dashboard_config import load_config
 from app.db import connect
 from app.runtime import Plugin
 from app.web import dashboard_period, render
@@ -350,7 +351,7 @@ def coffee_page(request: Request, period: str = "week") -> Response:
         title="Coffee",
         beans=beans,
         shots=shots,
-        dashboard=coffee_dashboard(shots, len(beans)),
+        dashboard=coffee_dashboard(shots, len(beans), load_config(settings)["plugins"]["coffee"]),
         period=selected,
     )
 

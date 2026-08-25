@@ -5,39 +5,62 @@ from __future__ import annotations
 from typing import Any
 
 from app.charts import plot
+from app.dashboard_config import DEFAULT_CONFIG
+from app.dashboard_metrics import configured_readings, display_value, metric_settings
 
 
 def goal_dashboard(
-    goal: dict[str, Any], live: dict[tuple[str, str], dict[str, Any]] | None = None
+    goal: dict[str, Any],
+    live: dict[tuple[str, str], dict[str, Any]] | None = None,
+    config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Keep the established projection import without loading plugin adapters eagerly."""
 
     from app.goals_dashboard import goal_dashboard as project_goal
 
-    return project_goal(goal, live)
+    return project_goal(goal, live, config)
 
 
-def coffee_dashboard(shots: list[dict[str, Any]], bean_count: int) -> dict[str, Any]:
+def coffee_dashboard(
+    shots: list[dict[str, Any]], bean_count: int, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    config = config or DEFAULT_CONFIG["plugins"]["coffee"]
     ordered = [shot for shot in reversed(shots) if shot["dose_g"]]
     ratios = [shot["yield_g"] / shot["dose_g"] for shot in ordered]
     ratings = [shot["rating"] for shot in shots if shot["rating"] is not None]
     latest = shots[0] if shots else None
-    return {
+    latest_ratio = latest["yield_g"] / latest["dose_g"] if latest and latest["dose_g"] else None
+    average_rating = sum(ratings) / len(ratings) if ratings else None
+    chart = metric_settings(config)["extraction_ratio"]
+    result = {
         **plot(ratios),
         "has_series": bool(ratios),
         "bean_count": bean_count,
         "shot_count": len(shots),
-        "latest_ratio": round(latest["yield_g"] / latest["dose_g"], 2)
-        if latest and latest["dose_g"]
-        else None,
+        "latest_ratio": round(latest_ratio, 2) if latest_ratio is not None else None,
         "latest_time": latest["time_s"] if latest else None,
-        "average_rating": round(sum(ratings) / len(ratings), 1) if ratings else None,
-        "start_label": _shot_label(ordered[0]) if ordered else None,
-        "end_label": _shot_label(ordered[-1]) if ordered else None,
+        "average_rating": round(average_rating, 1) if average_rating is not None else None,
+        "start_label": _shot_label(ordered[0], chart["precision"]) if ordered else None,
+        "end_label": _shot_label(ordered[-1], chart["precision"]) if ordered else None,
     }
+    result["readings"] = configured_readings(
+        config,
+        {
+            "bean_count": {"value": bean_count},
+            "latest_ratio": {"value": latest_ratio, "prefix": "1:"},
+            "latest_time": {"value": result["latest_time"], "suffix": "s"},
+            "average_rating": {"value": average_rating, "suffix": "/5"},
+        },
+    )
+    result["has_series"] = result["has_series"] and chart["enabled"]
+    result["chart_label"] = chart["label"]
+    return result
 
 
-def recipes_dashboard(recipes: list[dict[str, Any]]) -> dict[str, Any]:
+def recipes_dashboard(
+    recipes: list[dict[str, Any]], config: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    config = config or DEFAULT_CONFIG["plugins"]["recipes"]
     logs = sorted(
         [log for recipe in recipes for log in recipe["cook_logs"]],
         key=lambda log: (log["created_at"], log["id"]),
@@ -45,19 +68,38 @@ def recipes_dashboard(recipes: list[dict[str, Any]]) -> dict[str, Any]:
     )
     ordered = list(reversed(logs))
     ratings = [float(log["rating"]) for log in ordered]
-    return {
+    average_rating = sum(ratings) / len(ratings) if ratings else None
+    chart = metric_settings(config)["cook_rating"]
+    result = {
         **plot(ratings),
         "has_series": bool(ratings),
         "recipe_count": len(recipes),
         "cook_count": sum(len(recipe["cook_logs"]) for recipe in recipes),
-        "average_rating": round(sum(ratings) / len(ratings), 1) if ratings else None,
+        "average_rating": round(average_rating, 1) if average_rating is not None else None,
         "latest_rating": logs[0]["rating"] if logs else None,
-        "start_label": _cook_label(ordered[0]) if ordered else None,
-        "end_label": _cook_label(ordered[-1]) if ordered else None,
+        "start_label": _cook_label(ordered[0], chart["precision"]) if ordered else None,
+        "end_label": _cook_label(ordered[-1], chart["precision"]) if ordered else None,
     }
+    result["readings"] = configured_readings(
+        config,
+        {
+            "recipe_count": {"value": result["recipe_count"]},
+            "cook_count": {"value": result["cook_count"]},
+            "average_rating": {"value": average_rating, "suffix": "/5"},
+            "latest_rating": {"value": result["latest_rating"], "suffix": "/5"},
+        },
+    )
+    result["has_series"] = result["has_series"] and chart["enabled"]
+    result["chart_label"] = chart["label"]
+    return result
 
 
-def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, Any]:
+def food_dashboard(
+    summary: dict[str, Any],
+    records: list[dict[str, Any]],
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    config = config or DEFAULT_CONFIG["plugins"]["food"]
     days = summary["daily_confirmed_totals"]
     peak = max((day["calories"] for day in days), default=0) or 1
     calorie_chart = plot([float(day["calories"]) for day in days])
@@ -81,6 +123,8 @@ def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> di
         if record["status"] == "eaten" and record["consumption_date_local"]:
             records_by_date.setdefault(record["consumption_date_local"], []).append(record)
     projected_days = []
+    average_calories = sum(day["calories"] for day in days) / len(days) if days else 0
+    average_protein = sum(day["protein_g"] for day in days) / len(days) if days else 0
     for day in days:
         meals: dict[str, list[dict[str, str]]] = {}
         for record in records_by_date.get(day["date"], []):
@@ -96,74 +140,45 @@ def food_dashboard(summary: dict[str, Any], records: list[dict[str, Any]]) -> di
                 "meal_count": len(meals),
             }
         )
-    return {
+    result = {
         "days": projected_days,
         "calorie_chart": calorie_chart,
-        "average_calories": round(sum(day["calories"] for day in days) / len(days)) if days else 0,
-        "average_protein": round(sum(day["protein_g"] for day in days) / len(days), 1)
-        if days
-        else 0,
+        "average_calories": round(average_calories),
+        "average_protein": round(average_protein, 1),
         "confirmed_count": sum(
-            record["status"] == "eaten" and record["nutrition_id"] is not None
-            for record in records
+            record["status"] == "eaten" and record["nutrition_id"] is not None for record in records
         ),
         "excluded_count": summary["excluded_count"],
         "unresolved_count": unresolved_count,
     }
+    result["readings"] = configured_readings(
+        config,
+        {
+            "average_calories": {"value": average_calories, "suffix": " kcal"},
+            "average_protein": {"value": average_protein, "suffix": "g"},
+            "confirmed_count": {"value": result["confirmed_count"]},
+            "unresolved_count": {"value": result["unresolved_count"]},
+        },
+    )
+    chart = metric_settings(config)["confirmed_calories"]
+    result["calorie_chart_enabled"] = chart["enabled"]
+    result["calorie_chart_label"] = chart["label"]
+    return result
 
 
-def health_dashboard(report: dict[str, Any]) -> dict[str, Any]:
-    labels = {
-        "vo2_max": "VO₂ max",
-        "body_weight_kg": "Body weight",
-        "resting_heart_rate": "Resting heart rate",
-        "workouts_completed": "Workouts",
-    }
-    metrics = []
-    for name, metric in report["metrics"].items():
-        points = metric["series"]
-        values = [float(point["value"]) for point in points]
-        if name == "workouts_completed":
-            running = 0.0
-            values = [running := running + value for value in values]
-        latest = values[-1] if values else None
-        metrics.append(
-            {
-                **plot(values),
-                "name": name,
-                "label": labels[name],
-                "value": round(latest, 1) if latest is not None else None,
-                "unit": metric["unit"],
-                "latest_date": metric["latest"]["date"] if metric["latest"] else None,
-                "has_series": bool(values),
-                "start_label": _health_label(points[0], values[0], metric["unit"])
-                if values
-                else None,
-                "end_label": _health_label(points[-1], values[-1], metric["unit"])
-                if values
-                else None,
-            }
-        )
+def _shot_label(shot: dict[str, Any], precision: int) -> dict[str, str]:
+    ratio = shot["yield_g"] / shot["dose_g"]
     return {
-        "metrics": metrics,
-        "freshness": report["source"]["freshness"],
-        "latest_export_date": report["source"]["latest_export_date"],
-        "exported_days": len(report["coverage"]["exported_dates"]),
-        "missing_days": len(report["source"]["missing_dates"]),
+        "date": shot["created_at"][:10],
+        "value": f"{display_value(ratio, precision)}×",
     }
 
 
-def _shot_label(shot: dict[str, Any]) -> dict[str, str]:
-    ratio = round(shot["yield_g"] / shot["dose_g"], 2)
-    return {"date": shot["created_at"][:10], "value": f"{ratio}×"}
-
-
-def _cook_label(log: dict[str, Any]) -> dict[str, str]:
-    return {"date": log["created_at"][:10], "value": f"{log['rating']}/5"}
-
-
-def _health_label(point: dict[str, Any], value: float, unit: str) -> dict[str, str]:
-    return {"date": point["date"], "value": f"{round(value, 1)} {unit}".strip()}
+def _cook_label(log: dict[str, Any], precision: int) -> dict[str, str]:
+    return {
+        "date": log["created_at"][:10],
+        "value": f"{display_value(log['rating'], precision)}/5",
+    }
 
 
 def _axis_indices(length: int) -> list[int]:

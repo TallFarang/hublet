@@ -8,6 +8,7 @@
       {% if chart.target_y is not none %}
       <line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>
       {% endif %}
+      {% if chart.context_points %}<polyline class="chart-context-series" points="{{ chart.context_points }}"/>{% endif %}
       {% if chart.points %}
       {% if chart.single %}<line class="chart-series" x1="47" y1="{{ chart.last.y }}" x2="53" y2="{{ chart.last.y }}"/>
       {% else %}<polyline class="chart-series" points="{{ chart.points }}"/>{% endif %}

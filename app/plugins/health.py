@@ -1,4 +1,4 @@
-"""Health plugin wiring over retained Agentbridge history."""
+"""Health plugin wiring over its retained master store."""
 
 from __future__ import annotations
 
@@ -11,7 +11,8 @@ from mcp.server import MCPServer
 from pydantic import Field
 
 from app.config import Settings
-from app.dashboard import health_dashboard
+from app.dashboard_config import load_config
+from app.dashboard_health import health_dashboard
 from app.plugins.health_query import list_types, query_records, sync_status
 from app.plugins.health_report import summary
 from app.plugins.health_schema import DB_FILENAME, MIGRATIONS
@@ -26,7 +27,7 @@ QueryOffset = Annotated[int, Field(ge=0)]
 
 def register_mcp(server: MCPServer, settings: Settings) -> None:
     def sync_tool(dry_run: bool = False) -> dict[str, Any]:
-        """Merge the configured Agentbridge exports atomically."""
+        """Ingest the configured Agentbridge exports atomically."""
         return sync_agentbridge(settings, dry_run)
 
     def query_tool(
@@ -74,7 +75,7 @@ def health_page(request: Request, period: str = "week") -> Response:
         request,
         "health.html",
         title="Health",
-        dashboard=health_dashboard(report),
+        dashboard=health_dashboard(report, load_config(settings)["plugins"]["health"]),
         period=selected,
     )
 

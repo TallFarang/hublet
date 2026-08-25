@@ -18,6 +18,8 @@ from starlette.staticfiles import StaticFiles
 
 from app.auth import BearerAuthMiddleware, DashboardAuthMiddleware, SameOriginMiddleware
 from app.config import Settings
+from app.dashboard_config import load_config
+from app.dashboard_config import register_mcp as register_dashboard_config
 from app.plugins import PLUGINS
 from app.runtime import Plugin, migrate_plugins, plugin_health
 from app.web import STATIC_DIR, render
@@ -33,6 +35,7 @@ def create_app(
     resolved_settings = Settings.from_env() if settings is None else settings
     selected_plugins = tuple(PLUGINS if plugins is None else plugins)
     mcp = MCPServer("Hublet")
+    register_dashboard_config(mcp, resolved_settings)
     for plugin in selected_plugins:
         plugin.register_mcp(mcp, resolved_settings)
     mcp_application = mcp.streamable_http_app(
@@ -47,6 +50,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         migrate_plugins(resolved_settings, selected_plugins)
+        load_config(resolved_settings)
         application.state.settings = resolved_settings
         application.state.plugins = selected_plugins
         async with mcp.session_manager.run():

@@ -5,7 +5,14 @@ DB_FILENAME = "health.db"
 MAPPINGS = {
     "HKQuantityTypeIdentifierVO2Max": ("vo2_max", "ml/(kg*min)"),
     "HKQuantityTypeIdentifierBodyMass": ("body_weight_kg", "kg"),
+    "HKQuantityTypeIdentifierBodyFatPercentage": ("body_fat_percentage", "%"),
+    "HKQuantityTypeIdentifierLeanBodyMass": ("lean_body_mass_kg", "kg"),
     "HKQuantityTypeIdentifierRestingHeartRate": ("resting_heart_rate", "count/min"),
+    "HKQuantityTypeIdentifierHeartRateRecoveryOneMinute": (
+        "heart_rate_recovery",
+        "count/min",
+    ),
+    "HKCategoryTypeIdentifierSleepAnalysis": ("sleep_hours", "h"),
     "HKWorkoutTypeIdentifier": ("workouts_completed", "workouts"),
 }
 

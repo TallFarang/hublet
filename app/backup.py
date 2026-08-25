@@ -10,6 +10,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from app.config import Settings
+from app.dashboard_config import FILENAME as DASHBOARD_CONFIG
 from app.plugins import PLUGINS
 from app.runtime import Plugin
 
@@ -43,6 +44,9 @@ def snapshot_databases(
                 sqlite3.connect(staging / plugin.db_filename) as destination,
             ):
                 source.backup(destination)
+        dashboard_config = settings.data_dir / DASHBOARD_CONFIG
+        if dashboard_config.is_file():
+            shutil.copy2(dashboard_config, staging / DASHBOARD_CONFIG)
         (staging / SNAPSHOT_MARKER).touch()
 
         staging.rename(snapshot)

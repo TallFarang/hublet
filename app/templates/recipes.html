@@ -5,13 +5,10 @@
   <header class="plugin-title"><h1>Recipes</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel" aria-label="Recipe summary">
     <dl class="readings">
-      <div><dt>Linked</dt><dd>{{ dashboard.recipe_count }}</dd></div>
-      <div><dt>Cooks</dt><dd>{{ dashboard.cook_count }}</dd></div>
-      <div><dt>Avg rating</dt><dd>{% if dashboard.average_rating is not none %}{{ dashboard.average_rating }}/5{% else %}—{% endif %}</dd></div>
-      <div><dt>Latest</dt><dd>{% if dashboard.latest_rating is not none %}{{ dashboard.latest_rating }}/5{% else %}—{% endif %}</dd></div>
+      {% for reading in dashboard.readings %}<div><dt>{{ reading.label }}</dt><dd>{{ reading.display }}</dd></div>{% endfor %}
     </dl>
     {% if dashboard.has_series %}<figure class="trend-figure">
-      <figcaption>Cook ratings</figcaption>
+      <figcaption>{{ dashboard.chart_label }}</figcaption>
       {{ line_chart(dashboard, "Cook rating trend") }}
     </figure>{% endif %}
   </section>

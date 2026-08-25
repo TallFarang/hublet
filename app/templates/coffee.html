@@ -5,13 +5,10 @@
   <header class="plugin-title"><h1>Coffee</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel" aria-label="Coffee summary">
     <dl class="readings">
-      <div><dt>Open beans</dt><dd>{{ dashboard.bean_count }}</dd></div>
-      <div><dt>Latest ratio</dt><dd>{% if dashboard.latest_ratio is not none %}1:{{ dashboard.latest_ratio }}{% else %}—{% endif %}</dd></div>
-      <div><dt>Latest time</dt><dd>{% if dashboard.latest_time is not none %}{{ dashboard.latest_time|round(1) }}s{% else %}—{% endif %}</dd></div>
-      <div><dt>Avg rating</dt><dd>{% if dashboard.average_rating is not none %}{{ dashboard.average_rating }}/5{% else %}—{% endif %}</dd></div>
+      {% for reading in dashboard.readings %}<div><dt>{{ reading.label }}</dt><dd>{{ reading.display }}</dd></div>{% endfor %}
     </dl>
     {% if dashboard.has_series %}<figure class="trend-figure">
-      <figcaption>Extraction ratio</figcaption>
+      <figcaption>{{ dashboard.chart_label }}</figcaption>
       {{ line_chart(dashboard, "Extraction ratio trend") }}
     </figure>{% endif %}
   </section>

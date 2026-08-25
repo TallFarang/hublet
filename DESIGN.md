@@ -159,6 +159,8 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 
 **The Food Means Read Rule.** Food may use its amber signal for nutrition status, but the web dashboard exposes no Food mutation controls.
 
+**The Configured Instrument Rule.** One validated document controls metric visibility, order, labels, precision and tested views across every plugin. Configuration changes presentation, never source values or domain meaning.
+
 ## Typography
 
 **Display Font:** Native system sans, led by San Francisco on Apple platforms
@@ -254,11 +256,11 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 ### Goals Status
 
-- **Read-only:** Goals separates active Health, Career and Social goals into content-sized category panels. Current values stay beside titles; target values label their dashed chart line. Numeric supporting evidence expands beneath its primary chart, while definitions, statuses, sources, prose, and inactive goals stay out of the dashboard.
+- **Read-only:** Goals separates active Health, Career and Social goals into content-sized category panels. Current values stay beside titles; target values label their dashed chart line. Configured supporting and supplemental evidence expands beneath its primary chart. The calorie view places muted daily totals behind a seven-day average. Definitions, statuses, sources, prose, and inactive goals stay out of the dashboard.
 
 ### Health Status
 
-- **Read-only:** Health shows global freshness, four mapped measurements and compact inline trends. Raw records and synchronization stay in MCP rather than the dashboard.
+- **Read-only:** Health shows global freshness and configured practical measurements with compact inline trends. The default set covers body composition, sleep, cardiovascular recovery and workouts; VO₂ max remains available but hidden. Raw records and synchronization stay in MCP rather than the dashboard.
 
 ## Do's and Don'ts
 

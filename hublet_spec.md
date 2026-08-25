@@ -93,7 +93,7 @@ Start with one file per plugin. Split files only when navigation becomes painful
 
 ## 5. Plugin runtime
 
-Each plugin is an ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the five descriptors in one tuple. Do not add discovery, lifecycle hooks, configuration schemas or a dynamic plugin framework.
+Each plugin is an ordinary Python module. A tiny immutable `Plugin` descriptor holds only its identity and direct references to its migrations, MCP tool registration, HTML router and launcher summary. Explicitly register the five descriptors in one tuple. Do not add discovery, lifecycle hooks or a dynamic plugin framework. One core dashboard document may select code-owned metrics and tested views; it is not a plugin configuration or formula system.
 
 ```text
 Plugin(
@@ -238,13 +238,13 @@ uncertain-record facts while the dedicated gap query retains full investigative 
 
 ## 11a. Health plugin
 
-Health is a read-only projection of JSON files beneath `HUBLET_AGENTBRIDGE_DIR`. A sync chooses
-the highest daily revision, validates the complete set, deduplicates HealthKit UUIDs and replaces
-the current `health.db` snapshot in one transaction. It keeps current days, discovered types,
-canonical records with full raw JSON, and one sync-state row—no batch or revision history.
-Unknown types are stored without semantic interpretation. Health summaries map only VO2 max, body
-weight, resting heart rate and workout count into goal-ready `HealthKit` evidence. OpenClaw performs
-sync, summary, evidence recording and Goals snapshot in that order.
+Health is the permanent latest-state store ingested from JSON beneath `HUBLET_AGENTBRIDGE_DIR`. A
+sync chooses the highest daily revision, validates it, deduplicates HealthKit UUIDs and atomically
+merges it with retained history. Current dates replace matching dates; missing source dates remain.
+An empty source is a no-op after the first import. Health keeps discovered types, canonical records
+with full raw JSON and one sync-state row, but no old revision or byte-for-byte envelope history.
+The practical catalogue covers body composition, sleep, cardiovascular recovery, workouts and
+optional VO2 max. OpenClaw performs sync, summary, evidence recording and Goals snapshot in order.
 
 ## 12. Database conventions
 
@@ -371,9 +371,9 @@ Use the existing MacBook, home network, Python, SQLite, Bonjour/mDNS, GitHub pub
 
 ## 16. Backup and recovery
 
-Provide one command that snapshots all five databases from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR` using SQLite's online backup API. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
+Provide one command that snapshots all five databases and the optional dashboard configuration from `HUBLET_DATA_DIR` to `HUBLET_BACKUP_DIR`, using SQLite's online backup API for databases. The intended host directories are `$HOME/.hublet/data/` and `$HOME/.hublet/backups/`, supplied through deployment configuration rather than committed values. Schedule daily with macOS launchd. Thirty daily snapshots is enough initially; the backup folder should also be covered by the Mac's independent backup.
 
-Restore: stop the runtime -> replace the affected `.db` with the chosen snapshot -> start the runtime -> verify `/healthz`.
+Restore: stop the runtime -> replace the affected `.db` and, when needed, `dashboard.json` with the chosen snapshot -> start the runtime -> verify `/healthz`.
 
 ## 17. Explicit non-goals
 

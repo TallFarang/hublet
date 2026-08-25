@@ -8,6 +8,7 @@ from fastapi.responses import Response
 
 from app.config import Settings
 from app.dashboard import food_dashboard
+from app.dashboard_config import load_config
 from app.db import connect
 from app.plugins.food_corrections import correct_record
 from app.plugins.food_mcp import register_mcp
@@ -44,7 +45,7 @@ def food_page(
         request,
         "food.html",
         title="Food",
-        dashboard=food_dashboard(report, records),
+        dashboard=food_dashboard(report, records, load_config(settings)["plugins"]["food"]),
         catalogue=_catalogue(settings, q, restaurant, sort, include_estimates),
         period=selected,
     )

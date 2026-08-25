@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 
 from app.config import Settings
@@ -34,10 +36,11 @@ def definition(goal_id: str, title: str, status: str, order: int, *, target=True
     }
 
 
-def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
+def test_dashboard_graphs_only_active_goals_and_configured_metrics(
     settings_env: dict[str, str],
 ) -> None:
     settings = Settings.from_env(settings_env)
+    today = datetime.now().astimezone().date()
     app = create_app(settings=settings, plugins=(goals.PLUGIN,))
     with TestClient(app, base_url=settings.public_origin) as client:
         login(client, settings)
@@ -59,7 +62,7 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
             "Example source",
             "primary-reading",
             unit="points",
-            observed_at="2026-08-18T08:00:00Z",
+            observed_at=f"{today}T08:00:00Z",
         )
         goals.record_evidence(
             settings,
@@ -68,20 +71,20 @@ def test_dashboard_graphs_only_active_goals_and_only_their_primary_metric(
             99,
             "Example source",
             "supporting-reading",
-            observed_at="2026-08-18T08:00:00Z",
+            observed_at=f"{today}T08:00:00Z",
         )
         response = client.get("/goals")
 
     page = response.text
     assert page.count('class="goal-readout"') == 3
     assert page.count('class="instrument-panel goal-domain"') == 3
-    assert page.count('class="line-chart"') == 2
+    assert page.count('class="line-chart"') == 1
     assert page.index("Primary goal") < page.index("Tracking context")
     assert page.index("Health") < page.index("Career") < page.index("Social")
     assert "Completed goal" not in page and "Archived goal" not in page
     assert 'class="dashboard-details"' not in page
-    assert "99" in page
-    assert "18/08" in page
+    assert "99" not in page
+    assert today.strftime("%d/%m") in page
     assert 'class="chart-target-label"' in page and ">10 points<" in page
     assert "≥ 10 points" not in page
     assert goals.launcher_summary(settings) == "3 goals"
@@ -135,6 +138,6 @@ def test_dashboard_projects_every_numeric_supporting_series_without_text() -> No
     assert projected["target_y_percent"] is not None
     assert [chart["label"] for chart in projected["tracking"]] == [
         "Workouts",
-        "Sleep hours",
+        "Sleep",
     ]
     assert all("source" not in chart for chart in projected["tracking"])

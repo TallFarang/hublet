@@ -10,6 +10,7 @@ from pytest import CaptureFixture, MonkeyPatch
 
 from app import backup
 from app.config import Settings
+from app.dashboard_config import DEFAULT_CONFIG, FILENAME, replace_config
 from app.plugins import PLUGINS
 
 REPOSITORY_ROOT = Path(__file__).parents[1]
@@ -30,6 +31,7 @@ def test_snapshot_databases_captures_all_live_databases(settings_env: dict[str, 
             connection.execute("INSERT INTO marker VALUES (?)", (plugin.name,))
             connection.commit()
             live_connections.append(connection)
+        replace_config(settings, DEFAULT_CONFIG)
 
         snapshot = backup.snapshot_databases(settings, PLUGINS, today=date(2026, 8, 15))
 
@@ -37,6 +39,7 @@ def test_snapshot_databases_captures_all_live_databases(settings_env: dict[str, 
         for plugin in PLUGINS:
             with sqlite3.connect(snapshot / plugin.db_filename) as copy:
                 assert copy.execute("SELECT value FROM marker").fetchone()[0] == plugin.name
+        assert (snapshot / FILENAME).read_text() == (settings.data_dir / FILENAME).read_text()
     finally:
         for connection in live_connections:
             connection.close()

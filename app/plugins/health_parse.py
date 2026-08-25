@@ -25,9 +25,6 @@ def build_snapshot(configured_root: Path) -> dict[str, Any]:
         match = FILENAME.fullmatch(candidate.name)
         if match and int(match[2]) > selected.get(match[1], (-1, candidate))[0]:
             selected[match[1]] = (int(match[2]), candidate)
-    if not selected:
-        raise ValueError("no Agentbridge daily exports found")
-
     days, type_rows, records = [], [], {}
     for export_date, (revision, path) in sorted(selected.items()):
         day, exports, selected_types = _read_day(root, path, export_date, revision)
@@ -154,7 +151,13 @@ def _record(type_name: str, kind: str, export_date: str, record: Any) -> dict[st
 def _quantity(type_name: str, kind: str, value: Any, unit: Any) -> tuple[float | None, str | None]:
     if kind != "quantity" or isinstance(value, bool) or not isinstance(value, (int, float)):
         return None, None
-    if type_name != "HKQuantityTypeIdentifierBodyMass":
+    if type_name == "HKQuantityTypeIdentifierBodyFatPercentage" and unit == "%":
+        numeric = float(value)
+        return round(numeric * 100 if abs(numeric) <= 1 else numeric, 8), "%"
+    if type_name not in {
+        "HKQuantityTypeIdentifierBodyMass",
+        "HKQuantityTypeIdentifierLeanBodyMass",
+    }:
         return float(value), unit if isinstance(unit, str) else None
     factors = {"kg": 1.0, "g": 0.001, "lb": 0.45359237, "lbs": 0.45359237}
     if unit not in factors:

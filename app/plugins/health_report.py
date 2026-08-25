@@ -10,6 +10,7 @@ from app.config import Settings
 from app.db import connect
 from app.plugins.health_query import _range, sync_status
 from app.plugins.health_schema import DB_FILENAME, MAPPINGS
+from app.plugins.health_sleep import sleep_evidence, sleep_series
 
 
 def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any]:
@@ -43,7 +44,9 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
                           normalized_value, normalized_unit, duration_seconds,
                           activity_type, raw_json
                    FROM records WHERE local_date BETWEEN ? AND ?
-                   AND type IN (?, ?, ?, ?) ORDER BY local_date, COALESCE(start_at, end_at), id""",
+                   AND type IN ({}) ORDER BY local_date, COALESCE(start_at, end_at), id""".format(
+                    ",".join("?" for _type in MAPPINGS)
+                ),
                 (start.isoformat(), end.isoformat(), *MAPPINGS),
             )
         ]
@@ -54,8 +57,17 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
         typed = [row for row in rows if row["type"] == type_name]
         empty = [day for day in requested if sections.get((day, type_name)) == 0]
         missing = [day for day in requested if day in exported and (day, type_name) not in sections]
+        if metric == "sleep_hours":
+            series = sleep_series(typed)
+            metrics[metric] = _metric(metric, expected_unit, series, empty, missing)
+            evidence.extend(sleep_evidence(metric, expected_unit, point) for point in series)
+            continue
         if metric == "workouts_completed":
-            series = [{"date": day, "value": sum(row["local_date"] == day for row in typed)} for day in requested if day in exported]
+            series = [
+                {"date": day, "value": sum(row["local_date"] == day for row in typed)}
+                for day in requested
+                if day in exported
+            ]
             metrics[metric] = _metric(metric, expected_unit, series, empty, missing)
             if len(exported) == len(requested) and not missing:
                 evidence.append(
@@ -85,7 +97,10 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
             and (row["normalized_unit"] or row["unit"]) == expected_unit
         ]
         series = [{"date": item["date"], "value": item["value"]} for item in samples]
-        metrics[metric] = {**_metric(metric, expected_unit, series, empty, missing), "samples": samples}
+        metrics[metric] = {
+            **_metric(metric, expected_unit, series, empty, missing),
+            "samples": samples,
+        }
         evidence.extend(_point_evidence(metric, sample) for sample in samples)
     return {
         "start_date": start.isoformat(),
@@ -121,6 +136,7 @@ def _semantic_records(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["normalized_unit"] or row["unit"],
             row["duration_seconds"],
             row["activity_type"],
+            json.dumps(raw.get("value"), sort_keys=True, separators=(",", ":")),
             json.dumps(raw.get("source"), sort_keys=True, separators=(",", ":")),
         )
         unique.setdefault(key, row)

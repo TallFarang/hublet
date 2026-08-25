@@ -1,4 +1,4 @@
-"""Atomically merge Agentbridge's current window into retained Health history."""
+"""Atomically ingest Agentbridge exports into retained Health history."""
 
 from __future__ import annotations
 
@@ -19,7 +19,10 @@ def sync_agentbridge(settings: Settings, dry_run: bool = False) -> dict[str, Any
     if not isinstance(dry_run, bool):
         raise TypeError("dry_run must be a boolean")
     try:
-        snapshot, previous_digest = _merge(settings, build_snapshot(settings.agentbridge_dir))
+        current = build_snapshot(settings.agentbridge_dir)
+        snapshot, previous_digest = _merge(settings, current)
+        if not snapshot["days"]:
+            raise ValueError("no Agentbridge exports or stored Health history found")
         result = {
             "dry_run": dry_run,
             "changed": snapshot["dataset_digest"] != previous_digest,
@@ -27,6 +30,7 @@ def sync_agentbridge(settings: Settings, dry_run: bool = False) -> dict[str, Any
             "records": len(snapshot["records"]),
             "types": len({row[1] for row in snapshot["types"]}),
             "dataset_digest": snapshot["dataset_digest"],
+            "source_days": len(current["days"]),
         }
         if dry_run:
             return result

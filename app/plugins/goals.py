@@ -13,6 +13,7 @@ from fastapi.responses import Response
 from mcp.server import MCPServer
 
 from app.config import Settings
+from app.dashboard_config import load_config
 from app.db import connect
 from app.goals_dashboard import goal_dashboard, live_tracking_series
 from app.runtime import Plugin
@@ -20,7 +21,7 @@ from app.web import dashboard_period, render
 
 DB_FILENAME = "goals.db"
 DIRECTIONS = {"above", "at_or_above", "at_or_below", "increasing_trend", "equals"}
-ROLES = {"outcome", "supporting_indicator"}
+ROLES = {"outcome", "supporting_indicator", "supplemental_indicator"}
 NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
 MIGRATIONS = (
@@ -578,9 +579,10 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
 @router.get("")
 def goals_page(request: Request, period: str = "week") -> Response:
     selected = dashboard_period(period)
+    config = load_config(request.app.state.settings)["plugins"]["goals"]
     registry = get_registry(request.app.state.settings)
     live = live_tracking_series(
-        request.app.state.settings, selected["start"], selected["end"]
+        request.app.state.settings, selected["start"], selected["end"], config
     )
     active_domains = []
     for domain in registry["domains"]:
@@ -594,7 +596,7 @@ def goals_page(request: Request, period: str = "week") -> Response:
                 selected["start"],
                 selected["end"],
             )
-            goal["dashboard"] = goal_dashboard(goal, live)
+            goal["dashboard"] = goal_dashboard(goal, live, config)
             domain_goals.append(goal)
         if domain_goals:
             active_domains.append(
@@ -713,7 +715,9 @@ def _normalise_sources(
             "outcome" if target is not None and metric == target["metric"] else "supporting_indicator"
         )
         if role not in ROLES:
-            raise ValueError("evidence role must be outcome or supporting_indicator")
+            raise ValueError(
+                "evidence role must be outcome, supporting_indicator or supplemental_indicator"
+            )
         details = source.get("details") or {}
         _require_scalar_mapping(details, "evidence details")
         expectation = source.get("expectation")

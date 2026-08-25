@@ -35,11 +35,12 @@ instrument rather than a reporting suite.
 - Goals with timestamped absolute progress measurements.
 - Apple Notes recipe references with cooking experiments and conclusions.
 - Receipt-backed food consumption with current linked nutrition and explicit tracking gaps.
-- Read-only Agentbridge HealthKit snapshots with compact evidence for Goals.
+- A permanent HealthKit store ingested from Agentbridge with compact evidence for Goals.
+- One validated dashboard document for metric visibility, order, labels, precision and tested views.
 - Server-rendered HTML, read-only filters and inline data graphics, with no JavaScript, frontend framework,
   chart library, web font or external asset dependency.
 - One signed-cookie dashboard login and a separately protected MCP endpoint.
-- No user accounts, destructive agent tools, general analytics suite or plugin framework.
+- No user accounts, destructive agent tools, formula language, general analytics suite or dynamic plugin framework.
 
 ## Brand Commitments
 

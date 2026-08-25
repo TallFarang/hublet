@@ -41,7 +41,7 @@
 }
 .readings {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   margin: 0;
   border-block: 1px solid var(--line);
 }
@@ -63,6 +63,7 @@
 .line-chart line, .line-chart polyline { vector-effect: non-scaling-stroke; }
 .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
 .chart-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-context-series { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.55; }
 .chart-series { fill: none; stroke: var(--accent); stroke-width: 2.5; }
 .chart-dot {
   position: absolute;
@@ -108,7 +109,6 @@
 .chart-endpoints > span { display: flex; gap: 0.35rem; }
 .chart-endpoints > span:last-child strong { color: var(--accent); }
 .dashboard-details { display: grid; gap: 1rem; padding-top: clamp(3rem, 8vw, 6rem); }
-
 .goal-domains { display: grid; gap: 1rem; }
 .goal-domain { min-height: 0; }
 .goal-domain > h2 { margin: 0; font-size: 1rem; }

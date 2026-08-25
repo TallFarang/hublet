@@ -5,7 +5,7 @@
   <header class="plugin-title"><h1>Food</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel" aria-label="Food summary">
     <figure class="bar-figure">
-      <figcaption>Confirmed calories</figcaption>
+      {% if dashboard.calorie_chart_enabled %}<figcaption>{{ dashboard.calorie_chart_label }}</figcaption>
       {% if period.key == 'week' %}<div class="bar-chart bar-chart--week" role="img"
            aria-label="Confirmed calories for {{ period.days }} days">
         {% for day in dashboard.days %}
@@ -15,7 +15,7 @@
           <span class="bar-label">{{ day.date|uk_date(true) }}</span>
         </div>
         {% endfor %}
-      </div>{% else %}<div class="food-month-chart">{{ line_chart(dashboard.calorie_chart, "Confirmed calories for 30 days") }}</div>{% endif %}
+      </div>{% else %}<div class="food-month-chart">{{ line_chart(dashboard.calorie_chart, "Confirmed calories for 30 days") }}</div>{% endif %}{% endif %}
       <details class="meal-disclosure">
         <summary>{% if period.key == 'week' %}Meals{% else %}Days under two meals{% endif %}</summary>
         <ol class="meal-days">
@@ -35,10 +35,7 @@
       </details>
     </figure>
     <dl class="readings readings--below">
-      <div><dt>Daily avg</dt><dd>{{ dashboard.average_calories }} kcal</dd></div>
-      <div><dt>Protein avg</dt><dd>{{ dashboard.average_protein }}g</dd></div>
-      <div><dt>Confirmed</dt><dd>{{ dashboard.confirmed_count }}</dd></div>
-      <div><dt>Unresolved</dt><dd>{{ dashboard.unresolved_count }}</dd></div>
+      {% for reading in dashboard.readings %}<div><dt>{{ reading.label }}</dt><dd>{{ reading.display }}</dd></div>{% endfor %}
     </dl>
   </section>
 

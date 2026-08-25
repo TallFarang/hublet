@@ -13,6 +13,7 @@ from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import recipes_dashboard
+from app.dashboard_config import load_config
 from app.db import connect
 from app.runtime import Plugin
 from app.web import dashboard_period, render
@@ -215,7 +216,7 @@ def recipes_page(request: Request, period: str = "week") -> Response:
         "recipes.html",
         title="Recipes",
         recipes=records,
-        dashboard=recipes_dashboard(records),
+        dashboard=recipes_dashboard(records, load_config(settings)["plugins"]["recipes"]),
         period=selected,
     )
 
