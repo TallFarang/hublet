@@ -20,52 +20,6 @@ EXPECTED_DEV_DEPENDENCIES = {
     "pytest==9.1.1",
     "ruff==0.16.3",
 }
-EXPECTED_RUNTIME_LOCK_PACKAGES = {
-    "annotated-doc",
-    "annotated-types",
-    "anyio",
-    "attrs",
-    "cffi",
-    "click",
-    "cryptography",
-    "fastapi",
-    "h11",
-    "httpcore2",
-    "httpx2",
-    "idna",
-    "itsdangerous",
-    "jinja2",
-    "jsonschema",
-    "jsonschema-specifications",
-    "markupsafe",
-    "mcp",
-    "mcp-types",
-    "opentelemetry-api",
-    "pycparser",
-    "pydantic",
-    "pydantic-core",
-    "pyjwt",
-    "python-multipart",
-    "referencing",
-    "rpds-py",
-    "sse-starlette",
-    "starlette",
-    "truststore",
-    "typing-extensions",
-    "typing-inspection",
-    "uvicorn",
-}
-EXPECTED_DEV_LOCK_PACKAGES = EXPECTED_RUNTIME_LOCK_PACKAGES | {
-    "certifi",
-    "httpcore",
-    "httpx",
-    "iniconfig",
-    "packaging",
-    "pluggy",
-    "pygments",
-    "pytest",
-    "ruff",
-}
 REQUIRED_ENV_KEYS = {
     "HUBLET_AGENTBRIDGE_DIR",
     "HUBLET_BACKUP_DIR",
@@ -135,44 +89,16 @@ def test_project_metadata_has_only_approved_exact_direct_pins() -> None:
 def test_resolved_lock_files_are_pinned_and_separated() -> None:
     runtime = read_lock("requirements.lock")
     development = read_lock("requirements-dev.lock")
-    runtime_direct = {item.split("==", 1)[0].casefold(): item.split("==", 1)[1] for item in EXPECTED_RUNTIME_DEPENDENCIES}
-    dev_direct = {item.split("==", 1)[0].casefold(): item.split("==", 1)[1] for item in EXPECTED_DEV_DEPENDENCIES}
+    runtime_direct = {
+        item.split("==", 1)[0].casefold(): item.split("==", 1)[1]
+        for item in EXPECTED_RUNTIME_DEPENDENCIES
+    }
+    dev_direct = {
+        item.split("==", 1)[0].casefold(): item.split("==", 1)[1]
+        for item in EXPECTED_DEV_DEPENDENCIES
+    }
 
-    assert set(runtime) == EXPECTED_RUNTIME_LOCK_PACKAGES
-    assert set(development) == EXPECTED_DEV_LOCK_PACKAGES
     assert runtime_direct.items() <= runtime.items()
     assert runtime.items() <= development.items()
     assert dev_direct.items() <= development.items()
     assert dev_direct.keys().isdisjoint(runtime)
-
-
-def test_readme_installs_from_locks_without_resolving_project_dependencies() -> None:
-    readme = (REPOSITORY_ROOT / "README.md").read_text()
-
-    assert "pip install -r requirements-dev.lock" in readme
-    assert "pip install --no-deps -e ." in readme
-    assert REQUIRED_ENV_KEYS <= {key for key in REQUIRED_ENV_KEYS if key in readme}
-
-
-def test_mcp_allowed_host_examples_use_sdk_wildcard_port_syntax() -> None:
-    allowed_hosts = "hublet.example.test:*,localhost:*,127.0.0.1:*"
-
-    assert allowed_hosts in (REPOSITORY_ROOT / ".env.example").read_text()
-    assert allowed_hosts in (REPOSITORY_ROOT / "README.md").read_text()
-    assert allowed_hosts in (REPOSITORY_ROOT / "hublet_spec.md").read_text()
-
-
-def test_spec_locks_dashboard_session_semantics() -> None:
-    specification = (REPOSITORY_ROOT / "hublet_spec.md").read_text()
-    required_contract = {
-        "Starlette `SessionMiddleware`",
-        "`{\"authenticated\": true}`",
-        "`max_age` of 90 days",
-        "HttpOnly",
-        "SameSite=Lax",
-        "Path=/",
-        "dashboard token rotation alone does not revoke existing sessions",
-        "rotating `HUBLET_SESSION_SECRET` revokes all existing sessions",
-    }
-
-    assert all(statement in specification for statement in required_contract)

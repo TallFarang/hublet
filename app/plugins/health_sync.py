@@ -10,7 +10,6 @@ from typing import Any
 
 from app.config import Settings
 from app.db import connect
-from app.plugins.health_goals import update_healthkit_sources
 from app.plugins.health_parse import build_snapshot
 from app.plugins.health_schema import DB_FILENAME
 
@@ -40,15 +39,10 @@ def sync_agentbridge(settings: Settings, dry_run: bool = False) -> dict[str, Any
             _mark_success(settings)
         from app.plugins.health_query import sync_status
 
-        status = sync_status(settings)
-        goals = update_healthkit_sources(
-            settings, "connected" if status["freshness"] == "fresh" else "stale"
-        )
-        return {**result, "status": status, "goals_updated": goals}
+        return {**result, "status": sync_status(settings)}
     except Exception as error:
         if not dry_run:
             _record_error(settings, str(error))
-            update_healthkit_sources(settings, "stale")
         raise
 
 

@@ -363,52 +363,6 @@ def test_evidence_query_supports_periods_filters_and_history(goal_settings: Sett
         )
 
 
-def test_report_snapshot_returns_prior_values_and_factual_gaps(goal_settings: Settings) -> None:
-    sources = [
-        {
-            "metric": "connected_metric",
-            "cadence": "weekly",
-            "source": "Connected source",
-            "tracking_status": "connected",
-            "role": "outcome",
-        },
-        {
-            "metric": "offline_metric",
-            "cadence": "monthly",
-            "source": "Offline source",
-            "tracking_status": "not_connected",
-            "role": "supporting_indicator",
-        },
-    ]
-    goals.create_goal(
-        goal_settings,
-        **example_definition(
-            dependencies=[],
-            target={"metric": "connected_metric", "direction": "increasing_trend"},
-            evidence_sources=sources,
-        ),
-    )
-    goals.record_evidence(
-        goal_settings,
-        goal_id="reach_example",
-        metric="connected_metric",
-        value=7,
-        source="Connected source",
-        observed_at="2026-08-09T12:00:00Z",
-        idempotency_key="prior",
-    )
-
-    snapshot = goals.report_snapshot(goal_settings, "2026-08-10", "2026-08-16")
-    evidence = snapshot["domains"][0]["goals"][0]["evidence"]
-
-    assert evidence[0]["observations"] == []
-    assert evidence[0]["latest_before_period"]["value"] == 7
-    assert evidence[0]["gap"] == "no_observation_in_period"
-    assert evidence[1]["latest_before_period"] is None
-    assert evidence[1]["gap"] == "source_unavailable"
-    assert "progress" not in snapshot["domains"][0]["goals"][0]
-
-
 def test_mcp_exposes_only_the_new_goal_contract(goal_settings: Settings) -> None:
     server = MCPServer("test")
     goals.register_mcp(server, goal_settings)
@@ -425,7 +379,6 @@ def test_mcp_exposes_only_the_new_goal_contract(goal_settings: Settings) -> None
         "goals_set_status",
         "goals_record_evidence",
         "goals_query_evidence",
-        "goals_report_snapshot",
     }
     assert "title" in schemas["goals_create"]["properties"]
     assert "title" in schemas["goals_update"]["required"]

@@ -82,7 +82,7 @@ def live_tracking_series(
         display = configured.get("calorie_target_adherence")
         if display and display["enabled"]:
             extended = (date.fromisoformat(start) - timedelta(days=6)).isoformat()
-            days = food_summary(settings, extended, end, [])["daily_confirmed_totals"]
+            days = food_summary(settings, extended, end)["daily_confirmed_totals"]
             daily = [{"date": day["date"], "value": day["calories"]} for day in days]
             rolling = [
                 {

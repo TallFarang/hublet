@@ -169,7 +169,7 @@ def test_corrections_amend_in_place_and_live_nutrition_changes_history(
         food.correct_record(food_settings, "meal-1", {"notes": "No reason"}, "")
 
 
-def test_summary_excludes_uncertain_and_excluded_and_reports_explicit_gaps(
+def test_summary_excludes_uncertain_and_excluded_records(
     food_settings: Settings,
 ) -> None:
     nutrition(food_settings)
@@ -203,34 +203,17 @@ def test_summary_excludes_uncertain_and_excluded_and_reports_explicit_gaps(
         food_settings, "excluded-dinner", {"status": "excluded"}, "Did not eat it"
     )
 
-    result = food.summary(
-        food_settings, "2026-08-15", "2026-08-16", ["breakfast", "lunch", "dinner"]
-    )
+    result = food.summary(food_settings, "2026-08-15", "2026-08-16")
 
     assert result["daily_confirmed_totals"][0]["calories"] == 300
     assert result["daily_confirmed_totals"][1]["calories"] == 0
-    assert result["uncertain_count"] == 1
     assert result["excluded_count"] == 1
-    assert result["complete_dates"] == []
-    assert result["averages_over_complete_days"]["calories"] is None
-    assert {gap["meal_slot"] for gap in result["gaps"]["missing_expected_meals"]} >= {
-        "lunch",
-        "dinner",
+    assert set(result) == {
+        "start_date",
+        "end_date",
+        "daily_confirmed_totals",
+        "excluded_count",
     }
-    assert result["gaps"]["uncertain_records"] == [
-        {
-            "date": "2026-08-15",
-            "restaurant": "Example Kitchen",
-            "item": "Unknown lunch",
-            "status": "uncertain",
-            "record_id": result["gaps"]["uncertain_records"][0]["record_id"],
-        }
-    ]
-    assert "nutrition" not in result["gaps"]["uncertain_records"][0]
-    detailed = food.find_gaps(
-        food_settings, "2026-08-15", "2026-08-16", ["breakfast", "lunch", "dinner"]
-    )
-    assert "nutrition" in detailed["uncertain_records"][0]
 
 
 def test_dates_ranges_search_and_validation(food_settings: Settings) -> None:
@@ -305,7 +288,6 @@ def test_register_mcp_exposes_exact_food_tool_set(food_settings: Settings) -> No
         "food_query_records",
         "food_upsert_nutrition",
         "food_find_nutrition",
-        "food_find_gaps",
         "food_summary",
     ]
 
@@ -324,7 +306,6 @@ def test_food_tools_build_valid_mcp_schemas(food_settings: Settings) -> None:
         "food_query_records",
         "food_upsert_nutrition",
         "food_find_nutrition",
-        "food_find_gaps",
         "food_summary",
     }
     receipt = schemas["food_ingest_receipt"]["$defs"]["ReceiptItem"]

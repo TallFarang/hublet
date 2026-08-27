@@ -7,8 +7,7 @@ from mcp.server import MCPServer
 
 from app.config import Settings
 from app.main import create_app
-from app.plugins import goals, health
-from app.plugins.health_goals import update_healthkit_sources
+from app.plugins import health
 from app.plugins.health_query import sync_status
 from app.plugins.health_report import summary
 from app.plugins.health_sync import sync_agentbridge
@@ -41,7 +40,7 @@ def mapped_sections(day: str) -> list[dict]:
 def prepared_settings(settings_env: dict[str, str]) -> tuple[Settings, str]:
     settings = Settings.from_env(settings_env)
     settings.agentbridge_dir.mkdir()
-    migrate_plugins(settings, (goals.PLUGIN, health.PLUGIN))
+    migrate_plugins(settings, (health.PLUGIN,))
     day = export_date()
     write_export(settings.agentbridge_dir, day, mapped_sections(day))
     return settings, day
@@ -56,6 +55,7 @@ def test_summary_separates_no_measurement_and_missing_export(settings_env: dict[
     report = summary(settings, earlier, latest)
     status = sync_status(settings)
 
+    assert not (settings.data_dir / "goals.db").exists()
     assert report["coverage"]["missing_dates"] == [export_date(2)]
     assert report["metrics"]["body_weight_kg"]["no_measurement_dates"] == [earlier, latest]
     assert report["metrics"]["vo2_max"]["latest"]["value"] == 41.2
@@ -63,63 +63,6 @@ def test_summary_separates_no_measurement_and_missing_export(settings_env: dict[
     assert status["freshness"] == "stale"
     assert status["missing_dates"] == [export_date(2)]
     assert not any(item["metric"] == "workouts_completed" for item in report["evidence"])
-
-
-def test_health_updates_goal_source_and_supplies_idempotent_evidence(
-    settings_env: dict[str, str],
-) -> None:
-    settings, day = prepared_settings(settings_env)
-    goals.create_goal(
-        settings,
-        "fitness",
-        "health",
-        "Improve fitness",
-        status="awaiting_automated_data",
-        target={"metric": "vo2_max", "value": 45, "unit": "ml/(kg*min)"},
-        evidence_sources=[
-            {
-                "metric": "vo2_max",
-                "cadence": "weekly",
-                "source": "HealthKit",
-                "tracking_status": "unspecified",
-                "role": "outcome",
-            }
-        ],
-    )
-    sync_agentbridge(settings)
-    definition = goals.get_goal(settings, "fitness")
-    report = summary(settings, day, day)
-    evidence = next(item for item in report["evidence"] if item["metric"] == "vo2_max")
-
-    assert definition["status"] == "active"
-    assert definition["evidence_sources"][0]["tracking_status"] == "connected"
-    assert definition["evidence_sources"][0]["details"]["transport"] == (
-        "Agentbridge via Hublet Health"
-    )
-    first = goals.record_evidence(settings, "fitness", **evidence)
-    second = goals.record_evidence(settings, "fitness", **evidence)
-    assert first["created"] is True and second["created"] is False
-    assert goals.report_snapshot(settings, day, day)["domains"][0]["goals"][0]["evidence"][0]["gap"] is None
-
-    update_healthkit_sources(settings, "stale")
-    empty = goals.create_goal(
-        settings,
-        "fitness_gap",
-        "health",
-        "Track fitness",
-        evidence_sources=[
-            {
-                "metric": "vo2_max",
-                "cadence": "weekly",
-                "source": "HealthKit",
-                "tracking_status": "stale",
-            }
-        ],
-    )
-    assert empty["id"] == "fitness_gap"
-    snapshot = goals.report_snapshot(settings, day, day)
-    gap_goal = next(item for item in snapshot["domains"][0]["goals"] if item["definition"]["id"] == "fitness_gap")
-    assert gap_goal["evidence"][0]["gap"] == "source_stale"
 
 
 def test_health_mcp_contract_and_private_dashboard(settings_env: dict[str, str]) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -392,52 +392,6 @@ def query_evidence(
     return [_observation_from_row(row) for row in rows]
 
 
-def report_snapshot(settings: Settings, start_date: str, end_date: str) -> dict[str, Any]:
-    start = _date(start_date, "start_date")
-    end = _date(end_date, "end_date")
-    if start > end:
-        raise ValueError("start_date must not be after end_date")
-    registry = get_registry(settings)
-    for domain in registry["domains"]:
-        reported_goals = []
-        for definition in domain["goals"]:
-            evidence = []
-            for source in definition["evidence_sources"]:
-                observations = query_evidence(
-                    settings,
-                    goal_id=definition["id"],
-                    metric=source["metric"],
-                    source=source["source"],
-                    start_date=start.isoformat(),
-                    end_date=end.isoformat(),
-                )
-                prior = query_evidence(
-                    settings,
-                    goal_id=definition["id"],
-                    metric=source["metric"],
-                    source=source["source"],
-                    end_date=(start - timedelta(days=1)).isoformat(),
-                    limit=1,
-                )
-                gap = None
-                if not observations:
-                    gap = {
-                        "connected": "no_observation_in_period",
-                        "stale": "source_stale",
-                    }.get(source["tracking_status"], "source_unavailable")
-                evidence.append(
-                    {
-                        "source_definition": source,
-                        "observations": observations,
-                        "latest_before_period": prior[0] if prior else None,
-                        "gap": gap,
-                    }
-                )
-            reported_goals.append({"definition": definition, "evidence": evidence})
-        domain["goals"] = reported_goals
-    return {"start_date": start.isoformat(), "end_date": end.isoformat(), **registry}
-
-
 def register_mcp(server: MCPServer, settings: Settings) -> None:
     def registry_tool() -> dict[str, Any]:
         """Return every domain and complete goal definition in display order."""
@@ -561,10 +515,6 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         """Query immutable evidence by goal, metric, source and effective date."""
         return query_evidence(settings, goal_id, metric, source, start_date, end_date, limit)
 
-    def snapshot_tool(start_date: str, end_date: str) -> dict[str, Any]:
-        """Build a factual reporting snapshot with prior values and explicit gaps."""
-        return report_snapshot(settings, start_date, end_date)
-
     server.add_tool(registry_tool, name="goals_registry_get")
     server.add_tool(list_tool, name="goals_list")
     server.add_tool(get_tool, name="goals_get")
@@ -573,7 +523,6 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
     server.add_tool(status_tool, name="goals_set_status")
     server.add_tool(record_tool, name="goals_record_evidence")
     server.add_tool(query_tool, name="goals_query_evidence")
-    server.add_tool(snapshot_tool, name="goals_report_snapshot")
 
 
 @router.get("")

@@ -87,30 +87,6 @@ def get_recipe(settings: Settings, recipe_id: str) -> dict[str, Any]:
     return result
 
 
-def update_recipe(
-    settings: Settings,
-    recipe_id: str,
-    *,
-    name: str | None = None,
-    note_reference: str | None = None,
-    tags: list[str] | None = None,
-) -> dict[str, Any]:
-    current = get_recipe(settings, recipe_id)
-    name = current["name"] if name is None else name.strip()
-    note_reference = (
-        current["note_reference"] if note_reference is None else note_reference.strip()
-    )
-    _validate_recipe(name, note_reference)
-    tag_values = current["tags"] if tags is None else tags
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        connection.execute(
-            """UPDATE recipes SET name = ?, note_reference = ?, tags_json = ?, updated_at = ?
-               WHERE id = ?""",
-            (name, note_reference, _tags_json(tag_values), _now(), recipe_id),
-        )
-    return get_recipe(settings, recipe_id)
-
-
 def log_cook(
     settings: Settings,
     recipe_id: str,

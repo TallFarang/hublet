@@ -49,7 +49,7 @@ def test_recipe_schema_keeps_notes_canonical(recipe_settings: Settings) -> None:
     assert not {"ingredients", "steps", "body"} & recipe_columns
 
 
-def test_link_search_get_and_edit_recipe(recipe_settings: Settings) -> None:
+def test_link_search_and_get_recipe(recipe_settings: Settings) -> None:
     linked = recipes.link_recipe(
         recipe_settings,
         "Sunday stew",
@@ -58,23 +58,14 @@ def test_link_search_get_and_edit_recipe(recipe_settings: Settings) -> None:
     )
     recipes.link_recipe(recipe_settings, "Quick noodles", "notes://example/noodles")
 
-    edited = recipes.update_recipe(
-        recipe_settings,
-        linked["id"],
-        name="Better stew",
-        note_reference="notes://example/better-stew",
-        tags=["dinner", "tested"],
-    )
-
-    assert edited["tags"] == ["dinner", "tested"]
-    assert "tags_json" not in edited
+    saved = recipes.get_recipe(recipe_settings, linked["id"])
+    assert saved["tags"] == ["dinner", "slow"]
+    assert "tags_json" not in saved
     assert [item["name"] for item in recipes.search(recipe_settings, "stew")] == [
-        "Better stew"
+        "Sunday stew"
     ]
-    assert recipes.search(recipe_settings, "tested")[0]["id"] == linked["id"]
-    assert recipes.get_recipe(recipe_settings, linked["id"])["note_reference"].endswith(
-        "better-stew"
-    )
+    assert recipes.search(recipe_settings, "slow")[0]["id"] == linked["id"]
+    assert saved["note_reference"].endswith("stew")
 
 
 def test_cook_history_preserves_experiment_and_conclusion(recipe_settings: Settings) -> None:

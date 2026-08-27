@@ -54,7 +54,6 @@ def test_mcp_adapter_registers_semantic_tools_and_calls_domain(
         "coffee.list_beans",
         "coffee.log_shot",
         "coffee.history",
-        "coffee.recommend_next",
     }
     assert coffee.history(settings, bean["id"])[0]["rating"] == 4
 

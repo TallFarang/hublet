@@ -16,7 +16,6 @@ dependencies = [
 
 [project.scripts]
 hublet-backup = "app.backup:main"
-hublet-food-import = "app.plugins.food_import:main"
 
 [project.optional-dependencies]
 dev = [

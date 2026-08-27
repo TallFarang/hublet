@@ -15,7 +15,7 @@ from app.plugins.food_mcp import register_mcp
 from app.plugins.food_nutrition import find_nutrition, get_nutrition, upsert_nutrition
 from app.plugins.food_receipts import ingest_receipt
 from app.plugins.food_records import query_records, record_consumption
-from app.plugins.food_reporting import find_gaps, summary
+from app.plugins.food_reporting import summary
 from app.plugins.food_schema import DB_FILENAME, MIGRATIONS
 from app.runtime import Plugin
 from app.web import dashboard_period, render
@@ -34,7 +34,7 @@ def food_page(
 ) -> Response:
     settings = request.app.state.settings
     selected = dashboard_period(period, datetime.now().astimezone().date())
-    report = summary(settings, selected["start"], selected["end"], [])
+    report = summary(settings, selected["start"], selected["end"])
     records = query_records(
         settings,
         start_date=selected["start"],
@@ -121,7 +121,6 @@ __all__ = [
     "MIGRATIONS",
     "PLUGIN",
     "correct_record",
-    "find_gaps",
     "find_nutrition",
     "get_nutrition",
     "ingest_receipt",

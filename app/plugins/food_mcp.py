@@ -12,7 +12,7 @@ from app.plugins.food_corrections import correct_record
 from app.plugins.food_nutrition import find_nutrition, upsert_nutrition
 from app.plugins.food_receipts import ingest_receipt
 from app.plugins.food_records import query_records, record_consumption
-from app.plugins.food_reporting import find_gaps, summary
+from app.plugins.food_reporting import summary
 
 
 def register_mcp(server: MCPServer, settings: Settings) -> None:
@@ -25,7 +25,6 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         ("food_query_records", partial(query_records, settings)),
         ("food_upsert_nutrition", partial(_upsert_nutrition, settings)),
         ("food_find_nutrition", partial(find_nutrition, settings)),
-        ("food_find_gaps", partial(find_gaps, settings)),
         ("food_summary", partial(summary, settings)),
     )
     for name, function in tools:

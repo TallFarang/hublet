@@ -1,18 +1,13 @@
 # Hublet
 
-Hublet is a brutally lightweight personal structured-memory daemon for OpenClaw. It will
-provide Coffee, Goals, Recipes, Food, and Health through one MCP endpoint and a small server-rendered
+Hublet is a brutally lightweight personal structured-memory daemon for OpenClaw. It provides
+Coffee, Goals, Recipes, Food, and Health through one MCP endpoint and a small server-rendered
 dashboard.
 
 The v1 runtime is intentionally narrow: Python 3.13, FastAPI, the official MCP SDK,
 `sqlite3`, Jinja2, and a local vendored copy of Pico CSS. The read-only dashboard uses HTML GET
 filters and dependency-free inline charts; there is no REST API, frontend framework, JavaScript,
 charting dependency, downloaded font, or external CSS CDN.
-
-## Development status
-
-This repository currently contains the public-safe project scaffold and implementation
-contract. Runtime features will be added in small test-first vertical slices.
 
 ## Local configuration
 
@@ -68,16 +63,6 @@ on the same date.
 To restore, stop Hublet, replace the affected live `.db` file and, when needed,
 `dashboard.json` with the chosen snapshot, start Hublet again, and verify `/healthz`.
 
-## Food recovery import
-
-`hublet-food-import LEDGER.csv CATALOGUE.csv --check` validates legacy Food CSVs in a
-temporary database. Run it again without `--check` to transactionally populate an empty
-`food.db`, or pass `--database PATH` to build an empty recovery candidate elsewhere. The
-importer collapses append-only legacy correction chains onto their original stable IDs, creates
-deterministic nutrition IDs and only the needed legacy variants, verifies correction-aware
-totals, and confirms both source checksums remain unchanged.
-Keep the source CSVs outside the repository as read-only rollback archives.
-
 ## Agentbridge Health sync
 
 Set `HUBLET_AGENTBRIDGE_DIR` to the directory containing Agentbridge daily JSON exports. The
@@ -87,10 +72,9 @@ and previously imported dates remain when their JSON is removed. Invalid exports
 Health data intact. Once Health contains history, an empty export directory is a successful no-op.
 Unknown HealthKit types remain queryable as raw JSON.
 
-For a weekly Goals report, OpenClaw should call Health sync, request `health_summary`, record the
-returned mapped evidence through `goals_record_evidence`, and then request
-`goals_report_snapshot`. Hublet retains exact raw HealthKit records but not old daily revisions or
-byte-for-byte export envelopes. Take a successful Hublet backup before deleting source JSON.
+Goals reads linked Health and Food series without copying or changing those databases. Hublet
+retains exact raw HealthKit records but not old daily revisions or byte-for-byte export envelopes.
+Take a successful Hublet backup before deleting source JSON.
 
 ## CI
 

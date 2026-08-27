@@ -88,7 +88,6 @@ def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
             {"date": "2026-08-15", "calories": 100, "protein_g": 10},
             {"date": "2026-08-16", "calories": 300, "protein_g": 30},
         ],
-        "uncertain_count": 1,
         "excluded_count": 1,
     }
     records = [

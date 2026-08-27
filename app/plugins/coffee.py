@@ -95,46 +95,6 @@ def list_beans(settings: Settings, status: str | None = "open") -> list[dict[str
         return [dict(row) for row in connection.execute(query, parameters)]
 
 
-def update_bean(
-    settings: Settings,
-    bean_id: str,
-    *,
-    name: str | None = None,
-    roaster: str | None = None,
-    roast_date: str | None = None,
-    origin: str | None = None,
-    process: str | None = None,
-    status: str | None = None,
-    notes: str | None = None,
-) -> dict[str, Any]:
-    changes = {
-        key: value
-        for key, value in {
-            "name": name.strip() if name is not None else None,
-            "roaster": roaster,
-            "roast_date": roast_date,
-            "origin": origin,
-            "process": process,
-            "status": status,
-            "notes": notes,
-        }.items()
-        if value is not None
-    }
-    if "name" in changes and not changes["name"]:
-        raise ValueError("name is required")
-    if status is not None and status not in {"open", "archived"}:
-        raise ValueError("status must be open or archived")
-    get_bean(settings, bean_id)
-    if changes:
-        assignments = ", ".join(f"{column} = ?" for column in changes)
-        with connect(settings.data_dir / DB_FILENAME) as connection:
-            connection.execute(
-                f"UPDATE beans SET {assignments} WHERE id = ?",
-                (*changes.values(), bean_id),
-            )
-    return get_bean(settings, bean_id)
-
-
 def log_shot(
     settings: Settings,
     bean_id: str,
@@ -221,61 +181,6 @@ def history(
         return [_shot(row) for row in connection.execute(query, parameters)]
 
 
-def recommend_next(settings: Settings, bean_id: str) -> dict[str, Any]:
-    shots = history(settings, bean_id=bean_id, limit=100)
-    if not shots:
-        return {
-            "recommendation": "Log a shot before changing variables.",
-            "change": None,
-            "target": None,
-            "evidence": [],
-        }
-
-    rated = [shot for shot in shots if shot["rating"] is not None]
-    best = max(rated, key=lambda shot: (shot["rating"], shot["created_at"]), default=None)
-    if best is not None and best["rating"] >= 4:
-        return {
-            "recommendation": "Repeat the best-rated shot.",
-            "change": None,
-            "target": {
-                key: best[key]
-                for key in (
-                    "dose_g",
-                    "yield_g",
-                    "time_s",
-                    "grind_setting",
-                    "temperature_c",
-                )
-            },
-            "evidence": [{"shot_id": best["id"], "rating": best["rating"]}],
-        }
-
-    latest = shots[0]
-    tags = {tag.casefold() for tag in latest["taste_tags"]}
-    direction = None
-    if "sour" in tags or latest["time_s"] < 25:
-        direction = "finer"
-    elif "bitter" in tags or latest["time_s"] > 35:
-        direction = "coarser"
-    recommendation = (
-        f"Grind {direction}; keep every other setting unchanged."
-        if direction
-        else "Repeat once before changing a variable."
-    )
-    return {
-        "recommendation": recommendation,
-        "change": {"grind_setting": direction} if direction else None,
-        "target": None,
-        "evidence": [
-            {
-                "shot_id": latest["id"],
-                "time_s": latest["time_s"],
-                "taste_tags": latest["taste_tags"],
-            }
-        ],
-    }
-
-
 def register_mcp(server: MCPServer, settings: Settings) -> None:
     def add_bean_tool(
         name: str,
@@ -323,15 +228,10 @@ def register_mcp(server: MCPServer, settings: Settings) -> None:
         """Return recent espresso shots."""
         return history(settings, bean_id, limit)
 
-    def recommend_next_tool(bean_id: str) -> dict[str, Any]:
-        """Recommend one conservative next adjustment from personal history."""
-        return recommend_next(settings, bean_id)
-
     server.add_tool(add_bean_tool, name="coffee.add_bean")
     server.add_tool(list_beans_tool, name="coffee.list_beans")
     server.add_tool(log_shot_tool, name="coffee.log_shot")
     server.add_tool(history_tool, name="coffee.history")
-    server.add_tool(recommend_next_tool, name="coffee.recommend_next")
 
 
 @router.get("")
