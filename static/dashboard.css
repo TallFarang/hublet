@@ -59,8 +59,8 @@
 .trend-figure figcaption, .bar-figure figcaption { color: var(--muted); font-size: 0.8rem; font-weight: 650; }
 .chart-wrap { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .chart-plot { position: relative; min-height: 0; flex: 1; display: flex; margin-top: 0.75rem; }
-.line-chart { width: 100%; min-height: 160px; flex: 1; margin: 0; overflow: visible; }
-.line-chart line, .line-chart polyline { vector-effect: non-scaling-stroke; }
+.line-chart, .bar-chart-svg { width: 100%; min-height: 160px; flex: 1; margin: 0; overflow: visible; }
+.chart-plot svg line, .chart-plot svg polyline { vector-effect: non-scaling-stroke; }
 .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
 .chart-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart-context-series { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.55; }
@@ -137,19 +137,19 @@
   content: "";
 }
 .goal-readout[open] > summary::after { top: 0.6rem; transform: rotate(225deg); }
-.goal-name { min-width: 0; }
+.goal-name { min-width: 0; font-size: clamp(1.15rem, 2.5vw, 1.5rem); }
 .goal-measurement { display: grid; }
 .goal-measurement { justify-items: end; }
-.goal-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.goal-measurement strong { color: var(--accent); font-size: clamp(2rem, 4vw, 3rem); font-variant-numeric: tabular-nums; }
 .goal-readout .chart-wrap { grid-column: 1 / -1; }
 .goal-readout .chart-plot { margin-top: 0.3rem; }
-.goal-readout .line-chart { min-height: 64px; height: 64px; }
+.goal-readout :is(.line-chart, .bar-chart-svg) { min-height: 140px; height: 140px; }
 .goal-readout:last-child { padding-bottom: 0; border-bottom: 0; }
 .tracking-charts { display: grid; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .tracking-chart header { display: flex; justify-content: space-between; gap: 1rem; }
 .tracking-chart header > strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .tracking-chart header > strong:first-child { color: var(--text); }
-.tracking-chart .line-chart { min-height: 56px; height: 56px; }
+.tracking-chart :is(.line-chart, .bar-chart-svg) { min-height: 56px; height: 56px; }
 
 .health-freshness { align-self: end; margin-bottom: 0.5rem; }
 .health-readouts { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
@@ -158,21 +158,13 @@
 .health-readout header small { font-size: 0.82rem; white-space: nowrap; }
 .health-measurement { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.35rem; }
 .health-measurement strong { color: var(--accent); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-.health-readout .line-chart { min-height: 58px; height: 58px; margin-top: 0.35rem; }
+.health-readout :is(.line-chart, .bar-chart-svg) { min-height: 58px; height: 58px; margin-top: 0.35rem; }
 .health-sync-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0.8rem 0 0; }
 .health-sync-strip dt { color: var(--muted); font-size: 0.82rem; }
 .health-sync-strip dd { margin: 0.1rem 0 0; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 .signal { color: var(--muted); font-size: 0.82rem; font-weight: 700; }
 .signal--fresh { color: var(--health); }
 
-.bar-chart { flex: 1; min-height: 230px; display: grid; gap: 0.4rem; margin-top: 1rem; }
-.bar-chart--week { grid-template-columns: repeat(7, 1fr); }
-.bar-day { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 0.35rem; text-align: center; }
-.bar-value, .bar-label { min-height: 1em; color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
-.bar-track { min-height: 120px; display: flex; align-items: end; background: #0f1216; border-bottom: 1px solid var(--line-strong); }
-.bar-fill { width: 100%; min-height: 1px; display: block; background: var(--accent); }
-.food-month-chart { min-height: 230px; flex: 1; display: flex; margin-top: 1rem; }
-.food-month-chart .line-chart { min-height: 0; height: 100%; }
 .meal-disclosure { margin-top: 1rem; border-top: 1px solid var(--line); }
 .meal-disclosure summary { min-height: 44px; padding-block: 0.75rem; font-size: 0.82rem; font-weight: 700; }
 .meal-days { margin: 0; padding: 0; list-style: none; }
@@ -191,10 +183,8 @@
   .readings div:nth-child(even) { padding-left: 0.8rem; }
   .readings:not(.readings--below) div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .readings--below div:nth-child(n+3) { border-top: 1px solid var(--line); }
-  .line-chart { min-height: 140px; }
-  .goal-readout .line-chart { min-height: 52px; height: 52px; }
+  .line-chart, .bar-chart-svg { min-height: 140px; }
+  .goal-readout :is(.line-chart, .bar-chart-svg) { min-height: 112px; height: 112px; }
   .health-readouts { gap: 0 0.65rem; }
-  .bar-chart { min-height: 200px; gap: 0.25rem; }
-  .food-month-chart { min-height: 200px; }
   .meal-days li { grid-template-columns: 1fr; gap: 0.25rem; }
 }

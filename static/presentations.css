@@ -1,0 +1,38 @@
+.chart-bar { fill: var(--accent); }
+
+.chart-current {
+  align-self: flex-end;
+  margin-top: 0.2rem;
+  color: var(--accent);
+  font-size: clamp(1.15rem, 3vw, 1.8rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-value {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.health-readout[data-presentation="value"] { min-height: 150px; }
+.health-readout[data-presentation="value"] .health-measurement { flex: 1; align-items: center; }
+.health-readout[data-presentation="value"] .health-measurement strong {
+  font-size: clamp(2.5rem, 7vw, 5rem);
+}
+
+.goal-readout[data-presentation="value"] > :is(summary, .goal-summary) { min-height: 150px; }
+.goal-readout[data-presentation="value"] .goal-measurement { align-content: center; }
+.goal-readout[data-presentation="value"] .goal-measurement strong {
+  font-size: clamp(2.5rem, 7vw, 5rem);
+}
+.tracking-chart[data-presentation="value"] { min-height: 72px; }
+.tracking-chart[data-presentation="value"] header > strong:last-child { font-size: 1.5rem; }
+
+@media (max-width: 760px) {
+  .goal-readout[data-presentation="value"] > :is(summary, .goal-summary) { min-height: 112px; }
+  .health-readout[data-presentation="value"] { min-height: 120px; }
+}

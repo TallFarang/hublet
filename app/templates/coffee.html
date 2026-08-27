@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% from "charts.html" import line_chart, period_toggle %}
+{% from "charts.html" import series_chart, period_toggle %}
 {% block body_class %}plugin-page coffee-page{% endblock %}
 {% block content %}
   <header class="plugin-title"><h1>Coffee</h1>{{ period_toggle(period) }}</header>
   <section class="instrument-panel" aria-label="Coffee summary">
     <dl class="readings">
-      {% for reading in dashboard.readings %}<div><dt>{{ reading.label }}</dt><dd>{{ reading.display }}</dd></div>{% endfor %}
+      {% for reading in dashboard.readings %}<div class="presentation--{{ reading.presentation }}"><dt>{{ reading.label }}</dt><dd>{{ reading.display }}</dd></div>{% endfor %}
     </dl>
-    {% if dashboard.has_series %}<figure class="trend-figure">
+    {% if dashboard.has_series %}<figure class="trend-figure presentation--{{ dashboard.presentation }}">
       <figcaption>{{ dashboard.chart_label }}</figcaption>
-      {{ line_chart(dashboard, "Extraction ratio trend") }}
+      {% if dashboard.presentation == 'value' %}<strong class="metric-value">{{ dashboard.current_display }}</strong>
+      {% else %}<strong class="chart-current">{{ dashboard.current_display }}</strong>{{ series_chart(dashboard, "Extraction ratio trend") }}{% endif %}
     </figure>{% endif %}
   </section>
 

@@ -25,6 +25,7 @@ def configured_readings(
             {
                 "key": metric["key"],
                 "label": metric["label"],
+                "presentation": metric["presentation"],
                 "display": display_value(
                     value.get("value"),
                     metric["precision"],
@@ -45,3 +46,17 @@ def display_value(value: Any, precision: int, prefix: str = "", suffix: str = ""
     else:
         rendered = str(value)
     return f"{prefix}{rendered}{suffix}"
+
+
+def axis_dates(points: list[dict[str, Any]]) -> list[str]:
+    """Return at most five evenly spaced dates for a compact chart axis."""
+
+    dated = [
+        date
+        for point in points
+        if (date := point.get("date") or point.get("observed_at") or point.get("period_end"))
+    ]
+    if len(dated) <= 1:
+        return dated
+    indices = sorted({round(index * (len(dated) - 1) / 4) for index in range(5)})
+    return [dated[index] for index in indices]

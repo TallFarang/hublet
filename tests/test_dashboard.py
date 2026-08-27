@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from app.dashboard import coffee_dashboard, food_dashboard, goal_dashboard, plot, recipes_dashboard
+from copy import deepcopy
+
+from app.charts import bar_plot, plot
+from app.dashboard import coffee_dashboard, food_dashboard, goal_dashboard, recipes_dashboard
+from app.dashboard_config import DEFAULT_CONFIG
 
 
 def goal(values: list[object], *, direction: str = "at_or_above") -> dict[str, object]:
@@ -24,6 +28,10 @@ def test_plot_handles_empty_single_and_target_series() -> None:
     assert len(series["points"].split()) == 3
     assert series["target_y"] == 4.0
 
+    bars = bar_plot([-2, 0, 4])
+    assert bars["baseline_y"] < 34
+    assert bars["bars"][1]["height"] == 0
+
 
 def test_goal_dashboard_projects_values_without_status_copy() -> None:
     projected = goal_dashboard(goal([8, 10]))
@@ -37,8 +45,20 @@ def test_goal_dashboard_projects_values_without_status_copy() -> None:
 def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
     coffee = coffee_dashboard(
         [
-            {"dose_g": 18, "yield_g": 36, "time_s": 29, "rating": 5, "created_at": "2026-08-02T00:00:00Z"},
-            {"dose_g": 18, "yield_g": 40, "time_s": 31, "rating": 3, "created_at": "2026-08-01T00:00:00Z"},
+            {
+                "dose_g": 18,
+                "yield_g": 36,
+                "time_s": 29,
+                "rating": 5,
+                "created_at": "2026-08-02T00:00:00Z",
+            },
+            {
+                "dose_g": 18,
+                "yield_g": 40,
+                "time_s": 31,
+                "rating": 3,
+                "created_at": "2026-08-01T00:00:00Z",
+            },
         ],
         bean_count=2,
     )
@@ -54,10 +74,12 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
     )
 
     assert coffee["latest_ratio"] == 2.0
+    assert coffee["presentation"] == "line" and coffee["current_display"] == "2.0×"
     assert coffee["average_rating"] == 4.0
     assert coffee["start_label"] == {"date": "2026-08-01", "value": "2.22×"}
     assert recipes["cook_count"] == 2
     assert recipes["latest_rating"] == 5
+    assert recipes["presentation"] == "line" and recipes["current_display"] == "5/5"
 
 
 def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
@@ -97,5 +119,14 @@ def test_food_dashboard_counts_only_confirmed_linked_records() -> None:
     assert dashboard["days"][0]["meal_count"] == 2
     assert dashboard["average_calories"] == 200
     assert dashboard["average_protein"] == 20
-    assert dashboard["calorie_chart"]["callout"]["value"] == "300 kcal"
+    assert dashboard["calorie_chart"]["presentation"] == "bar"
+    assert len(dashboard["calorie_chart"]["bars"]) == 2
+    assert dashboard["calorie_chart"]["callout"] is None
     assert dashboard["calorie_chart"]["axis_labels"] == ["2026-08-15", "2026-08-16"]
+
+    config = deepcopy(DEFAULT_CONFIG["plugins"]["food"])
+    next(metric for metric in config["metrics"] if metric["key"] == "confirmed_calories")[
+        "presentation"
+    ] = "line"
+    line = food_dashboard(report, records, config)["calorie_chart"]
+    assert line["presentation"] == "line" and line["callout"]["value"] == "300 kcal"

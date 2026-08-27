@@ -41,6 +41,11 @@ typography:
     fontSize: "1.5rem"
     fontWeight: 750
     lineHeight: 1.2
+  instrument-value:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "clamp(2.5rem, 7vw, 5rem)"
+    fontWeight: 750
+    lineHeight: 1
   login-display:
     fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, system-ui, sans-serif"
     fontSize: "clamp(2rem, 8vw, 3rem)"
@@ -159,7 +164,7 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 
 **The Food Means Read Rule.** Food may use its amber signal for nutrition status, but the web dashboard exposes no Food mutation controls.
 
-**The Configured Instrument Rule.** One validated document controls metric visibility, order, labels, precision and tested views across every plugin. Configuration changes presentation, never source values or domain meaning.
+**The Configured Instrument Rule.** One validated document controls metric visibility, order, labels, precision, data views and Value, Line or Bar presentation across every plugin. Configuration changes presentation, never source values or domain meaning.
 
 ## Typography
 
@@ -232,7 +237,7 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 - **Panel:** One bordered neutral surface owns the first useful viewport.
 - **Readings:** Four values appear in a ruled grid; on compact screens it becomes a two-by-two matrix.
-- **Charts:** Inline SVG line charts and CSS bar charts use strong-rule baselines, muted target lines, and the current plugin signal for data. Empty states remain centered and quiet.
+- **Charts:** Inline SVG line and bar charts use strong-rule baselines, muted target lines, and the current plugin signal for data. Value presentation replaces the chart with one deliberately large reading. Empty states remain centered and quiet.
 
 ### Filters / Fields
 

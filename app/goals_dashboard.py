@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any
 
-from app.charts import plot
+from app.charts import series_plot
 from app.config import Settings
 from app.dashboard_config import DEFAULT_CONFIG
-from app.dashboard_metrics import display_value, metric_settings
+from app.dashboard_metrics import axis_dates, display_value, metric_settings
 from app.plugins.food_reporting import summary as food_summary
 from app.plugins.food_schema import DB_FILENAME as FOOD_DB
 from app.plugins.health_report import summary as health_summary
@@ -30,8 +30,9 @@ def goal_dashboard(
     values = [float(row["value"]) for row in numeric]
     latest = numeric[-1] if numeric else None
     target_value = _number(target.get("value"))
-    geometry = plot(values, target_value)
     config = config or DEFAULT_CONFIG["plugins"]["goals"]
+    presentation = config.get("goal_presentations", {}).get(goal.get("id"), "line")
+    geometry = series_plot(values, presentation, target_value)
     display = metric_settings(config).get(metric or "")
     return {
         **geometry,
@@ -52,6 +53,7 @@ def goal_dashboard(
         "end_label": _observation_label(numeric[-1], display["precision"] if display else None)
         if numeric
         else None,
+        "axis_labels": axis_dates(numeric) if presentation == "bar" else [],
         "tracking": _tracking_charts(goal, live or {}, config),
     }
 
@@ -141,12 +143,18 @@ def _tracking_charts(
         expectation = source.get("expectation") or {}
         charts.append(
             {
-                **plot(values, _number(expectation.get("value")), context),
+                **series_plot(
+                    values,
+                    display["presentation"],
+                    _number(expectation.get("value")),
+                    context,
+                ),
                 "label": label,
                 "latest": display_value(series[-1]["value"], display["precision"]),
                 "unit": unit or expectation.get("unit") or "",
                 "start_label": start_label,
                 "end_label": end_label,
+                "axis_labels": axis_dates(series) if display["presentation"] == "bar" else [],
             }
         )
     return charts

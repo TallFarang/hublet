@@ -37,9 +37,10 @@ The complete configuration contract is:
 Dashboard sessions and MCP bearer access are independent credentials.
 
 Dashboard presentation is configured by one validated `dashboard.json` in `HUBLET_DATA_DIR`.
-When the file is absent Hublet uses built-in defaults. OpenClaw reads the active document and the
-supported metric views with `dashboard_config_get`, then validates and atomically saves a complete
-replacement with `dashboard_config_replace`. The web dashboard remains read-only.
+When the file is absent Hublet uses built-in defaults. OpenClaw reads the active document and each
+metric's supported data views and Value, Line or Bar presentations with `dashboard_config_get`, then
+validates and atomically saves a complete replacement with `dashboard_config_replace`. Goals may
+select a presentation by goal ID. The web dashboard remains read-only.
 
 ## Development install
 

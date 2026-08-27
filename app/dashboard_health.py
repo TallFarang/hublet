@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.charts import plot
+from app.charts import series_plot
 from app.dashboard_config import DEFAULT_CONFIG
-from app.dashboard_metrics import display_value, enabled_metrics
+from app.dashboard_metrics import axis_dates, display_value, enabled_metrics
 
 
 def health_dashboard(
@@ -29,7 +29,7 @@ def health_dashboard(
         latest = values[-1] if values else None
         metrics.append(
             {
-                **plot(values),
+                **series_plot(values, settings["presentation"]),
                 "name": name,
                 "label": settings["label"],
                 "value": display_value(latest, settings["precision"])
@@ -44,6 +44,7 @@ def health_dashboard(
                 "end_label": _label(points[-1], values[-1], metric["unit"], settings["precision"])
                 if values
                 else None,
+                "axis_labels": axis_dates(points) if settings["presentation"] == "bar" else [],
             }
         )
     return {

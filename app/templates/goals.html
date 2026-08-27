@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "charts.html" import line_chart, period_toggle %}
+{% from "charts.html" import series_chart, period_toggle %}
 {% block body_class %}plugin-page goals-page{% endblock %}
 {% block content %}
   <header class="plugin-title"><h1>Goals</h1>{{ period_toggle(period) }}</header>
@@ -8,19 +8,19 @@
       <h2 id="domain-{{ domain.id }}">{{ domain.name }}</h2>
       <div class="goal-readouts">
       {% for goal in domain.goals %}
-        {% if goal.dashboard.tracking %}<details class="goal-readout"><summary>
-        {% else %}<section class="goal-readout"><div class="goal-summary">{% endif %}
+        {% if goal.dashboard.tracking %}<details class="goal-readout" data-presentation="{{ goal.dashboard.presentation }}"><summary>
+        {% else %}<section class="goal-readout" data-presentation="{{ goal.dashboard.presentation }}"><div class="goal-summary">{% endif %}
           <strong class="goal-name">{{ goal.title }}</strong>
           <span class="goal-measurement">
             <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
           </span>
-          {% if goal.dashboard.has_series %}{{ line_chart(goal.dashboard, goal.title ~ ' progress') }}{% endif %}
+          {% if goal.dashboard.presentation != 'value' and goal.dashboard.has_series %}{{ series_chart(goal.dashboard, goal.title ~ ' progress') }}{% endif %}
         {% if goal.dashboard.tracking %}</summary>
           <div class="tracking-charts">
             {% for chart in goal.dashboard.tracking %}
-            <section class="tracking-chart">
+            <section class="tracking-chart" data-presentation="{{ chart.presentation }}">
               <header><strong>{{ chart.label }}</strong><strong>{{ chart.latest }} {{ chart.unit }}</strong></header>
-              {{ line_chart(chart, goal.title ~ ' ' ~ chart.label) }}
+              {% if chart.presentation != 'value' %}{{ series_chart(chart, goal.title ~ ' ' ~ chart.label) }}{% endif %}
             </section>
             {% endfor %}
           </div>

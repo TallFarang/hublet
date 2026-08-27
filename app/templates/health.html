@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "charts.html" import line_chart, period_toggle %}
+{% from "charts.html" import series_chart, period_toggle %}
 {% block body_class %}plugin-page health-page{% endblock %}
 {% block content %}
   <header class="plugin-title"><h1>Health</h1>{{ period_toggle(period) }}</header>
@@ -7,13 +7,13 @@
     <span class="health-freshness signal signal--{{ dashboard.freshness }}">{{ dashboard.freshness|replace('_', ' ') }}</span>
     <div class="health-readouts">
       {% for metric in dashboard.metrics %}
-      <section class="health-readout">
+      <section class="health-readout" data-presentation="{{ metric.presentation }}">
         <header><strong>{{ metric.label }}</strong><small>{{ metric.latest_date|uk_date if metric.latest_date else '—' }}</small></header>
         <div class="health-measurement">
           <strong>{{ metric.value if metric.value is not none else '—' }}</strong>
           <small>{{ metric.unit if metric.value is not none else '' }}</small>
         </div>
-        {% if metric.has_series %}{{ line_chart(metric, metric.label ~ ' trend') }}{% endif %}
+        {% if metric.presentation != 'value' and metric.has_series %}{{ series_chart(metric, metric.label ~ ' trend') }}{% endif %}
       </section>
       {% endfor %}
     </div>

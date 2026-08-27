@@ -58,13 +58,17 @@ def test_pages_share_local_css_and_no_javascript(settings_env: dict[str, str]) -
             for path in ("/", "/coffee", "/goals", "/recipes", "/food", "/health")
         ]
         pico = client.get("/static/pico.min.css")
-        styles = [client.get(f"/static/{name}.css") for name in ("tokens", "shell", "dashboard", "forms")]
+        styles = [
+            client.get(f"/static/{name}.css")
+            for name in ("tokens", "shell", "dashboard", "presentations", "forms")
+        ]
 
     for page in pages:
         assert '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' in page.text
         assert 'href="/static/pico.min.css?v=' in page.text
         assert 'href="/static/tokens.css?v=' in page.text
         assert 'href="/static/dashboard.css?v=' in page.text
+        assert 'href="/static/presentations.css?v=' in page.text
         assert "<script" not in page.text
         assert "onclick=" not in page.text
         assert "https://" not in page.text
@@ -232,13 +236,13 @@ def test_food_meal_disclosure_changes_with_period(settings_env: dict[str, str]) 
         month = client.get("/food?period=month")
 
     assert "Meals" in week.text and all(item in week.text for item in ("Rice", "Soup", "Salad"))
-    assert 'class="bar-chart bar-chart--week"' in week.text
-    assert 'class="food-month-chart"' in month.text and 'class="line-chart"' in month.text
-    month_chart = month.text.split('class="food-month-chart"', 1)[1].split(
+    assert 'class="bar-chart-svg"' in week.text and week.text.count('class="chart-bar"') == 7
+    assert 'class="bar-chart-svg"' in month.text and month.text.count('class="chart-bar"') == 30
+    month_chart = month.text.split('class="bar-chart-svg"', 1)[1].split(
         'class="meal-disclosure"', 1
     )[0]
     assert month_chart.count("<time>") == 5
-    assert 'class="chart-callout"' in month_chart and "1000 kcal" in month_chart
+    assert "1000 kcal" in month.text
     monthly_meals = month.text.split('class="meal-days"', 1)[1].split("</ol>", 1)[0]
     assert "Days under two meals" in month.text
     assert yesterday.strftime("%d/%m/%Y") in monthly_meals and "1 meal" in monthly_meals

@@ -12,94 +12,11 @@ from typing import Any
 from mcp.server import MCPServer
 
 from app.config import Settings
+from app.dashboard_catalogue import CATALOGUE, DEFAULT_CONFIG
 
 FILENAME = "dashboard.json"
-METRIC_FIELDS = {"key", "enabled", "label", "precision", "view"}
+METRIC_FIELDS = {"key", "enabled", "label", "precision", "view", "presentation"}
 LINKED_ROLES = {"supporting_indicator", "supplemental_indicator"}
-
-
-def _metric(key: str, label: str, precision: int, view: str, enabled: bool = True) -> dict:
-    return {"key": key, "enabled": enabled, "label": label, "precision": precision, "view": view}
-
-
-DEFAULT_CONFIG = {
-    "schema_version": 1,
-    "plugins": {
-        "health": {
-            "metrics": [
-                _metric("body_weight_kg", "Body weight", 1, "daily_latest"),
-                _metric("body_fat_percentage", "Body fat", 1, "daily_latest"),
-                _metric("lean_body_mass_kg", "Lean mass", 1, "daily_latest"),
-                _metric("sleep_hours", "Sleep", 1, "daily_total"),
-                _metric("resting_heart_rate", "Resting heart rate", 0, "daily_latest"),
-                _metric("heart_rate_recovery", "Heart rate recovery", 0, "daily_latest"),
-                _metric("workouts_completed", "Workouts", 0, "daily_total"),
-                _metric("vo2_max", "VO₂ max", 1, "daily_latest", False),
-            ]
-        },
-        "food": {
-            "metrics": [
-                _metric("confirmed_calories", "Confirmed calories", 0, "daily_total"),
-                _metric("average_calories", "Daily avg", 0, "period_average"),
-                _metric("average_protein", "Protein avg", 1, "period_average"),
-                _metric("confirmed_count", "Confirmed", 0, "period_total"),
-                _metric("unresolved_count", "Unresolved", 0, "period_total"),
-            ]
-        },
-        "coffee": {
-            "metrics": [
-                _metric("bean_count", "Open beans", 0, "latest"),
-                _metric("latest_ratio", "Latest ratio", 2, "latest"),
-                _metric("latest_time", "Latest time", 1, "latest"),
-                _metric("average_rating", "Avg rating", 1, "period_average"),
-                _metric("extraction_ratio", "Extraction ratio", 2, "daily_latest"),
-            ]
-        },
-        "recipes": {
-            "metrics": [
-                _metric("recipe_count", "Linked", 0, "latest"),
-                _metric("cook_count", "Cooks", 0, "period_total"),
-                _metric("average_rating", "Avg rating", 1, "period_average"),
-                _metric("latest_rating", "Latest", 0, "latest"),
-                _metric("cook_rating", "Cook ratings", 0, "daily_latest"),
-            ]
-        },
-        "goals": {
-            "linked_roles": ["supporting_indicator", "supplemental_indicator"],
-            "metrics": [
-                _metric("body_weight_kg", "Body weight", 1, "daily_latest"),
-                _metric("body_fat_percentage", "Body fat", 1, "daily_latest"),
-                _metric("lean_body_mass_kg", "Lean mass", 1, "daily_latest"),
-                _metric("calorie_target_adherence", "Calories", 0, "daily_with_rolling_7d"),
-                _metric("workouts_completed", "Workouts", 0, "daily_total"),
-                _metric("resting_heart_rate", "Resting heart rate", 0, "daily_latest"),
-                _metric("heart_rate_recovery", "Heart rate recovery", 0, "daily_latest"),
-                _metric("sleep_hours", "Sleep", 1, "daily_total"),
-                _metric("vo2_max", "VO₂ max", 1, "daily_latest", False),
-            ],
-        },
-    },
-}
-
-CATALOGUE = {
-    "health": {
-        item["key"]: [item["view"]] for item in DEFAULT_CONFIG["plugins"]["health"]["metrics"]
-    },
-    "food": {item["key"]: [item["view"]] for item in DEFAULT_CONFIG["plugins"]["food"]["metrics"]},
-    "coffee": {
-        item["key"]: [item["view"]] for item in DEFAULT_CONFIG["plugins"]["coffee"]["metrics"]
-    },
-    "recipes": {
-        item["key"]: [item["view"]] for item in DEFAULT_CONFIG["plugins"]["recipes"]["metrics"]
-    },
-    "goals": {
-        item["key"]: [item["view"]] for item in DEFAULT_CONFIG["plugins"]["goals"]["metrics"]
-    },
-}
-CATALOGUE["goals"]["calorie_target_adherence"] = [
-    "daily_total",
-    "daily_with_rolling_7d",
-]
 
 
 def load_config(settings: Settings) -> dict[str, Any]:
@@ -116,12 +33,15 @@ def load_config(settings: Settings) -> dict[str, Any]:
 def validate_config(document: Any) -> dict[str, Any]:
     if not isinstance(document, dict) or set(document) != {"schema_version", "plugins"}:
         raise ValueError("dashboard configuration must contain schema_version and plugins")
-    if document["schema_version"] != 1 or not isinstance(document["plugins"], dict):
+    document = _upgrade_v1(deepcopy(document))
+    if document["schema_version"] != 2 or not isinstance(document["plugins"], dict):
         raise ValueError("unsupported dashboard configuration")
     if set(document["plugins"]) != set(CATALOGUE):
         raise ValueError("dashboard configuration must contain every known plugin")
     for plugin, values in document["plugins"].items():
-        expected = {"metrics", "linked_roles"} if plugin == "goals" else {"metrics"}
+        expected = (
+            {"metrics", "linked_roles", "goal_presentations"} if plugin == "goals" else {"metrics"}
+        )
         if not isinstance(values, dict) or set(values) != expected:
             raise ValueError(f"invalid {plugin} dashboard settings")
         _validate_metrics(plugin, values["metrics"])
@@ -132,7 +52,31 @@ def validate_config(document: Any) -> dict[str, Any]:
         or not set(roles) <= LINKED_ROLES
     ):
         raise ValueError("invalid Goals linked roles")
+    _validate_goal_presentations(document["plugins"]["goals"]["goal_presentations"])
     return deepcopy(document)
+
+
+def _upgrade_v1(document: dict[str, Any]) -> dict[str, Any]:
+    if document.get("schema_version") != 1:
+        return document
+    plugins = document.get("plugins")
+    if not isinstance(plugins, dict):
+        return document
+    defaults = {
+        plugin: {metric["key"]: metric["presentation"] for metric in values["metrics"]}
+        for plugin, values in DEFAULT_CONFIG["plugins"].items()
+    }
+    for plugin, values in plugins.items():
+        if not isinstance(values, dict) or not isinstance(values.get("metrics"), list):
+            continue
+        for metric in values["metrics"]:
+            if isinstance(metric, dict) and metric.get("key") in defaults.get(plugin, {}):
+                metric.setdefault("presentation", defaults[plugin][metric["key"]])
+    goals = plugins.get("goals")
+    if isinstance(goals, dict):
+        goals.setdefault("goal_presentations", {})
+    document["schema_version"] = 2
+    return document
 
 
 def _validate_metrics(plugin: str, metrics: Any) -> None:
@@ -144,8 +88,12 @@ def _validate_metrics(plugin: str, metrics: Any) -> None:
             raise ValueError(f"invalid {plugin} metric settings")
         key, label = metric["key"], metric["label"]
         precision, view = metric["precision"], metric["view"]
-        if key not in CATALOGUE[plugin] or view not in CATALOGUE[plugin][key]:
+        presentation = metric["presentation"]
+        supported = CATALOGUE[plugin].get(key)
+        if not supported or view not in supported["views"]:
             raise ValueError(f"unsupported {plugin} metric or view: {key}")
+        if presentation not in supported["presentations"]:
+            raise ValueError(f"unsupported presentation for {plugin}.{key}")
         if (
             not isinstance(metric["enabled"], bool)
             or not isinstance(label, str)
@@ -160,6 +108,20 @@ def _validate_metrics(plugin: str, metrics: Any) -> None:
         raise ValueError(f"duplicate {plugin} metric")
     if set(keys) != set(CATALOGUE[plugin]):
         raise ValueError(f"{plugin} configuration must contain every supported metric")
+
+
+def _validate_goal_presentations(presentations: Any) -> None:
+    if not isinstance(presentations, dict):
+        raise TypeError("Goals goal_presentations must be an object")
+    if any(
+        not isinstance(goal_id, str)
+        or not goal_id.strip()
+        or len(goal_id) > 100
+        or not isinstance(presentation, str)
+        or presentation not in {"value", "line", "bar"}
+        for goal_id, presentation in presentations.items()
+    ):
+        raise ValueError("invalid Goals goal presentation")
 
 
 def replace_config(settings: Settings, document: Any) -> dict[str, Any]:
@@ -180,7 +142,7 @@ def replace_config(settings: Settings, document: Any) -> dict[str, Any]:
 
 def register_mcp(server: MCPServer, settings: Settings) -> None:
     def get_tool() -> dict[str, Any]:
-        """Return the active dashboard configuration and supported metric views."""
+        """Return dashboard configuration and supported metric views and presentations."""
         return {"config": load_config(settings), "catalogue": CATALOGUE}
 
     def replace_tool(config: dict[str, Any]) -> dict[str, Any]:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.charts import plot
+from app.charts import series_plot
 from app.dashboard_config import DEFAULT_CONFIG
-from app.dashboard_metrics import configured_readings, display_value, metric_settings
+from app.dashboard_metrics import axis_dates, configured_readings, display_value, metric_settings
 
 
 def goal_dashboard(
@@ -33,7 +33,7 @@ def coffee_dashboard(
     average_rating = sum(ratings) / len(ratings) if ratings else None
     chart = metric_settings(config)["extraction_ratio"]
     result = {
-        **plot(ratios),
+        **series_plot(ratios, chart["presentation"]),
         "has_series": bool(ratios),
         "bean_count": bean_count,
         "shot_count": len(shots),
@@ -42,6 +42,10 @@ def coffee_dashboard(
         "average_rating": round(average_rating, 1) if average_rating is not None else None,
         "start_label": _shot_label(ordered[0], chart["precision"]) if ordered else None,
         "end_label": _shot_label(ordered[-1], chart["precision"]) if ordered else None,
+        "axis_labels": axis_dates([{"date": shot["created_at"][:10]} for shot in ordered])
+        if chart["presentation"] == "bar"
+        else [],
+        "current_display": display_value(latest_ratio, chart["precision"], suffix="×"),
     }
     result["readings"] = configured_readings(
         config,
@@ -71,7 +75,7 @@ def recipes_dashboard(
     average_rating = sum(ratings) / len(ratings) if ratings else None
     chart = metric_settings(config)["cook_rating"]
     result = {
-        **plot(ratings),
+        **series_plot(ratings, chart["presentation"]),
         "has_series": bool(ratings),
         "recipe_count": len(recipes),
         "cook_count": sum(len(recipe["cook_logs"]) for recipe in recipes),
@@ -79,6 +83,12 @@ def recipes_dashboard(
         "latest_rating": logs[0]["rating"] if logs else None,
         "start_label": _cook_label(ordered[0], chart["precision"]) if ordered else None,
         "end_label": _cook_label(ordered[-1], chart["precision"]) if ordered else None,
+        "axis_labels": axis_dates([{"date": log["created_at"][:10]} for log in ordered])
+        if chart["presentation"] == "bar"
+        else [],
+        "current_display": display_value(
+            logs[0]["rating"] if logs else None, chart["precision"], suffix="/5"
+        ),
     }
     result["readings"] = configured_readings(
         config,
@@ -101,16 +111,18 @@ def food_dashboard(
 ) -> dict[str, Any]:
     config = config or DEFAULT_CONFIG["plugins"]["food"]
     days = summary["daily_confirmed_totals"]
-    peak = max((day["calories"] for day in days), default=0) or 1
-    calorie_chart = plot([float(day["calories"]) for day in days])
+    chart = metric_settings(config)["confirmed_calories"]
+    calorie_chart = series_plot([float(day["calories"]) for day in days], chart["presentation"])
     if days:
         calorie_chart.update(
             {
-                "axis_labels": [days[index]["date"] for index in _axis_indices(len(days))],
+                "axis_labels": axis_dates(days),
                 "callout": {
                     "value": f"{round(days[-1]['calories'])} kcal",
                     "y": round(calorie_chart["last"]["y"] / 38 * 100, 2),
-                },
+                }
+                if chart["presentation"] == "line"
+                else None,
             }
         )
     unresolved_count = sum(
@@ -135,7 +147,6 @@ def food_dashboard(
         projected_days.append(
             {
                 **day,
-                "bar": round(day["calories"] / peak * 100, 2),
                 "meals": [{"slot": slot, "items": items} for slot, items in meals.items()],
                 "meal_count": len(meals),
             }
@@ -150,6 +161,9 @@ def food_dashboard(
         ),
         "excluded_count": summary["excluded_count"],
         "unresolved_count": unresolved_count,
+        "current_calories": display_value(
+            days[-1]["calories"] if days else None, chart["precision"], suffix=" kcal"
+        ),
     }
     result["readings"] = configured_readings(
         config,
@@ -160,7 +174,6 @@ def food_dashboard(
             "unresolved_count": {"value": result["unresolved_count"]},
         },
     )
-    chart = metric_settings(config)["confirmed_calories"]
     result["calorie_chart_enabled"] = chart["enabled"]
     result["calorie_chart_label"] = chart["label"]
     return result
@@ -179,9 +192,3 @@ def _cook_label(log: dict[str, Any], precision: int) -> dict[str, str]:
         "date": log["created_at"][:10],
         "value": f"{display_value(log['rating'], precision)}/5",
     }
-
-
-def _axis_indices(length: int) -> list[int]:
-    if length <= 1:
-        return [0] if length else []
-    return sorted({round(index * (length - 1) / 4) for index in range(5)})

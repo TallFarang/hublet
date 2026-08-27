@@ -113,3 +113,12 @@ def test_practical_health_catalogue_normalises_without_changing_raw_records(
         if metric["name"] == "vo2_max"
     )
     assert vo2["value"] == "38.8"
+    next(metric for metric in config["metrics"] if metric["key"] == "vo2_max")["presentation"] = (
+        "bar"
+    )
+    vo2_bar = next(
+        metric
+        for metric in health_dashboard(report, config)["metrics"]
+        if metric["name"] == "vo2_max"
+    )
+    assert vo2_bar["presentation"] == "bar" and len(vo2_bar["bars"]) == 1

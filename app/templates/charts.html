@@ -1,6 +1,15 @@
-{% macro line_chart(chart, label) -%}
+{% macro series_chart(chart, label) -%}
 <div class="chart-wrap">
   <div class="chart-plot">
+    {% if chart.presentation == 'bar' %}
+    <svg class="bar-chart-svg" viewBox="0 0 100 38" preserveAspectRatio="none"
+         role="img" aria-label="{{ label }}">
+      <title>{{ label }}</title>
+      <line class="chart-baseline" x1="0" y1="{{ chart.baseline_y }}" x2="100" y2="{{ chart.baseline_y }}"/>
+      {% if chart.target_y is not none %}<line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>{% endif %}
+      {% for bar in chart.bars %}<rect class="chart-bar" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}"/>{% endfor %}
+    </svg>
+    {% else %}
     <svg class="line-chart" viewBox="0 0 100 38" preserveAspectRatio="none"
          role="img" aria-label="{{ label }}">
       <title>{{ label }}</title>
@@ -14,6 +23,7 @@
       {% else %}<polyline class="chart-series" points="{{ chart.points }}"/>{% endif %}
       {% endif %}
     </svg>
+    {% endif %}
     {% if chart.callout %}<span class="chart-dot" style="--chart-y: {{ chart.callout.y }}%" aria-hidden="true"></span>{% endif %}
     {% if chart.callout %}<strong class="chart-callout" style="--chart-y: {{ chart.callout.y }}%">{{ chart.callout.value }}</strong>{% endif %}
     {% if chart.target_line_label %}<span class="chart-target-label" style="--chart-y: {{ chart.target_y_percent }}%">{{ chart.target_line_label }}</span>{% endif %}
