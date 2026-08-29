@@ -1,10 +1,18 @@
-{% macro series_chart(chart, label) -%}
-<div class="chart-wrap">
+{% macro series_chart(chart, label, show_bar_values=false) -%}
+{% set bar_count = chart.bars|length if chart.presentation == 'bar' else 0 %}
+{% set labelled_bars = show_bar_values and bar_count > 0 and bar_count <= 7 %}
+<div class="chart-wrap{% if labelled_bars %} chart-wrap--bar-values{% endif %}">
+  {% if labelled_bars %}
+  <div class="chart-bar-values" style="--bar-count: {{ bar_count }}" aria-hidden="true">
+    {% for bar in chart.bars %}<strong class="chart-bar-value">{{ bar.label }}</strong>{% endfor %}
+  </div>
+  {% endif %}
   <div class="chart-plot">
     {% if chart.presentation == 'bar' %}
     <svg class="bar-chart-svg" viewBox="0 0 100 38" preserveAspectRatio="none"
          role="img" aria-label="{{ label }}">
       <title>{{ label }}</title>
+      {% if labelled_bars %}<desc>Values, oldest to newest: {% for bar in chart.bars %}{{ bar.label }}{% if not loop.last %}, {% endif %}{% endfor %}</desc>{% endif %}
       <line class="chart-baseline" x1="0" y1="{{ chart.baseline_y }}" x2="100" y2="{{ chart.baseline_y }}"/>
       {% if chart.target_y is not none %}<line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>{% endif %}
       {% for bar in chart.bars %}<rect class="chart-bar" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}"/>{% endfor %}

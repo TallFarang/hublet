@@ -4,16 +4,23 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.dashboard_metrics import display_value
+
 
 def series_plot(
     values: list[float],
     presentation: str,
     target: float | None = None,
     context: list[float] | None = None,
+    precision: int | None = None,
 ) -> dict[str, Any]:
     """Project one series into the selected dependency-free visual."""
 
-    geometry = bar_plot(values, target) if presentation == "bar" else plot(values, target, context)
+    geometry = (
+        bar_plot(values, target, precision)
+        if presentation == "bar"
+        else plot(values, target, context)
+    )
     return {**geometry, "presentation": presentation}
 
 
@@ -52,7 +59,9 @@ def plot(
     }
 
 
-def bar_plot(values: list[float], target: float | None = None) -> dict[str, Any]:
+def bar_plot(
+    values: list[float], target: float | None = None, precision: int | None = None
+) -> dict[str, Any]:
     """Map values into honest zero-baseline SVG bars."""
 
     domain = [0.0, *values, *([] if target is None else [target])]
@@ -72,6 +81,7 @@ def bar_plot(values: list[float], target: float | None = None) -> dict[str, Any]
             "y": min(zero, y(value)),
             "width": round(width, 2),
             "height": round(abs(zero - y(value)), 2),
+            "label": display_value(value, precision) if precision is not None else f"{value:g}",
         }
         for index, value in enumerate(values)
     ]

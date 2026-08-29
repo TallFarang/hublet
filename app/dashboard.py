@@ -33,7 +33,7 @@ def coffee_dashboard(
     average_rating = sum(ratings) / len(ratings) if ratings else None
     chart = metric_settings(config)["extraction_ratio"]
     result = {
-        **series_plot(ratios, chart["presentation"]),
+        **series_plot(ratios, chart["presentation"], precision=chart["precision"]),
         "has_series": bool(ratios),
         "bean_count": bean_count,
         "shot_count": len(shots),
@@ -75,7 +75,7 @@ def recipes_dashboard(
     average_rating = sum(ratings) / len(ratings) if ratings else None
     chart = metric_settings(config)["cook_rating"]
     result = {
-        **series_plot(ratings, chart["presentation"]),
+        **series_plot(ratings, chart["presentation"], precision=chart["precision"]),
         "has_series": bool(ratings),
         "recipe_count": len(recipes),
         "cook_count": sum(len(recipe["cook_logs"]) for recipe in recipes),
@@ -112,7 +112,11 @@ def food_dashboard(
     config = config or DEFAULT_CONFIG["plugins"]["food"]
     days = summary["daily_confirmed_totals"]
     chart = metric_settings(config)["confirmed_calories"]
-    calorie_chart = series_plot([float(day["calories"]) for day in days], chart["presentation"])
+    calorie_chart = series_plot(
+        [float(day["calories"]) for day in days],
+        chart["presentation"],
+        precision=chart["precision"],
+    )
     if days:
         calorie_chart.update(
             {

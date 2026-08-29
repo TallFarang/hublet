@@ -29,7 +29,9 @@ def health_dashboard(
         latest = values[-1] if values else None
         metrics.append(
             {
-                **series_plot(values, settings["presentation"]),
+                **series_plot(
+                    values, settings["presentation"], precision=settings["precision"]
+                ),
                 "name": name,
                 "label": settings["label"],
                 "value": display_value(latest, settings["precision"])

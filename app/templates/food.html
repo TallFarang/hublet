@@ -7,7 +7,7 @@
     <figure class="bar-figure presentation--{{ dashboard.calorie_chart.presentation }}">
       {% if dashboard.calorie_chart_enabled %}<figcaption>{{ dashboard.calorie_chart_label }}</figcaption>
       {% if dashboard.calorie_chart.presentation == 'value' %}<strong class="metric-value">{{ dashboard.current_calories }}</strong>
-      {% else %}<strong class="chart-current">{{ dashboard.current_calories }}</strong>{{ series_chart(dashboard.calorie_chart, "Confirmed calories for " ~ period.days ~ " days") }}{% endif %}{% endif %}
+      {% else %}<strong class="chart-current">{{ dashboard.current_calories }}</strong>{{ series_chart(dashboard.calorie_chart, "Confirmed calories for " ~ period.days ~ " days", period.key == 'week') }}{% endif %}{% endif %}
       <details class="meal-disclosure">
         <summary>{% if period.key == 'week' %}Meals{% else %}Days under two meals{% endif %}</summary>
         <ol class="meal-days">

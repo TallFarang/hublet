@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from app.charts import bar_plot, plot
+from app.charts import bar_plot, plot, series_plot
 from app.dashboard import coffee_dashboard, food_dashboard, goal_dashboard, recipes_dashboard
 from app.dashboard_config import DEFAULT_CONFIG
 
@@ -28,9 +28,27 @@ def test_plot_handles_empty_single_and_target_series() -> None:
     assert len(series["points"].split()) == 3
     assert series["target_y"] == 4.0
 
-    bars = bar_plot([-2, 0, 4])
+    bars = bar_plot([-2, 0, 4], precision=0)
     assert bars["baseline_y"] < 34
     assert bars["bars"][1]["height"] == 0
+    assert [bar["label"] for bar in bars["bars"]] == ["-2", "0", "4"]
+    assert bar_plot([1.234], precision=2)["bars"][0]["label"] == "1.23"
+
+
+def test_weekly_bar_labels_are_shared_but_never_crowded() -> None:
+    from app.web import TEMPLATES
+
+    chart = TEMPLATES.env.get_template("charts.html").module.series_chart
+    weekly = str(chart(series_plot(list(range(7)), "bar", precision=0), "Weekly", True))
+    dense = str(chart(series_plot(list(range(8)), "bar", precision=0), "Dense", True))
+    monthly = str(chart(series_plot(list(range(7)), "bar", precision=0), "Monthly", False))
+    empty = str(chart(series_plot([], "bar", precision=0), "Empty", True))
+
+    assert weekly.count('class="chart-bar-value"') == 7
+    assert "Values, oldest to newest: 0, 1, 2, 3, 4, 5, 6" in weekly
+    assert 'class="chart-bar-values"' not in dense
+    assert 'class="chart-bar-values"' not in monthly
+    assert 'class="chart-bar-values"' not in empty
 
 
 def test_goal_dashboard_projects_values_without_status_copy() -> None:

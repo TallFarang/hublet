@@ -13,7 +13,7 @@
           <strong>{{ metric.value if metric.value is not none else '—' }}</strong>
           <small>{{ metric.unit if metric.value is not none else '' }}</small>
         </div>
-        {% if metric.presentation != 'value' and metric.has_series %}{{ series_chart(metric, metric.label ~ ' trend') }}{% endif %}
+        {% if metric.presentation != 'value' and metric.has_series %}{{ series_chart(metric, metric.label ~ ' trend', period.key == 'week') }}{% endif %}
       </section>
       {% endfor %}
     </div>

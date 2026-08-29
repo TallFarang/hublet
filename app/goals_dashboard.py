@@ -27,8 +27,13 @@ def goal_dashboard(
     target_value = _number(target.get("value"))
     config = config or DEFAULT_CONFIG["plugins"]["goals"]
     presentation = config.get("goal_presentations", {}).get(goal.get("id"), "line")
-    geometry = series_plot(values, presentation, target_value)
     display = metric_settings(config).get(metric or "")
+    geometry = series_plot(
+        values,
+        presentation,
+        target_value,
+        precision=display["precision"] if display else None,
+    )
     return {
         **geometry,
         "latest": display_value(latest["value"], display["precision"])
@@ -101,6 +106,7 @@ def _tracking_charts(
                     display["presentation"],
                     _number(expectation.get("value")),
                     context,
+                    precision=display["precision"],
                 ),
                 "label": label,
                 "latest": display_value(series[-1]["value"], display["precision"]),

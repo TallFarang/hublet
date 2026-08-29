@@ -14,13 +14,13 @@
           <span class="goal-measurement">
             <strong>{% if goal.dashboard.latest is not none %}{{ goal.dashboard.latest }} {{ goal.dashboard.unit }}{% else %}—{% endif %}</strong>
           </span>
-          {% if goal.dashboard.presentation != 'value' and goal.dashboard.has_series %}{{ series_chart(goal.dashboard, goal.title ~ ' progress') }}{% endif %}
+          {% if goal.dashboard.presentation != 'value' and goal.dashboard.has_series %}{{ series_chart(goal.dashboard, goal.title ~ ' progress', period.key == 'week') }}{% endif %}
         {% if goal.dashboard.tracking %}</summary>
           <div class="tracking-charts">
             {% for chart in goal.dashboard.tracking %}
             <section class="tracking-chart" data-presentation="{{ chart.presentation }}">
               <header><strong>{{ chart.label }}</strong><strong>{{ chart.latest }} {{ chart.unit }}</strong></header>
-              {% if chart.presentation != 'value' %}{{ series_chart(chart, goal.title ~ ' ' ~ chart.label) }}{% endif %}
+              {% if chart.presentation != 'value' %}{{ series_chart(chart, goal.title ~ ' ' ~ chart.label, period.key == 'week') }}{% endif %}
             </section>
             {% endfor %}
           </div>

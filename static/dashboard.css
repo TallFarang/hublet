@@ -58,6 +58,17 @@
 .trend-figure, .bar-figure { flex: 1; display: flex; flex-direction: column; margin: 1.25rem 0 0; }
 .trend-figure figcaption, .bar-figure figcaption { color: var(--muted); font-size: 0.8rem; font-weight: 650; }
 .chart-wrap { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.chart-bar-values {
+  display: grid;
+  grid-template-columns: repeat(var(--bar-count), minmax(0, 1fr));
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+}
+.chart-wrap--bar-values .chart-plot { margin-top: 0.3rem; }
 .chart-plot { position: relative; min-height: 0; flex: 1; display: flex; margin-top: 0.75rem; }
 .line-chart, .bar-chart-svg { width: 100%; min-height: 160px; flex: 1; margin: 0; overflow: visible; }
 .chart-plot svg line, .chart-plot svg polyline { vector-effect: non-scaling-stroke; }
@@ -150,7 +161,6 @@
 .tracking-chart header > strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .tracking-chart header > strong:first-child { color: var(--text); }
 .tracking-chart :is(.line-chart, .bar-chart-svg) { min-height: 56px; height: 56px; }
-
 .health-freshness { align-self: end; margin-bottom: 0.5rem; }
 .health-readouts { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 .health-readout { min-width: 0; display: flex; flex-direction: column; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }

@@ -10,7 +10,7 @@
     {% if dashboard.has_series %}<figure class="trend-figure presentation--{{ dashboard.presentation }}">
       <figcaption>{{ dashboard.chart_label }}</figcaption>
       {% if dashboard.presentation == 'value' %}<strong class="metric-value">{{ dashboard.current_display }}</strong>
-      {% else %}<strong class="chart-current">{{ dashboard.current_display }}</strong>{{ series_chart(dashboard, "Cook rating trend") }}{% endif %}
+      {% else %}<strong class="chart-current">{{ dashboard.current_display }}</strong>{{ series_chart(dashboard, "Cook rating trend", period.key == 'week') }}{% endif %}
     </figure>{% endif %}
   </section>
 

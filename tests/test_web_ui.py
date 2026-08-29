@@ -237,10 +237,12 @@ def test_food_meal_disclosure_changes_with_period(settings_env: dict[str, str]) 
 
     assert "Meals" in week.text and all(item in week.text for item in ("Rice", "Soup", "Salad"))
     assert 'class="bar-chart-svg"' in week.text and week.text.count('class="chart-bar"') == 7
+    assert week.text.count('class="chart-bar-value"') == 7
     assert 'class="bar-chart-svg"' in month.text and month.text.count('class="chart-bar"') == 30
     month_chart = month.text.split('class="bar-chart-svg"', 1)[1].split(
         'class="meal-disclosure"', 1
     )[0]
+    assert 'class="chart-bar-values"' not in month_chart
     assert month_chart.count("<time>") == 5
     assert "1000 kcal" in month.text
     monthly_meals = month.text.split('class="meal-days"', 1)[1].split("</ol>", 1)[0]
