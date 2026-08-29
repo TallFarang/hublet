@@ -2,17 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 from typing import Any
 
 from app.charts import series_plot
-from app.config import Settings
 from app.dashboard_config import DEFAULT_CONFIG
 from app.dashboard_metrics import axis_dates, display_value, metric_settings
-from app.plugins.food_reporting import summary as food_summary
-from app.plugins.food_schema import DB_FILENAME as FOOD_DB
-from app.plugins.health_report import summary as health_summary
-from app.plugins.health_schema import DB_FILENAME as HEALTH_DB
 
 LiveSeries = dict[tuple[str, str], dict[str, Any]]
 
@@ -24,9 +18,10 @@ def goal_dashboard(
 ) -> dict[str, Any]:
     """Project one active goal into only the readings its dashboard needs."""
 
+    live = live or {}
     target = goal.get("target") or {}
     metric = target.get("metric")
-    numeric = _numeric_series(goal.get("history", []), metric)
+    numeric, series_unit = _primary_series(goal, metric, live)
     values = [float(row["value"]) for row in numeric]
     latest = numeric[-1] if numeric else None
     target_value = _number(target.get("value"))
@@ -41,67 +36,25 @@ def goal_dashboard(
         else latest["value"]
         if latest
         else None,
-        "unit": (latest or {}).get("unit") or target.get("unit") or "",
+        "unit": series_unit or (latest or {}).get("unit") or target.get("unit") or "",
         "has_series": bool(values),
         "target_line_label": _target_label(target),
         "target_y_percent": round(geometry["target_y"] / 38 * 100, 2)
         if geometry["target_y"] is not None
         else None,
-        "start_label": _observation_label(numeric[0], display["precision"] if display else None)
+        "start_label": _observation_label(
+            numeric[0], display["precision"] if display else None, series_unit
+        )
         if numeric
         else None,
-        "end_label": _observation_label(numeric[-1], display["precision"] if display else None)
+        "end_label": _observation_label(
+            numeric[-1], display["precision"] if display else None, series_unit
+        )
         if numeric
         else None,
         "axis_labels": axis_dates(numeric) if presentation == "bar" else [],
-        "tracking": _tracking_charts(goal, live or {}, config),
+        "tracking": _tracking_charts(goal, live, config),
     }
-
-
-def live_tracking_series(
-    settings: Settings, start: str, end: str, config: dict[str, Any] | None = None
-) -> LiveSeries:
-    """Read connected Hublet sources without copying or changing their data."""
-
-    result: LiveSeries = {}
-    config = config or DEFAULT_CONFIG["plugins"]["goals"]
-    configured = metric_settings(config)
-    if (settings.data_dir / HEALTH_DB).is_file():
-        report = health_summary(settings, start, end)
-        for metric, reading in report["metrics"].items():
-            points = reading["series"]
-            display = configured.get(metric)
-            if points and display and display["enabled"]:
-                result[(metric, "HealthKit")] = {
-                    "label": display["label"],
-                    "unit": reading["unit"],
-                    "series": points,
-                    "precision": display["precision"],
-                }
-    if (settings.data_dir / FOOD_DB).is_file():
-        display = configured.get("calorie_target_adherence")
-        if display and display["enabled"]:
-            extended = (date.fromisoformat(start) - timedelta(days=6)).isoformat()
-            days = food_summary(settings, extended, end)["daily_confirmed_totals"]
-            daily = [{"date": day["date"], "value": day["calories"]} for day in days]
-            rolling = [
-                {
-                    "date": day["date"],
-                    "value": sum(item["value"] for item in daily[index - 6 : index + 1]) / 7,
-                }
-                for index, day in enumerate(daily)
-                if index >= 6
-            ]
-            daily = [point for point in daily if point["date"] >= start]
-            use_rolling = display["view"] == "daily_with_rolling_7d"
-            result[("calorie_target_adherence", "Hublet Food")] = {
-                "label": display["label"],
-                "unit": "kcal",
-                "series": rolling if use_rolling else daily,
-                "context_series": daily if use_rolling else [],
-                "precision": display["precision"],
-            }
-    return result
 
 
 def _tracking_charts(
@@ -127,8 +80,8 @@ def _tracking_charts(
             values = [float(point["value"]) for point in series]
             context = [float(point["value"]) for point in connected.get("context_series", [])]
             unit = connected["unit"]
-            start_label = _point_label(series[0], unit, display["precision"])
-            end_label = _point_label(series[-1], unit, display["precision"])
+            start_label = _observation_label(series[0], display["precision"], unit)
+            end_label = _observation_label(series[-1], display["precision"], unit)
             label = connected["label"]
         else:
             series = _numeric_series(goal.get("history", []), metric, provider)
@@ -164,6 +117,18 @@ def _number(value: Any) -> float | None:
     return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
 
+def _primary_series(
+    goal: dict[str, Any], metric: str | None, live: LiveSeries
+) -> tuple[list[dict[str, Any]], str]:
+    for source in goal.get("evidence_sources", []):
+        if source.get("role") != "outcome" or source.get("metric") != metric:
+            continue
+        connected = live.get((metric, source.get("source")))
+        if connected and connected["series"]:
+            return connected["series"], connected.get("unit") or ""
+    return _numeric_series(goal.get("history", []), metric), ""
+
+
 def _numeric_series(
     history: list[dict[str, Any]], metric: str | None, source: str | None = None
 ) -> list[dict[str, Any]]:
@@ -184,21 +149,18 @@ def _target_label(target: dict[str, Any]) -> str | None:
     return " ".join(part for part in (displayed, target.get("unit")) if part)
 
 
-def _observation_label(observation: dict[str, Any], precision: int | None = None) -> dict[str, str]:
-    unit = observation.get("unit") or ""
+def _observation_label(
+    observation: dict[str, Any], precision: int | None = None, fallback_unit: str = ""
+) -> dict[str, str]:
+    unit = observation.get("unit") or fallback_unit
     value = (
         display_value(observation["value"], precision)
         if precision is not None
         else observation["value"]
     )
     return {
-        "date": observation.get("observed_at") or observation.get("period_end"),
+        "date": observation.get("date")
+        or observation.get("observed_at")
+        or observation.get("period_end"),
         "value": f"{value} {unit}".strip(),
-    }
-
-
-def _point_label(point: dict[str, Any], unit: str, precision: int) -> dict[str, str]:
-    return {
-        "date": point["date"],
-        "value": f"{display_value(point['value'], precision)} {unit}".strip(),
     }

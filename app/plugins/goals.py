@@ -15,7 +15,8 @@ from mcp.server import MCPServer
 from app.config import Settings
 from app.dashboard_config import load_config
 from app.db import connect
-from app.goals_dashboard import goal_dashboard, live_tracking_series
+from app.goals_dashboard import goal_dashboard
+from app.plugins.goals_live import live_tracking_series
 from app.runtime import Plugin
 from app.web import dashboard_period, render
 
