@@ -25,7 +25,7 @@ def test_launcher_is_compact_factual_and_ordered(settings_env: dict[str, str]) -
 
     with TestClient(app, base_url=settings.public_origin) as client:
         sign_in(client, settings)
-        coffee.add_bean(settings, "Daybreak")
+        coffee.add_bag(settings, "Daybreak", "Example Roaster")
         goals.create_goal(settings, "read", "health", "Read")
         recipe = recipes.link_recipe(settings, "Stew", "notes://example/stew")
         recipes.log_cook(settings, recipe["id"], rating=4)
@@ -33,7 +33,7 @@ def test_launcher_is_compact_factual_and_ordered(settings_env: dict[str, str]) -
 
     assert response.status_code == 200
     assert "Personal" not in response.text
-    assert "1 open bean" in response.text
+    assert "1 open bag" in response.text
     assert "1 goal" in response.text
     assert "1 cook" in response.text
     assert "0 food records" in response.text
@@ -91,7 +91,7 @@ def test_plugin_pages_are_read_only_dashboards(settings_env: dict[str, str]) -> 
         }
 
     assert all("<main" in page and page.count("<form") == 1 for page in pages.values())
-    assert "Add beans" not in pages["coffee"] and "Log shot" not in pages["coffee"]
+    assert "Add bag" not in pages["coffee"] and "Log brew" not in pages["coffee"]
     assert "Add goal" not in pages["goals"]
     assert "Current progress" not in pages["goals"]
     assert "Link recipe" not in pages["recipes"]

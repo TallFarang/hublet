@@ -31,7 +31,7 @@ instrument rather than a reporting suite.
 
 ## Capabilities and Constraints
 
-- Coffee beans, shots and conservative history-first recommendations.
+- Coffee bags and complete V60, AeroPress, French press, and espresso recipe history.
 - Goals with timestamped absolute progress measurements.
 - Apple Notes recipe references with cooking experiments and conclusions.
 - Receipt-backed food consumption with current linked nutrition and explicit tracking gaps.

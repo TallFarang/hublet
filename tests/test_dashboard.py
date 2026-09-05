@@ -64,21 +64,37 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
     coffee = coffee_dashboard(
         [
             {
-                "dose_g": 18,
-                "yield_g": 36,
-                "time_s": 29,
+                "method": "v60",
+                "dose_g": 30,
+                "water_g": 450,
+                "yield_g": None,
+                "time_s": 180,
+                "grind_setting": "5.2",
+                "temperature_c": 94,
+                "bypass_water_g": 60,
                 "rating": 5,
+                "taste_notes": "sweet",
+                "notes": "Split batch",
+                "bag": {"name": "Moonrise", "roaster": "Example"},
                 "created_at": "2026-08-02T00:00:00Z",
             },
             {
+                "method": "espresso",
                 "dose_g": 18,
-                "yield_g": 40,
+                "water_g": None,
+                "yield_g": 36,
                 "time_s": 31,
+                "grind_setting": "1.3",
+                "temperature_c": None,
+                "bypass_water_g": None,
                 "rating": 3,
+                "taste_notes": None,
+                "notes": "Latte",
+                "bag": {"name": "Moonrise", "roaster": "Example"},
                 "created_at": "2026-08-01T00:00:00Z",
             },
         ],
-        bean_count=2,
+        bag_count=2,
     )
     recipes = recipes_dashboard(
         [
@@ -91,10 +107,12 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
         ]
     )
 
-    assert coffee["latest_ratio"] == 2.0
-    assert coffee["presentation"] == "line" and coffee["current_display"] == "2.0×"
+    assert coffee["bag_count"] == 2 and coffee["brew_count"] == 2
+    assert coffee["latest_rating"] == 5
     assert coffee["average_rating"] == 4.0
-    assert coffee["start_label"] == {"date": "2026-08-01", "value": "2.22×"}
+    assert coffee["brews"][0]["method"] == "V60"
+    assert coffee["brews"][0]["recipe"] == "30g / 450g · grind 5.2 · 180s · 94°C · +60g bypass"
+    assert coffee["brews"][0]["outcome"] == "5/5 · sweet"
     assert recipes["cook_count"] == 2
     assert recipes["latest_rating"] == 5
     assert recipes["presentation"] == "line" and recipes["current_display"] == "5/5"

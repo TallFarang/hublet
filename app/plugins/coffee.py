@@ -1,245 +1,27 @@
-"""Coffee records and conservative dial-in recommendations."""
-
-from __future__ import annotations
-
-import json
-from datetime import UTC, datetime
-from typing import Any
-from uuid import uuid4
+"""Coffee plugin wiring and public domain API."""
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
-from mcp.server import MCPServer
 
 from app.config import Settings
 from app.dashboard import coffee_dashboard
 from app.dashboard_config import load_config
-from app.db import connect
+from app.plugins.coffee_bags import add_bag, get_bag, list_bags, set_bag_status
+from app.plugins.coffee_brews import history, log_brew
+from app.plugins.coffee_mcp import register_mcp
+from app.plugins.coffee_schema import DB_FILENAME, DEFAULT_GRINDER, METHODS, MIGRATIONS
 from app.runtime import Plugin
 from app.web import dashboard_period, render
 
-DB_FILENAME = "coffee.db"
-MIGRATIONS = (
-    """
-    CREATE TABLE beans (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        roaster TEXT,
-        roast_date TEXT,
-        origin TEXT,
-        process TEXT,
-        status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'archived')),
-        notes TEXT,
-        created_at TEXT NOT NULL
-    );
-    CREATE TABLE shots (
-        id TEXT PRIMARY KEY,
-        bean_id TEXT NOT NULL REFERENCES beans(id),
-        dose_g REAL NOT NULL CHECK (dose_g > 0),
-        yield_g REAL NOT NULL CHECK (yield_g > 0),
-        time_s REAL NOT NULL CHECK (time_s > 0),
-        grind_setting TEXT NOT NULL,
-        grinder TEXT,
-        temperature_c REAL,
-        rating INTEGER CHECK (rating BETWEEN 1 AND 5),
-        taste_tags_json TEXT NOT NULL DEFAULT '[]',
-        notes TEXT,
-        created_at TEXT NOT NULL
-    );
-    """,
-)
 router = APIRouter(prefix="/coffee")
-
-
-def add_bean(
-    settings: Settings,
-    name: str,
-    roaster: str | None = None,
-    roast_date: str | None = None,
-    origin: str | None = None,
-    process: str | None = None,
-    status: str = "open",
-    notes: str | None = None,
-) -> dict[str, Any]:
-    name = name.strip()
-    _validate_bean(name, status)
-    bean_id = str(uuid4())
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        connection.execute(
-            """INSERT INTO beans
-               (id, name, roaster, roast_date, origin, process, status, notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (bean_id, name, roaster, roast_date, origin, process, status, notes, _now()),
-        )
-    return get_bean(settings, bean_id)
-
-
-def get_bean(settings: Settings, bean_id: str) -> dict[str, Any]:
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        row = connection.execute("SELECT * FROM beans WHERE id = ?", (bean_id,)).fetchone()
-    if row is None:
-        raise ValueError("Bean not found")
-    return dict(row)
-
-
-def list_beans(settings: Settings, status: str | None = "open") -> list[dict[str, Any]]:
-    if status is not None and status not in {"open", "archived"}:
-        raise ValueError("status must be open or archived")
-    query = "SELECT * FROM beans"
-    parameters: tuple[str, ...] = ()
-    if status is not None:
-        query += " WHERE status = ?"
-        parameters = (status,)
-    query += " ORDER BY created_at DESC, id DESC"
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        return [dict(row) for row in connection.execute(query, parameters)]
-
-
-def log_shot(
-    settings: Settings,
-    bean_id: str,
-    *,
-    dose_g: float,
-    yield_g: float,
-    time_s: float,
-    grind_setting: str,
-    grinder: str | None = None,
-    temperature_c: float | None = None,
-    rating: int | None = None,
-    taste_tags: list[str] | None = None,
-    notes: str | None = None,
-) -> dict[str, Any]:
-    get_bean(settings, bean_id)
-    if min(dose_g, yield_g, time_s) <= 0:
-        raise ValueError("dose, yield and time must be positive")
-    if not grind_setting.strip():
-        raise ValueError("grind_setting is required")
-    if rating is not None and rating not in range(1, 6):
-        raise ValueError("rating must be between 1 and 5")
-
-    shot_id = str(uuid4())
-    tags = [tag.strip() for tag in (taste_tags or []) if tag.strip()]
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        connection.execute(
-            """INSERT INTO shots
-               (id, bean_id, dose_g, yield_g, time_s, grind_setting, grinder,
-                temperature_c, rating, taste_tags_json, notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                shot_id,
-                bean_id,
-                dose_g,
-                yield_g,
-                time_s,
-                grind_setting.strip(),
-                grinder,
-                temperature_c,
-                rating,
-                json.dumps(tags, separators=(",", ":")),
-                notes,
-                _now(),
-            ),
-        )
-        row = connection.execute(
-            """SELECT shots.*, beans.name AS bean_name
-               FROM shots JOIN beans ON beans.id = shots.bean_id
-               WHERE shots.id = ?""",
-            (shot_id,),
-        ).fetchone()
-    return _shot(row)
-
-
-def history(
-    settings: Settings,
-    bean_id: str | None = None,
-    limit: int = 20,
-    *,
-    start_date: str | None = None,
-    end_date: str | None = None,
-) -> list[dict[str, Any]]:
-    if limit < 1:
-        raise ValueError("limit must be positive")
-    query = """SELECT shots.*, beans.name AS bean_name
-               FROM shots JOIN beans ON beans.id = shots.bean_id"""
-    clauses = []
-    parameters: list[Any] = []
-    if bean_id is not None:
-        get_bean(settings, bean_id)
-        clauses.append("shots.bean_id = ?")
-        parameters.append(bean_id)
-    if start_date is not None:
-        clauses.append("date(shots.created_at) >= ?")
-        parameters.append(start_date)
-    if end_date is not None:
-        clauses.append("date(shots.created_at) <= ?")
-        parameters.append(end_date)
-    if clauses:
-        query += " WHERE " + " AND ".join(clauses)
-    query += " ORDER BY shots.created_at DESC, shots.id DESC LIMIT ?"
-    parameters.append(min(limit, 100))
-    with connect(settings.data_dir / DB_FILENAME) as connection:
-        return [_shot(row) for row in connection.execute(query, parameters)]
-
-
-def register_mcp(server: MCPServer, settings: Settings) -> None:
-    def add_bean_tool(
-        name: str,
-        roaster: str | None = None,
-        roast_date: str | None = None,
-        origin: str | None = None,
-        process: str | None = None,
-        notes: str | None = None,
-    ) -> dict[str, Any]:
-        """Remember a bag of coffee beans."""
-        return add_bean(settings, name, roaster, roast_date, origin, process, notes=notes)
-
-    def list_beans_tool(status: str | None = "open") -> list[dict[str, Any]]:
-        """List coffee beans, normally only open bags."""
-        return list_beans(settings, status)
-
-    def log_shot_tool(
-        bean_id: str,
-        dose_g: float,
-        yield_g: float,
-        time_s: float,
-        grind_setting: str,
-        grinder: str | None = None,
-        temperature_c: float | None = None,
-        rating: int | None = None,
-        taste_tags: list[str] | None = None,
-        notes: str | None = None,
-    ) -> dict[str, Any]:
-        """Log an espresso shot and its outcome."""
-        return log_shot(
-            settings,
-            bean_id,
-            dose_g=dose_g,
-            yield_g=yield_g,
-            time_s=time_s,
-            grind_setting=grind_setting,
-            grinder=grinder,
-            temperature_c=temperature_c,
-            rating=rating,
-            taste_tags=taste_tags,
-            notes=notes,
-        )
-
-    def history_tool(bean_id: str | None = None, limit: int = 20) -> list[dict[str, Any]]:
-        """Return recent espresso shots."""
-        return history(settings, bean_id, limit)
-
-    server.add_tool(add_bean_tool, name="coffee.add_bean")
-    server.add_tool(list_beans_tool, name="coffee.list_beans")
-    server.add_tool(log_shot_tool, name="coffee.log_shot")
-    server.add_tool(history_tool, name="coffee.history")
 
 
 @router.get("")
 def coffee_page(request: Request, period: str = "week") -> Response:
     settings = request.app.state.settings
     selected = dashboard_period(period)
-    beans = list_beans(settings)
-    shots = history(
+    bags = list_bags(settings)
+    brews = history(
         settings,
         limit=100,
         start_date=selected["start"],
@@ -249,33 +31,19 @@ def coffee_page(request: Request, period: str = "week") -> Response:
         request,
         "coffee.html",
         title="Coffee",
-        beans=beans,
-        shots=shots,
-        dashboard=coffee_dashboard(shots, len(beans), load_config(settings)["plugins"]["coffee"]),
+        bags=bags,
+        dashboard=coffee_dashboard(
+            brews,
+            len(bags),
+            load_config(settings)["plugins"]["coffee"],
+        ),
         period=selected,
     )
 
 
 def launcher_summary(settings: Settings) -> str:
-    count = len(list_beans(settings))
-    return f"{count} open {'bean' if count == 1 else 'beans'}"
-
-
-def _validate_bean(name: str, status: str) -> None:
-    if not name:
-        raise ValueError("name is required")
-    if status not in {"open", "archived"}:
-        raise ValueError("status must be open or archived")
-
-
-def _shot(row: Any) -> dict[str, Any]:
-    result = dict(row)
-    result["taste_tags"] = json.loads(result.pop("taste_tags_json"))
-    return result
-
-
-def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    count = len(list_bags(settings))
+    return f"{count} open {'bag' if count == 1 else 'bags'}"
 
 
 PLUGIN = Plugin(
@@ -287,3 +55,15 @@ PLUGIN = Plugin(
     router=router,
     launcher_summary=launcher_summary,
 )
+
+__all__ = [
+    "DEFAULT_GRINDER",
+    "METHODS",
+    "PLUGIN",
+    "add_bag",
+    "get_bag",
+    "history",
+    "list_bags",
+    "log_brew",
+    "set_bag_status",
+]

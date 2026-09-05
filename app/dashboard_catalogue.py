@@ -22,7 +22,7 @@ def _metric(
 
 
 DEFAULT_CONFIG = {
-    "schema_version": 2,
+    "schema_version": 3,
     "plugins": {
         "health": {
             "metrics": [
@@ -47,11 +47,10 @@ DEFAULT_CONFIG = {
         },
         "coffee": {
             "metrics": [
-                _metric("bean_count", "Open beans", 0, "latest", "value"),
-                _metric("latest_ratio", "Latest ratio", 2, "latest", "value"),
-                _metric("latest_time", "Latest time", 1, "latest", "value"),
+                _metric("open_bag_count", "Open bags", 0, "latest", "value"),
+                _metric("brew_count", "Brews", 0, "period_total", "value"),
                 _metric("average_rating", "Avg rating", 1, "period_average", "value"),
-                _metric("extraction_ratio", "Extraction ratio", 2, "daily_latest", "line"),
+                _metric("latest_rating", "Latest", 0, "latest", "value"),
             ]
         },
         "recipes": {
@@ -84,7 +83,7 @@ DEFAULT_CONFIG = {
 SERIES_METRICS = {
     "health": {item["key"] for item in DEFAULT_CONFIG["plugins"]["health"]["metrics"]},
     "food": {"confirmed_calories"},
-    "coffee": {"extraction_ratio"},
+    "coffee": set(),
     "recipes": {"cook_rating"},
     "goals": {item["key"] for item in DEFAULT_CONFIG["plugins"]["goals"]["metrics"]},
 }

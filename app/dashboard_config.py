@@ -34,7 +34,8 @@ def validate_config(document: Any) -> dict[str, Any]:
     if not isinstance(document, dict) or set(document) != {"schema_version", "plugins"}:
         raise ValueError("dashboard configuration must contain schema_version and plugins")
     document = _upgrade_v1(deepcopy(document))
-    if document["schema_version"] != 2 or not isinstance(document["plugins"], dict):
+    document = _upgrade_v2(document)
+    if document["schema_version"] != 3 or not isinstance(document["plugins"], dict):
         raise ValueError("unsupported dashboard configuration")
     if set(document["plugins"]) != set(CATALOGUE):
         raise ValueError("dashboard configuration must contain every known plugin")
@@ -76,6 +77,17 @@ def _upgrade_v1(document: dict[str, Any]) -> dict[str, Any]:
     if isinstance(goals, dict):
         goals.setdefault("goal_presentations", {})
     document["schema_version"] = 2
+    return document
+
+
+def _upgrade_v2(document: dict[str, Any]) -> dict[str, Any]:
+    if document.get("schema_version") != 2:
+        return document
+    plugins = document.get("plugins")
+    if not isinstance(plugins, dict):
+        return document
+    plugins["coffee"] = deepcopy(DEFAULT_CONFIG["plugins"]["coffee"])
+    document["schema_version"] = 3
     return document
 
 

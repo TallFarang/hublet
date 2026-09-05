@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.charts import series_plot
+from app.coffee_dashboard import coffee_dashboard as project_coffee
 from app.dashboard_config import DEFAULT_CONFIG
 from app.dashboard_metrics import axis_dates, configured_readings, display_value, metric_settings
 
@@ -22,43 +23,11 @@ def goal_dashboard(
 
 
 def coffee_dashboard(
-    shots: list[dict[str, Any]], bean_count: int, config: dict[str, Any] | None = None
+    brews: list[dict[str, Any]], bag_count: int, config: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    config = config or DEFAULT_CONFIG["plugins"]["coffee"]
-    ordered = [shot for shot in reversed(shots) if shot["dose_g"]]
-    ratios = [shot["yield_g"] / shot["dose_g"] for shot in ordered]
-    ratings = [shot["rating"] for shot in shots if shot["rating"] is not None]
-    latest = shots[0] if shots else None
-    latest_ratio = latest["yield_g"] / latest["dose_g"] if latest and latest["dose_g"] else None
-    average_rating = sum(ratings) / len(ratings) if ratings else None
-    chart = metric_settings(config)["extraction_ratio"]
-    result = {
-        **series_plot(ratios, chart["presentation"], precision=chart["precision"]),
-        "has_series": bool(ratios),
-        "bean_count": bean_count,
-        "shot_count": len(shots),
-        "latest_ratio": round(latest_ratio, 2) if latest_ratio is not None else None,
-        "latest_time": latest["time_s"] if latest else None,
-        "average_rating": round(average_rating, 1) if average_rating is not None else None,
-        "start_label": _shot_label(ordered[0], chart["precision"]) if ordered else None,
-        "end_label": _shot_label(ordered[-1], chart["precision"]) if ordered else None,
-        "axis_labels": axis_dates([{"date": shot["created_at"][:10]} for shot in ordered])
-        if chart["presentation"] == "bar"
-        else [],
-        "current_display": display_value(latest_ratio, chart["precision"], suffix="×"),
-    }
-    result["readings"] = configured_readings(
-        config,
-        {
-            "bean_count": {"value": bean_count},
-            "latest_ratio": {"value": latest_ratio, "prefix": "1:"},
-            "latest_time": {"value": result["latest_time"], "suffix": "s"},
-            "average_rating": {"value": average_rating, "suffix": "/5"},
-        },
-    )
-    result["has_series"] = result["has_series"] and chart["enabled"]
-    result["chart_label"] = chart["label"]
-    return result
+    """Keep the established dashboard projection import."""
+
+    return project_coffee(brews, bag_count, config)
 
 
 def recipes_dashboard(
@@ -181,14 +150,6 @@ def food_dashboard(
     result["calorie_chart_enabled"] = chart["enabled"]
     result["calorie_chart_label"] = chart["label"]
     return result
-
-
-def _shot_label(shot: dict[str, Any], precision: int) -> dict[str, str]:
-    ratio = shot["yield_g"] / shot["dose_g"]
-    return {
-        "date": shot["created_at"][:10],
-        "value": f"{display_value(ratio, precision)}×",
-    }
 
 
 def _cook_label(log: dict[str, Any], precision: int) -> dict[str, str]:

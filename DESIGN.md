@@ -143,7 +143,7 @@ The palette is almost monochrome infrastructure with five semantic plugin signal
 - **Goal Signal:** Goal progress values, chart traces, completed states, and Goals actions.
 - **Food Signal:** Nutrition readings, weekly bars, the monthly line, and Food identity. Food is read-only in the dashboard, so this color does not imply an editing action.
 - **Recipe Signal:** Recipe readings, rating traces, and Recipes actions.
-- **Coffee Signal:** Coffee readings, extraction traces, and Coffee actions.
+- **Coffee Signal:** Coffee readings, brew outcomes, and Coffee actions.
 - **Health Signal:** HealthKit measurements, freshness, and Health identity.
 
 ### Tertiary
@@ -266,6 +266,10 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 ### Health Status
 
 - **Read-only:** Health shows global freshness and configured practical measurements with compact inline trends. The default set covers body composition, sleep, cardiovascular recovery and workouts; VO₂ max remains available but hidden. Raw records and synchronization stay in MCP rather than the dashboard.
+
+### Coffee Status
+
+- **Read-only:** Coffee uses four period readings and a ruled recent-brew list in the primary instrument. Every row keeps method, bag identity, outcome, and the complete practical recipe together. Open bags sit below in one records panel. There is no cross-method chart because comparable settings are more useful than a synthetic aggregate.
 
 ## Do's and Don'ts
 

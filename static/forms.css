@@ -30,6 +30,10 @@
 }
 .history-list li > span:first-child { display: grid; }
 .history-list time, .measurement { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.coffee-brews { flex: 1; margin-top: 1.5rem; }
+.coffee-brews h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+.brew-details { display: grid; justify-items: end; }
+.brew-outcome { color: var(--coffee); font-weight: 700; }
 .note-reference { display: block; padding: 0.75rem; overflow-wrap: anywhere; }
 .empty-state { color: var(--muted); }
 .domain-section + .domain-section { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
@@ -63,6 +67,7 @@
 @media (max-width: 760px) {
   .history-list li, .catalogue-results li { display: grid; }
   .history-list time, .measurement, .catalogue-results li > span:last-child { text-align: left; }
+  .brew-details { justify-items: start; }
   .catalogue-filters { grid-template-columns: 1fr; }
   .catalogue-filters button { width: 100%; }
 }

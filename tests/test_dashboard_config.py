@@ -91,6 +91,30 @@ def test_version_one_config_is_upgraded_in_memory(settings_env: dict[str, str]) 
     assert json.loads(path.read_text())["schema_version"] == 1
 
 
+def test_version_two_upgrade_replaces_only_obsolete_coffee_metrics() -> None:
+    legacy = deepcopy(DEFAULT_CONFIG)
+    legacy["schema_version"] = 2
+    legacy["plugins"]["health"]["metrics"][0]["label"] = "Weight"
+    legacy["plugins"]["coffee"] = {
+        "metrics": [
+            {
+                "key": "bean_count",
+                "enabled": True,
+                "label": "Beans",
+                "precision": 0,
+                "view": "latest",
+                "presentation": "value",
+            }
+        ]
+    }
+
+    upgraded = validate_config(legacy)
+
+    assert upgraded["schema_version"] == 3
+    assert upgraded["plugins"]["coffee"] == DEFAULT_CONFIG["plugins"]["coffee"]
+    assert upgraded["plugins"]["health"]["metrics"][0]["label"] == "Weight"
+
+
 def test_goal_presentations_are_independent_and_validated() -> None:
     configured = deepcopy(DEFAULT_CONFIG)
     configured["plugins"]["goals"]["goal_presentations"] = {
@@ -111,8 +135,8 @@ def test_dashboard_uses_configured_order_labels_and_visibility(
     configured = deepcopy(DEFAULT_CONFIG)
     metrics = configured["plugins"]["coffee"]["metrics"]
     for metric in metrics:
-        metric["enabled"] = metric["key"] == "bean_count"
-    metrics[0]["label"] = "Beans now"
+        metric["enabled"] = metric["key"] == "open_bag_count"
+    metrics[0]["label"] = "Bags now"
     replace_config(settings, configured)
 
     with TestClient(
@@ -120,8 +144,8 @@ def test_dashboard_uses_configured_order_labels_and_visibility(
         base_url=settings.public_origin,
     ) as client:
         login(client, settings)
-        coffee.add_bean(settings, "Daybreak")
+        coffee.add_bag(settings, "Daybreak", "Example Roaster")
         page = client.get("/coffee")
 
-    assert "Beans now" in page.text and ">1<" in page.text
-    assert "Latest ratio" not in page.text and "Extraction ratio" not in page.text
+    assert "Bags now" in page.text and ">1<" in page.text
+    assert "Brews" not in page.text and "Avg rating" not in page.text

@@ -36,7 +36,7 @@ The plugin convention is intentionally not a marketplace or dynamic discovery sy
   for display but plugins must not mutate each other's databases.
 - `recipes.db` stores Apple Notes references and cooking experiments; Apple Notes remains the
   canonical recipe body.
-- `coffee.db` stores beans and espresso shots.
+- `coffee.db` stores purchased bags and complete method-aware brew snapshots.
 
 Dashboard presentation lives in `dashboard.json`. OpenClaw can replace the complete validated
 document through MCP. Supported choices remain deliberately small: enabled state, label,
@@ -66,8 +66,13 @@ remain queryable.
 
 ### Coffee and Recipes
 
-Coffee records beans and shots. Recipes links Apple Notes and records cooking experiments. OpenClaw
-performs interpretation and recommendations rather than Hublet embedding advisory engines.
+Coffee records each purchase as a distinct bag and stores complete V60, AeroPress, French press,
+or espresso recipe snapshots. History can match repeat beans across bags by exact
+case-insensitive roaster and name, while roast and origin metadata support starting-point searches.
+Lagom Mini is the default grinder; filter bypass water is structured, while serving details such
+as a split iced batch or latte stay in notes. Recipes links Apple Notes and records cooking
+experiments. OpenClaw performs interpretation, recipe inheritance, and recommendations rather
+than Hublet embedding advisory engines.
 
 ## Web and security boundaries
 
