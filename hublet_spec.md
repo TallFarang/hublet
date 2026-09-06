@@ -70,9 +70,10 @@ Coffee records each purchase as a distinct bag and stores complete V60, AeroPres
 or espresso recipe snapshots. History can match repeat beans across bags by exact
 case-insensitive roaster and name, while roast and origin metadata support starting-point searches.
 Lagom Mini is the default grinder; filter bypass water is structured, while serving details such
-as a split iced batch or latte stay in notes. Recipes links Apple Notes and records cooking
-experiments. OpenClaw performs interpretation, recipe inheritance, and recommendations rather
-than Hublet embedding advisory engines.
+as a split iced batch or latte stay in notes. Espresso yield and pressure in bar are optional
+readings. Recipes links Apple Notes and records cooking experiments. OpenClaw performs
+interpretation, recipe inheritance, and recommendations rather than Hublet embedding advisory
+engines.
 
 ## Web and security boundaries
 

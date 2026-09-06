@@ -72,6 +72,7 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
                 "grind_setting": "5.2",
                 "temperature_c": 94,
                 "bypass_water_g": 60,
+                "pressure_bar": None,
                 "rating": 5,
                 "taste_notes": "sweet",
                 "notes": "Split batch",
@@ -82,11 +83,12 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
                 "method": "espresso",
                 "dose_g": 18,
                 "water_g": None,
-                "yield_g": 36,
+                "yield_g": None,
                 "time_s": 31,
                 "grind_setting": "1.3",
                 "temperature_c": None,
                 "bypass_water_g": None,
+                "pressure_bar": 9,
                 "rating": 3,
                 "taste_notes": None,
                 "notes": "Latte",
@@ -113,6 +115,7 @@ def test_coffee_and_recipe_dashboards_use_recent_factual_values() -> None:
     assert coffee["brews"][0]["method"] == "V60"
     assert coffee["brews"][0]["recipe"] == "30g / 450g · grind 5.2 · 180s · 94°C · +60g bypass"
     assert coffee["brews"][0]["outcome"] == "5/5 · sweet"
+    assert coffee["brews"][1]["recipe"] == "18g · grind 1.3 · 31s · 9 bar"
     assert recipes["cook_count"] == 2
     assert recipes["latest_rating"] == 5
     assert recipes["presentation"] == "line" and recipes["current_display"] == "5/5"

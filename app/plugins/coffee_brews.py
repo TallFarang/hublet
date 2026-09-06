@@ -25,6 +25,7 @@ def log_brew(
     grinder: str = DEFAULT_GRINDER,
     temperature_c: float | None = None,
     bypass_water_g: float | None = None,
+    pressure_bar: float | None = None,
     rating: int | None = None,
     taste_notes: str | None = None,
     notes: str | None = None,
@@ -35,7 +36,7 @@ def log_brew(
     grinder = _required(grinder, "grinder")
     taste_notes = _optional(taste_notes)
     notes = _optional(notes)
-    _validate_recipe(method, dose_g, water_g, yield_g, bypass_water_g)
+    _validate_recipe(method, dose_g, water_g, yield_g, bypass_water_g, pressure_bar)
     _positive_optional(time_s, "time_s")
     _positive_optional(temperature_c, "temperature_c")
     if rating is not None and rating not in range(1, 6):
@@ -48,13 +49,13 @@ def log_brew(
         connection.execute(
             """INSERT INTO brews
                (id, bag_id, method, dose_g, water_g, yield_g, time_s,
-                grind_setting, grinder, temperature_c, bypass_water_g,
+                grind_setting, grinder, temperature_c, bypass_water_g, pressure_bar,
                 rating, taste_notes, notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 brew_id, bag_id, method, dose_g, water_g,
                 yield_g, time_s, grind_setting, grinder, temperature_c,
-                bypass_water_g, rating, taste_notes, notes,
+                bypass_water_g, pressure_bar, rating, taste_notes, notes,
                 datetime.now(UTC).isoformat(),
             ),
         )
@@ -151,18 +152,21 @@ def _validate_recipe(
     dose_g: float,
     water_g: float | None,
     yield_g: float | None,
-    bypass_water_g: float | None,
+    bypass_water_g: float | None, pressure_bar: float | None,
 ) -> None:
     _positive(dose_g, "dose_g")
     if method == "espresso":
-        if water_g is not None or yield_g is None:
-            raise ValueError("espresso requires yield_g and does not use water_g")
+        if water_g is not None:
+            raise ValueError("espresso does not use water_g")
         if bypass_water_g is not None:
             raise ValueError("espresso does not use bypass_water_g")
-        _positive(yield_g, "yield_g")
+        _positive_optional(yield_g, "yield_g")
+        _positive_optional(pressure_bar, "pressure_bar")
     else:
         if water_g is None or yield_g is not None:
             raise ValueError("filter methods require water_g and do not use yield_g")
+        if pressure_bar is not None:
+            raise ValueError("filter methods do not use pressure_bar")
         _positive(water_g, "water_g")
         _positive_optional(bypass_water_g, "bypass_water_g")
 

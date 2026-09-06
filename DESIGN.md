@@ -269,7 +269,7 @@ Icons are Lucide-derived, unfilled, round-capped line drawings with a 24px view 
 
 ### Coffee Status
 
-- **Read-only:** Coffee uses four period readings and a ruled recent-brew list in the primary instrument. Every row keeps method, bag identity, outcome, and the complete practical recipe together. Open bags sit below in one records panel. There is no cross-method chart because comparable settings are more useful than a synthetic aggregate.
+- **Read-only:** Coffee uses four period readings and a ruled recent-brew list in the primary instrument. Every row keeps method, bag identity, outcome, and the available practical recipe together, including optional espresso yield and pressure. Open bags sit below in one records panel. There is no cross-method chart because comparable settings are more useful than a synthetic aggregate.
 
 ## Do's and Don'ts
 

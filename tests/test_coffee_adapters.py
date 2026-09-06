@@ -41,9 +41,9 @@ def test_mcp_adapter_registers_only_the_bag_and_brew_tools(
                 "bag_id": bag["id"],
                 "method": "espresso",
                 "dose_g": 18,
-                "yield_g": 36,
                 "time_s": 29,
                 "grind_setting": "1.3",
+                "pressure_bar": 9,
                 "rating": 4,
             },
         )
@@ -64,6 +64,7 @@ def test_mcp_adapter_registers_only_the_bag_and_brew_tools(
         "coffee.history",
     }
     assert coffee.history(settings, bag["id"])[0]["rating"] == 4
+    assert coffee.history(settings, bag["id"])[0]["pressure_bar"] == 9
     assert coffee.get_bag(settings, bag["id"])["status"] == "archived"
 
 
@@ -99,8 +100,8 @@ def test_dashboard_is_read_only_and_shows_filter_and_espresso_recipes(
             "espresso",
             18,
             "1.3",
-            yield_g=36,
             time_s=29,
+            pressure_bar=9,
             rating=5,
             notes="Latte",
         )
@@ -116,7 +117,7 @@ def test_dashboard_is_read_only_and_shows_filter_and_espresso_recipes(
     assert unavailable.status_code in {404, 405}
     assert "A&amp;B" in page.text
     assert "30g / 450g · grind 5.2 · +60g bypass" in page.text
-    assert "18g → 36g · grind 1.3 · 29s" in page.text
+    assert "18g · grind 1.3 · 29s · 9 bar" in page.text
     assert "balanced &amp; sweet" in page.text and "Latte" in page.text
     assert page.text.count("<form") == 1
 

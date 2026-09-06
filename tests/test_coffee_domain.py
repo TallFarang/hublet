@@ -37,8 +37,30 @@ def test_migration_replaces_legacy_coffee_data(settings_env: dict[str, str]) -> 
         bags = connection.execute("SELECT count(*) FROM bags").fetchone()[0]
 
     assert tables == {"bags", "brews"}
-    assert version == 2
+    assert version == 3
     assert bags == 0
+
+
+def test_pressure_migration_preserves_existing_brews(settings_env: dict[str, str]) -> None:
+    settings = Settings.from_env(settings_env)
+    database = settings.data_dir / coffee.DB_FILENAME
+    migrate(database, coffee.MIGRATIONS[:2])
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            """INSERT INTO bags (id, name, roaster, status, created_at)
+               VALUES ('bag', 'Bean', 'Roaster', 'open', 'now')"""
+        )
+        connection.execute(
+            """INSERT INTO brews
+               (id, bag_id, method, dose_g, yield_g, grind_setting, grinder, rating, created_at)
+               VALUES ('brew', 'bag', 'espresso', 18, 36, '1.2', 'Lagom Mini', 4, 'now')"""
+        )
+    migrate(database, coffee.MIGRATIONS)
+
+    saved = coffee.history(settings)[0]
+
+    assert saved["yield_g"] == 36
+    assert saved["pressure_bar"] is None
 
 
 def test_bags_are_distinct_purchases_with_exact_identity_matching(
@@ -71,7 +93,7 @@ def test_bags_are_distinct_purchases_with_exact_identity_matching(
         ("v60", {"water_g": 250}),
         ("aeropress", {"water_g": 220}),
         ("french_press", {"water_g": 500}),
-        ("espresso", {"yield_g": 36}),
+        ("espresso", {"pressure_bar": 9}),
     ],
 )
 def test_all_methods_store_complete_recipe_snapshots(
@@ -96,6 +118,8 @@ def test_all_methods_store_complete_recipe_snapshots(
     assert brew["grinder"] == "Lagom Mini"
     assert brew["bag"]["name"] == "Daybreak"
     assert brew["taste_notes"] == "sweet and balanced"
+    if method == "espresso":
+        assert brew["yield_g"] is None and brew["pressure_bar"] == 9
 
 
 def test_history_finds_recipes_across_repeat_bags(coffee_settings: Settings) -> None:
@@ -143,6 +167,17 @@ def test_domain_rejects_incomplete_or_invalid_records(coffee_settings: Settings)
     with pytest.raises(ValueError, match="filter methods"):
         coffee.log_brew(
             coffee_settings, bag["id"], "aeropress", 15, "5", yield_g=220, rating=3
+        )
+    with pytest.raises(ValueError, match="pressure_bar"):
+        coffee.log_brew(
+            coffee_settings,
+            bag["id"],
+            "v60",
+            15,
+            "5",
+            water_g=250,
+            pressure_bar=9,
+            rating=3,
         )
     with pytest.raises(ValueError, match="bypass"):
         coffee.log_brew(

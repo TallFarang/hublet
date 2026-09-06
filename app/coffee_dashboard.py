@@ -41,16 +41,17 @@ def _brew(brew: dict[str, Any]) -> dict[str, Any]:
         "french_press": "French press",
         "espresso": "Espresso",
     }[brew["method"]]
-    target = brew["yield_g"] if brew["method"] == "espresso" else brew["water_g"]
-    separator = "→" if brew["method"] == "espresso" else "/"
-    recipe = [
-        f"{_number(brew['dose_g'])}g {separator} {_number(target)}g",
-        f"grind {brew['grind_setting']}",
-    ]
+    recipe = [f"{_number(brew['dose_g'])}g"]
+    if brew["method"] == "espresso" and brew["yield_g"] is not None:
+        recipe[0] += f" → {_number(brew['yield_g'])}g"
+    elif brew["method"] != "espresso":
+        recipe[0] += f" / {_number(brew['water_g'])}g"
+    recipe.append(f"grind {brew['grind_setting']}")
     for value, suffix in (
         (brew["time_s"], "s"),
         (brew["temperature_c"], "°C"),
         (brew["bypass_water_g"], "g bypass"),
+        (brew["pressure_bar"], " bar"),
     ):
         if value is not None:
             prefix = "+" if suffix == "g bypass" else ""

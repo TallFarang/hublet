@@ -77,4 +77,44 @@ MIGRATIONS = (
     );
     CREATE INDEX brews_history ON brews(bag_id, created_at DESC);
     """,
+    """
+    DROP INDEX brews_history;
+    ALTER TABLE brews RENAME TO brews_v2;
+
+    CREATE TABLE brews (
+        id TEXT PRIMARY KEY,
+        bag_id TEXT NOT NULL REFERENCES bags(id),
+        method TEXT NOT NULL CHECK (
+            method IN ('v60', 'aeropress', 'french_press', 'espresso')
+        ),
+        dose_g REAL NOT NULL CHECK (dose_g > 0),
+        water_g REAL CHECK (water_g > 0),
+        yield_g REAL CHECK (yield_g > 0),
+        time_s REAL CHECK (time_s > 0),
+        grind_setting TEXT NOT NULL CHECK (length(trim(grind_setting)) > 0),
+        grinder TEXT NOT NULL CHECK (length(trim(grinder)) > 0),
+        temperature_c REAL CHECK (temperature_c > 0),
+        bypass_water_g REAL CHECK (bypass_water_g > 0),
+        pressure_bar REAL CHECK (pressure_bar > 0),
+        rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+        taste_notes TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        CHECK (
+            (method = 'espresso' AND water_g IS NULL)
+            OR (method != 'espresso' AND water_g IS NOT NULL AND yield_g IS NULL)
+        ),
+        CHECK (method != 'espresso' OR bypass_water_g IS NULL),
+        CHECK (method = 'espresso' OR pressure_bar IS NULL),
+        CHECK (rating IS NOT NULL OR length(trim(coalesce(taste_notes, ''))) > 0)
+    );
+    INSERT INTO brews
+        (id, bag_id, method, dose_g, water_g, yield_g, time_s, grind_setting,
+         grinder, temperature_c, bypass_water_g, rating, taste_notes, notes, created_at)
+        SELECT id, bag_id, method, dose_g, water_g, yield_g, time_s, grind_setting,
+               grinder, temperature_c, bypass_water_g, rating, taste_notes, notes, created_at
+        FROM brews_v2;
+    DROP TABLE brews_v2;
+    CREATE INDEX brews_history ON brews(bag_id, created_at DESC);
+    """,
 )
