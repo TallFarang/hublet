@@ -44,7 +44,12 @@ def recipes_dashboard(
     average_rating = sum(ratings) / len(ratings) if ratings else None
     chart = metric_settings(config)["cook_rating"]
     result = {
-        **series_plot(ratings, chart["presentation"], precision=chart["precision"]),
+        **series_plot(
+            ratings,
+            chart["presentation"],
+            precision=chart["precision"],
+            labels=[_cook_label(log, chart["precision"]) for log in ordered],
+        ),
         "has_series": bool(ratings),
         "recipe_count": len(recipes),
         "cook_count": sum(len(recipe["cook_logs"]) for recipe in recipes),
@@ -85,6 +90,13 @@ def food_dashboard(
         [float(day["calories"]) for day in days],
         chart["presentation"],
         precision=chart["precision"],
+        labels=[
+            {
+                "date": day["date"],
+                "value": display_value(day["calories"], chart["precision"], suffix=" kcal"),
+            }
+            for day in days
+        ],
     )
     if days:
         calorie_chart.update(

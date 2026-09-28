@@ -28,11 +28,15 @@ def goal_dashboard(
     config = config or DEFAULT_CONFIG["plugins"]["goals"]
     presentation = config.get("goal_presentations", {}).get(goal.get("id"), "line")
     display = metric_settings(config).get(metric or "")
+    precision = display["precision"] if display else None
+    unit = series_unit or (latest or {}).get("unit") or target.get("unit") or ""
+    labels = [_observation_label(row, precision, unit) for row in numeric]
     geometry = series_plot(
         values,
         presentation,
         target_value,
-        precision=display["precision"] if display else None,
+        precision=precision,
+        labels=labels,
     )
     return {
         **geometry,
@@ -41,22 +45,14 @@ def goal_dashboard(
         else latest["value"]
         if latest
         else None,
-        "unit": series_unit or (latest or {}).get("unit") or target.get("unit") or "",
+        "unit": unit,
         "has_series": bool(values),
         "target_line_label": _target_label(target),
         "target_y_percent": round(geometry["target_y"] / 38 * 100, 2)
         if geometry["target_y"] is not None
         else None,
-        "start_label": _observation_label(
-            numeric[0], display["precision"] if display else None, series_unit
-        )
-        if numeric
-        else None,
-        "end_label": _observation_label(
-            numeric[-1], display["precision"] if display else None, series_unit
-        )
-        if numeric
-        else None,
+        "start_label": labels[0] if labels else None,
+        "end_label": labels[-1] if labels else None,
         "axis_labels": axis_dates(numeric) if presentation == "bar" else [],
         "tracking": _tracking_charts(goal, live, config),
     }
@@ -99,6 +95,7 @@ def _tracking_charts(
             end_label = _observation_label(series[-1], display["precision"])
             label = display["label"]
         expectation = source.get("expectation") or {}
+        unit = unit or expectation.get("unit") or ""
         charts.append(
             {
                 **series_plot(
@@ -107,10 +104,14 @@ def _tracking_charts(
                     _number(expectation.get("value")),
                     context,
                     precision=display["precision"],
+                    labels=[
+                        _observation_label(point, display["precision"], unit)
+                        for point in series
+                    ],
                 ),
                 "label": label,
                 "latest": display_value(series[-1]["value"], display["precision"]),
-                "unit": unit or expectation.get("unit") or "",
+                "unit": unit,
                 "start_label": start_label,
                 "end_label": end_label,
                 "axis_labels": axis_dates(series) if display["presentation"] == "bar" else [],

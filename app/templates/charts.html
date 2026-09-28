@@ -1,3 +1,11 @@
+{% macro hover_regions(chart) -%}
+{% for region in chart.hover_regions %}
+<rect class="chart-hover" x="{{ region.x }}" y="0" width="{{ region.width }}" height="38" fill="transparent">
+  <title>{{ region.date|uk_date }}: {{ region.value }}</title>
+</rect>
+{% endfor %}
+{%- endmacro %}
+
 {% macro series_chart(chart, label, show_bar_values=false) -%}
 {% set bar_count = chart.bars|length if chart.presentation == 'bar' else 0 %}
 {% set labelled_bars = show_bar_values and bar_count > 0 and bar_count <= 7 %}
@@ -16,6 +24,7 @@
       <line class="chart-baseline" x1="0" y1="{{ chart.baseline_y }}" x2="100" y2="{{ chart.baseline_y }}"/>
       {% if chart.target_y is not none %}<line class="chart-target" x1="0" y1="{{ chart.target_y }}" x2="100" y2="{{ chart.target_y }}"/>{% endif %}
       {% for bar in chart.bars %}<rect class="chart-bar" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}"/>{% endfor %}
+      {{ hover_regions(chart) }}
     </svg>
     {% else %}
     <svg class="line-chart" viewBox="0 0 100 38" preserveAspectRatio="none"
@@ -30,6 +39,7 @@
       {% if chart.single %}<line class="chart-series" x1="47" y1="{{ chart.last.y }}" x2="53" y2="{{ chart.last.y }}"/>
       {% else %}<polyline class="chart-series" points="{{ chart.points }}"/>{% endif %}
       {% endif %}
+      {{ hover_regions(chart) }}
     </svg>
     {% endif %}
     {% if chart.callout %}<span class="chart-dot" style="--chart-y: {{ chart.callout.y }}%" aria-hidden="true"></span>{% endif %}

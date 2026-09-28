@@ -13,6 +13,7 @@ def series_plot(
     target: float | None = None,
     context: list[float] | None = None,
     precision: int | None = None,
+    labels: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Project one series into the selected dependency-free visual."""
 
@@ -21,7 +22,26 @@ def series_plot(
         if presentation == "bar"
         else plot(values, target, context)
     )
-    return {**geometry, "presentation": presentation}
+    return {
+        **geometry,
+        "presentation": presentation,
+        "hover_regions": _hover_regions(labels or [], presentation),
+    }
+
+
+def _hover_regions(labels: list[dict[str, Any]], presentation: str) -> list[dict[str, Any]]:
+    """Cover each bar column or the area nearest each line point."""
+
+    count = len(labels)
+    regions = []
+    for index, label in enumerate(labels):
+        if count == 1 or presentation == "bar":
+            left, right = index * 100 / count, (index + 1) * 100 / count
+        else:
+            left = max(0, (index - 0.5) * 100 / (count - 1))
+            right = min(100, (index + 0.5) * 100 / (count - 1))
+        regions.append({**label, "x": left, "width": right - left})
+    return regions
 
 
 def plot(

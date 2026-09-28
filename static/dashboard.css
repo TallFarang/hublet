@@ -76,6 +76,7 @@
 .chart-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart-context-series { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.55; }
 .chart-series { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.chart-dot, .chart-callout, .chart-target-label { pointer-events: none; }
 .chart-dot {
   position: absolute;
   right: -4px;

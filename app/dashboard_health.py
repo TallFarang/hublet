@@ -30,7 +30,13 @@ def health_dashboard(
         metrics.append(
             {
                 **series_plot(
-                    values, settings["presentation"], precision=settings["precision"]
+                    values,
+                    settings["presentation"],
+                    precision=settings["precision"],
+                    labels=[
+                        _label(point, value, metric["unit"], settings["precision"])
+                        for point, value in zip(points, values)
+                    ],
                 ),
                 "name": name,
                 "label": settings["label"],
