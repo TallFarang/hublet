@@ -51,7 +51,7 @@
         {% for item in catalogue['items'] %}
         <li class="catalogue-result">
           <span><strong>{{ item.item }}</strong><small>{{ item.restaurant }} · {{ item.portion_basis }}</small></span>
-          <span><strong>{{ item.calories|round|int }} kcal</strong><small>{{ item.protein_g }}g protein</small></span>
+          <span><strong>{{ item.calories|round|int }} kcal</strong><small>{% if item.macros_complete %}{{ item.protein_g }}g protein{% else %}Macros unknown{% endif %}</small></span>
         </li>
         {% else %}<li class="empty-state">No matches</li>{% endfor %}
       </ol>

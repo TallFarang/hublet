@@ -83,6 +83,9 @@ runner. Hublet does not publish or require a container image.
 
 ## Mac deployment
 
+For a Mac already running a locally modified Food v2 schema, follow the
+[Food v2 rollout instructions](ops/food-v2-rollout.md) before normal deployment.
+
 Hublet runs directly from one Git checkout and one virtual environment under `launchd`.
 Keep the checkout, live data, backups, logs and environment files in owner-chosen local
 paths. Nothing in the repository fixes a Mac username, LAN address or private directory.

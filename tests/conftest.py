@@ -4,6 +4,17 @@ from pathlib import Path
 
 import pytest
 
+from app.config import Settings
+from app.plugins import food
+from app.runtime import migrate_plugins
+
+
+@pytest.fixture
+def food_settings(settings_env: dict[str, str]) -> Settings:
+    settings = Settings.from_env(settings_env)
+    migrate_plugins(settings, (food.PLUGIN,))
+    return settings
+
 
 @pytest.fixture
 def settings_env(tmp_path: Path) -> dict[str, str]:

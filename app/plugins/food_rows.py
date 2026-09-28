@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
+from app.plugins.food_schema import MACRO_FIELDS
 from app.plugins.food_validation import clean_number
 
 NUTRITION_FIELDS = (
@@ -18,6 +19,7 @@ NUTRITION_FIELDS = (
     "protein_g",
     "carbs_g",
     "fat_g",
+    "macros_complete",
     "portion_basis",
     "source",
     "confidence",
@@ -37,6 +39,7 @@ RECORD_SELECT = """SELECT records.*,
     nutrition.protein_g AS nutrition_protein_g,
     nutrition.carbs_g AS nutrition_carbs_g,
     nutrition.fat_g AS nutrition_fat_g,
+    nutrition.macros_complete AS nutrition_macros_complete,
     nutrition.portion_basis AS nutrition_portion_basis,
     nutrition.source AS nutrition_source,
     nutrition.confidence AS nutrition_confidence,
@@ -45,6 +48,16 @@ RECORD_SELECT = """SELECT records.*,
     nutrition.evidence_basis AS nutrition_evidence_basis,
     nutrition.updated_at AS nutrition_updated_at
     FROM records LEFT JOIN nutrition ON nutrition.id = records.nutrition_id"""
+
+
+def nutrition_from_row(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+    """Keep storage placeholders out of every public nutrition response."""
+
+    result = dict(row)
+    result["macros_complete"] = bool(result["macros_complete"])
+    if not result["macros_complete"]:
+        result.update(dict.fromkeys(MACRO_FIELDS))
+    return result
 
 
 def joined_record(connection: sqlite3.Connection, record_id: str) -> dict[str, Any]:
@@ -59,14 +72,19 @@ def record_from_join(row: sqlite3.Row) -> dict[str, Any]:
     nutrition = None
     calculated = None
     if raw["nutrition_id"] is not None:
-        nutrition = {
-            field: raw.pop("nutrition_fact_id" if field == "id" else f"nutrition_{field}")
-            for field in NUTRITION_FIELDS
-        }
+        nutrition = nutrition_from_row(
+            {
+                field: raw.pop("nutrition_fact_id" if field == "id" else f"nutrition_{field}")
+                for field in NUTRITION_FIELDS
+            }
+        )
         calculated = {
             field: clean_number(nutrition[field] * raw["nutrition_multiplier"])
-            for field in ("calories", "protein_g", "carbs_g", "fat_g")
+            if nutrition[field] is not None
+            else None
+            for field in ("calories", *MACRO_FIELDS)
         }
+        calculated["macros_complete"] = nutrition["macros_complete"]
     else:
         for field in NUTRITION_FIELDS:
             raw.pop("nutrition_fact_id" if field == "id" else f"nutrition_{field}")

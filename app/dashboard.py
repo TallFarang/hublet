@@ -121,7 +121,9 @@ def food_dashboard(
             records_by_date.setdefault(record["consumption_date_local"], []).append(record)
     projected_days = []
     average_calories = sum(day["calories"] for day in days) / len(days) if days else 0
-    average_protein = sum(day["protein_g"] for day in days) / len(days) if days else 0
+    average_protein = None
+    if all(day["protein_g"] is not None for day in days):
+        average_protein = sum(day["protein_g"] for day in days) / len(days) if days else 0
     for day in days:
         meals: dict[str, list[dict[str, str]]] = {}
         for record in records_by_date.get(day["date"], []):
@@ -140,7 +142,7 @@ def food_dashboard(
         "days": projected_days,
         "calorie_chart": calorie_chart,
         "average_calories": round(average_calories),
-        "average_protein": round(average_protein, 1),
+        "average_protein": round(average_protein, 1) if average_protein is not None else None,
         "confirmed_count": sum(
             record["status"] == "eaten" and record["nutrition_id"] is not None for record in records
         ),
@@ -154,7 +156,9 @@ def food_dashboard(
         config,
         {
             "average_calories": {"value": average_calories, "suffix": " kcal"},
-            "average_protein": {"value": average_protein, "suffix": "g"},
+            "average_protein": {"value": average_protein, "suffix": "g"}
+            if average_protein is not None
+            else {"value": "Incomplete"},
             "confirmed_count": {"value": result["confirmed_count"]},
             "unresolved_count": {"value": result["unresolved_count"]},
         },

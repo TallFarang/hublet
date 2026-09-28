@@ -7,7 +7,7 @@ import re
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from app.plugins.food_schema import CONFIDENCES, STATUSES
+from app.plugins.food_schema import CONFIDENCES, MACRO_FIELDS, STATUSES
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
 
@@ -16,6 +16,9 @@ def normalise_nutrition(**values: Any) -> dict[str, Any]:
     evidence = required_text(values["evidence_class"], "evidence_class")
     if re.fullmatch(r"[A-Za-z][A-Za-z0-9 ._-]{0,99}", evidence) is None:
         raise ValueError("evidence_class contains unsupported characters")
+    complete = values["macros_complete"]
+    if not isinstance(complete, (bool, int)) or complete not in (0, 1):
+        raise ValueError("macros_complete must be true or false")
     result = {
         "id": identifier(values["nutrition_id"], "nutrition_id"),
         "restaurant": required_text(values["restaurant"], "restaurant"),
@@ -24,9 +27,7 @@ def normalise_nutrition(**values: Any) -> dict[str, Any]:
         "calories": non_negative(values["calories"], "calories"),
         "calories_min": optional_non_negative(values["calories_min"], "calories_min"),
         "calories_max": optional_non_negative(values["calories_max"], "calories_max"),
-        "protein_g": non_negative(values["protein_g"], "protein_g"),
-        "carbs_g": non_negative(values["carbs_g"], "carbs_g"),
-        "fat_g": non_negative(values["fat_g"], "fat_g"),
+        "macros_complete": bool(complete),
         "portion_basis": required_text(values["portion_basis"], "portion_basis"),
         "source": required_text(values["source"], "source"),
         "confidence": required_text(values["confidence"], "confidence").casefold(),
@@ -35,6 +36,9 @@ def normalise_nutrition(**values: Any) -> dict[str, Any]:
         "evidence_basis": optional_text(values["evidence_basis"]),
         "updated_at": utc_timestamp(values["updated_at"], "updated_at", required=True),
     }
+    for field in MACRO_FIELDS:
+        value = values[field]
+        result[field] = 0.0 if value is None and not complete else non_negative(value, field)
     if result["confidence"] not in CONFIDENCES:
         raise ValueError("confidence must be exact, high, medium, low or unknown")
     low, high = result["calories_min"], result["calories_max"]

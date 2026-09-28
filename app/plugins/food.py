@@ -16,6 +16,7 @@ from app.plugins.food_nutrition import find_nutrition, get_nutrition, upsert_nut
 from app.plugins.food_receipts import ingest_receipt
 from app.plugins.food_records import query_records, record_consumption
 from app.plugins.food_reporting import summary
+from app.plugins.food_rows import nutrition_from_row
 from app.plugins.food_schema import DB_FILENAME, MIGRATIONS
 from app.runtime import Plugin
 from app.web import dashboard_period, render
@@ -60,12 +61,13 @@ def _catalogue(
 ) -> dict[str, Any]:
     query = query.strip()[:100]
     restaurant = restaurant.strip()[:100]
+    protein_order = "macros_complete DESC, CASE WHEN macros_complete = 1 THEN protein_g END"
     orders = {
         "name": "restaurant, item, portion_basis, id",
-        "calories_asc": "calories, protein_g DESC, restaurant, item, id",
-        "calories_desc": "calories DESC, protein_g DESC, restaurant, item, id",
-        "protein_desc": "protein_g DESC, calories, restaurant, item, id",
-        "protein_asc": "protein_g, calories, restaurant, item, id",
+        "calories_asc": f"calories, {protein_order} DESC, restaurant, item, id",
+        "calories_desc": f"calories DESC, {protein_order} DESC, restaurant, item, id",
+        "protein_desc": f"{protein_order} DESC, calories, restaurant, item, id",
+        "protein_asc": f"{protein_order} ASC, calories, restaurant, item, id",
     }
     selected_sort = sort if sort in orders else "name"
     clauses, parameters = [], []
@@ -86,12 +88,11 @@ def _catalogue(
             )
         ]
         rows = connection.execute(
-            f"""SELECT restaurant, item, portion_basis, calories, protein_g
-                FROM nutrition{where} ORDER BY {orders[selected_sort]} LIMIT 10""",
+            f"SELECT * FROM nutrition{where} ORDER BY {orders[selected_sort]} LIMIT 10",
             parameters,
         ).fetchall()
     return {
-        "items": [dict(row) for row in rows],
+        "items": [nutrition_from_row(row) for row in rows],
         "query": query,
         "restaurant": restaurant,
         "restaurants": restaurants,

@@ -3,6 +3,7 @@
 DB_FILENAME = "food.db"
 STATUSES = {"eaten", "uncertain", "excluded"}
 CONFIDENCES = {"exact", "high", "medium", "low", "unknown"}
+MACRO_FIELDS = ("protein_g", "carbs_g", "fat_g")
 
 MIGRATIONS = (
     """
@@ -68,5 +69,10 @@ MIGRATIONS = (
     CREATE INDEX records_consumption_date ON records(consumption_date_local, status);
     CREATE INDEX records_purchase_date ON records(purchase_date_local);
     CREATE INDEX records_nutrition_id ON records(nutrition_id);
+    """,
+    """
+    ALTER TABLE nutrition
+    ADD COLUMN macros_complete INTEGER NOT NULL DEFAULT 1
+    CHECK (macros_complete IN (0, 1));
     """,
 )

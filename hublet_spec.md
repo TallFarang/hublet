@@ -57,6 +57,25 @@ Food supports receipt ingestion, consumption recording and correction, nutrition
 record queries, and compact daily confirmed totals. Receipt ingestion is atomic and idempotent.
 The dashboard provides period totals, meal visibility, and a filterable nutrition catalogue.
 
+Food schema v2 adds `nutrition.macros_complete` (0 or 1, default 1). A false flag means
+the entire macro set is unknown; calories remain usable. The numeric macro columns stay
+non-null internally, but nutrition and calculated-nutrition responses expose unknown
+`protein_g`, `carbs_g`, and `fat_g` as null and include a boolean `macros_complete`.
+
+Nutrition upserts preserve an existing completeness flag when it is omitted. New entries
+default to complete and require all three non-negative, finite macro values. Calorie-only
+MCP writes explicitly set `macros_complete=false` and may omit the macro fields; the domain
+function accepts null macro arguments. Missing incomplete macros use zero storage placeholders.
+Supplied macro numbers are retained internally but hidden while completeness is false.
+Explicitly setting the flag true requires all three macros, including genuine known zeroes.
+
+Daily confirmed totals retain calories from incomplete entries. If any included entry has
+unknown macros, all three daily macro totals are null and `macros_complete` is false. Empty
+confirmed totals remain zero; completeness describes only confirmed, linked records, not
+whether every meal was logged. A period containing an incomplete day has a null protein
+average, displayed as “Incomplete”. The catalogue displays “Macros unknown” and sorts
+unknown protein after known values. Goals' calorie series are unaffected.
+
 ### Health
 
 Health scans only `HUBLET_AGENTBRIDGE_DIR`. Current source revisions replace matching dates, new

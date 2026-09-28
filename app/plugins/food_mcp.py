@@ -38,20 +38,25 @@ def _upsert_nutrition(
     restaurant: str,
     item: str,
     calories: float,
-    protein_g: float,
-    carbs_g: float,
-    fat_g: float,
     portion_basis: str,
     source: str,
     confidence: str,
     evidence_class: str,
+    protein_g: float | None = None,
+    carbs_g: float | None = None,
+    fat_g: float | None = None,
+    macros_complete: bool | None = None,
     category: str | None = None,
     calories_min: float | None = None,
     calories_max: float | None = None,
     review_date: str | None = None,
     evidence_basis: str | None = None,
 ) -> dict[str, Any]:
-    """Create or fully replace a stable nutrition variant."""
+    """Upsert nutrition; use macros_complete=false for calorie-only entries.
+
+    Omitted completeness preserves an existing flag; new entries default to complete
+    and require all three macros. Unknown macro responses are null, never zero.
+    """
 
     return upsert_nutrition(
         settings,
@@ -71,4 +76,5 @@ def _upsert_nutrition(
         calories_max=calories_max,
         review_date=review_date,
         evidence_basis=evidence_basis,
+        macros_complete=macros_complete,
     )

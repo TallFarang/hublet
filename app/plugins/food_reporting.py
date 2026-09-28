@@ -7,6 +7,7 @@ from typing import Any
 
 from app.config import Settings
 from app.plugins.food_records import query_records
+from app.plugins.food_schema import MACRO_FIELDS
 from app.plugins.food_validation import clean_number, iso_date, required_text
 
 
@@ -17,7 +18,7 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
     records = query_records(settings, start_date=start_date, end_date=end_date, limit=500)
     daily_totals = []
     for current in _dates(start, end):
-        totals = {field: 0.0 for field in ("calories", "protein_g", "carbs_g", "fat_g")}
+        totals: dict[str, float | None] = dict.fromkeys(("calories", *MACRO_FIELDS), 0.0)
         for record in records:
             if (
                 record["consumption_date_local"] != current
@@ -25,10 +26,20 @@ def summary(settings: Settings, start_date: str, end_date: str) -> dict[str, Any
                 or record["nutrition_id"] is None
             ):
                 continue
-            for field in totals:
-                totals[field] += record["calculated_nutrition"][field]
+            for field, previous in totals.items():
+                value = record["calculated_nutrition"][field]
+                totals[field] = (
+                    previous + value if previous is not None and value is not None else None
+                )
         daily_totals.append(
-            {"date": current, **{field: clean_number(value) for field, value in totals.items()}}
+            {
+                "date": current,
+                "macros_complete": all(totals[field] is not None for field in MACRO_FIELDS),
+                **{
+                    field: clean_number(value) if value is not None else None
+                    for field, value in totals.items()
+                },
+            }
         )
     return {
         "start_date": start.isoformat(),
